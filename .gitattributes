@@ -1,0 +1,14 @@
+# Automatically detect text files and normalize line endings to LF in the repository,
+# while converting them to native line endings on checkout (CRLF for Windows, LF for Mac/Linux).
+* text=auto
+
+# Explicitly declare files that should always keep Windows line endings
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Explicitly declare binary files so Git never tries to "fix" their line endings
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.zip binary
