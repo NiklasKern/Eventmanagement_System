@@ -1,5 +1,6 @@
 # Eventmanagement_System
 Repository for our Outdoor Evenentmanagement System.
+
 ---
 ### `main` (Production Branch)
 * **Purpose:** Contains stable, production-ready code.
@@ -13,3 +14,7 @@ Repository for our Outdoor Evenentmanagement System.
 * **Purpose:** Isolated enviroment for developing specific features/user stories.
 * **Naming Convention:** `feature/feature-name` (e.g. `feature/add-event`.
 * **Usage:** Branch of `dev`: `git checkout dev && git checkout -b feature/feature-name`. Implement and commit features/task. Once all subtasks are done and quality assurence is done, push the branch to Github and open a **Pull Request into `dev`**.
+=======
+
+**Purpose:** Serves as the central integration branch for active development.
+**Usage:** All completed features are to be merged to `dev`. Allways base new feature branches of `dev`.
