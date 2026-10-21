@@ -23,7 +23,10 @@ jobs:
 
       - name: Push all branches and tags to Azure DevOps
         env:
-          AZURE_URL: https://dev.azure.com/nke6545/FHV_Project/_git/FHV_Project
+          AZURE_ORG: nke6545
+          AZURE_PROJECT: FHV_Project
+          AZURE_REPO: FHV_Project
+          AZURE_USER: nke6545
           AZURE_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
         run: |
           set -euo pipefail
@@ -35,33 +38,30 @@ jobs:
 
           # Strip stray spaces/newlines that sneak in when pasting the secret
           AZURE_PAT=$(printf '%s' "$AZURE_PAT" | tr -d '[:space:]')
+          echo "::add-mask::$AZURE_PAT"
 
-          # Check the PAT against the Azure DevOps API before pushing
-          STATUS=$(curl -s -o /dev/null -w '%{http_code}' -u ":$AZURE_PAT" \
-            "https://dev.azure.com/nke6545/_apis/projects?api-version=7.0")
+          # Check that the PAT can reach the Git repo itself (needs the Code scope)
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' -u "$AZURE_USER:$AZURE_PAT" \
+            "https://dev.azure.com/$AZURE_ORG/$AZURE_PROJECT/_apis/git/repositories/$AZURE_REPO?api-version=7.0")
           case "$STATUS" in
-            200) echo "PAT accepted by Azure DevOps" ;;
-            401|203|302) echo "::error::Azure DevOps rejected the PAT (HTTP $STATUS): invalid, expired, or created for a different organization"; exit 1 ;;
-            403) echo "::error::PAT is valid but lacks permission (HTTP 403): give it Code (Read & write) scope"; exit 1 ;;
+            200) echo "PAT has access to the Azure Git repo" ;;
+            401|203|302) echo "::error::PAT cannot access Git (HTTP $STATUS): it most likely lacks the Code (Read & write) scope"; exit 1 ;;
+            403) echo "::error::PAT lacks permission on this repo (HTTP 403)"; exit 1 ;;
+            404) echo "::error::Repo not found (HTTP 404): check AZURE_PROJECT / AZURE_REPO names"; exit 1 ;;
             *) echo "::error::Unexpected HTTP $STATUS from Azure DevOps"; exit 1 ;;
           esac
-
-          # Azure DevOps accepts a PAT as Basic auth with an empty username
-          AUTH=$(printf ':%s' "$AZURE_PAT" | base64 -w0)
-          echo "::add-mask::$AUTH"
 
           # Fail with a clear message instead of trying to prompt for a username
           export GIT_TERMINAL_PROMPT=0
 
-          git remote add azure "$AZURE_URL"
+          # Credentials in the remote URL (the PAT is masked in logs)
+          git remote add azure \
+            "https://$AZURE_USER:$AZURE_PAT@dev.azure.com/$AZURE_ORG/$AZURE_PROJECT/_git/$AZURE_REPO"
 
           # Remove origin/HEAD if present, otherwise it would be pushed as a branch called "HEAD"
           git remote set-head origin --delete 2>/dev/null || true
 
           # Push EVERY GitHub branch (not just the checked-out one) to the same name on Azure.
           # The refspec keeps slashes intact: origin/feature/x -> refs/heads/feature/x
-          git -c http.extraheader="AUTHORIZATION: Basic $AUTH" \
-            push azure "refs/remotes/origin/*:refs/heads/*"
-
-          git -c http.extraheader="AUTHORIZATION: Basic $AUTH" \
-            push azure --tags
+          git push azure "refs/remotes/origin/*:refs/heads/*"
+          git push azure --tags
