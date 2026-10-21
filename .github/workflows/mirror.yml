@@ -1,0 +1,51 @@
+name: Mirror to Azure DevOps
+
+on:
+  push:
+    branches:
+      - '**'   # all branches, including names with slashes
+    tags:
+      - '**'
+  workflow_dispatch:   # manual trigger from the GitHub UI
+
+# Never run two mirror jobs at the same time (avoids racing pushes)
+concurrency:
+  group: mirror-to-azure
+  cancel-in-progress: false
+
+jobs:
+  to_azure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history + all branches as refs/remotes/origin/*
+
+      - name: Push all branches and tags to Azure DevOps
+        env:
+          AZURE_URL: https://dev.azure.com/nke6545/FHV_Project/_git/FHV_Project
+          AZURE_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${AZURE_PAT:-}" ]; then
+            echo "::error::Secret AZURE_DEVOPS_PAT is empty or not available to this workflow"
+            exit 1
+          fi
+
+          # Azure DevOps accepts a PAT as Basic auth with an empty username
+          AUTH=$(printf ':%s' "$AZURE_PAT" | base64 -w0)
+          echo "::add-mask::$AUTH"
+
+          git remote add azure "$AZURE_URL"
+
+          # Remove origin/HEAD if present, otherwise it would be pushed as a branch called "HEAD"
+          git remote set-head origin --delete 2>/dev/null || true
+
+          # Push EVERY GitHub branch (not just the checked-out one) to the same name on Azure.
+          # The refspec keeps slashes intact: origin/feature/x -> refs/heads/feature/x
+          git -c http.extraheader="AUTHORIZATION: Basic $AUTH" \
+            push azure "refs/remotes/origin/*:refs/heads/*"
+
+          git -c http.extraheader="AUTHORIZATION: Basic $AUTH" \
+            push azure --tags
