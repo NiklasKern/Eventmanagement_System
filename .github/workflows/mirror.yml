@@ -3,7 +3,7 @@ name: Mirror to Azure DevOps
 on:
   push:
     branches:
-      - '**'   # all branches, including names with slashes
+      - '**'   # all branches, including names with slashes (feature/x, fix/y/z)
     tags:
       - '**'
   workflow_dispatch:   # manual trigger from the GitHub UI
@@ -33,9 +33,25 @@ jobs:
             exit 1
           fi
 
+          # Strip stray spaces/newlines that sneak in when pasting the secret
+          AZURE_PAT=$(printf '%s' "$AZURE_PAT" | tr -d '[:space:]')
+
+          # Check the PAT against the Azure DevOps API before pushing
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' -u ":$AZURE_PAT" \
+            "https://dev.azure.com/nke6545/_apis/projects?api-version=7.0")
+          case "$STATUS" in
+            200) echo "PAT accepted by Azure DevOps" ;;
+            401|203|302) echo "::error::Azure DevOps rejected the PAT (HTTP $STATUS): invalid, expired, or created for a different organization"; exit 1 ;;
+            403) echo "::error::PAT is valid but lacks permission (HTTP 403): give it Code (Read & write) scope"; exit 1 ;;
+            *) echo "::error::Unexpected HTTP $STATUS from Azure DevOps"; exit 1 ;;
+          esac
+
           # Azure DevOps accepts a PAT as Basic auth with an empty username
           AUTH=$(printf ':%s' "$AZURE_PAT" | base64 -w0)
           echo "::add-mask::$AUTH"
+
+          # Fail with a clear message instead of trying to prompt for a username
+          export GIT_TERMINAL_PROMPT=0
 
           git remote add azure "$AZURE_URL"
 
