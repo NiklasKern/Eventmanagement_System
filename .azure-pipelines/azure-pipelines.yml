@@ -57,4 +57,4 @@ steps:
     displayName: Push all branches and tags to GitHub
     env:
       GH_PAT: $(GITHUB_PAT)            # secret variables must be mapped explicitly
-      GITHUB_REPO: NiklasKern/Eventmanagement_System.git      # <-- replace, e.g. myname/FHV_Project
+      GITHUB_REPO: NiklasKern/Eventmanagement_System      # <-- replace, e.g. myname/FHV_Project
