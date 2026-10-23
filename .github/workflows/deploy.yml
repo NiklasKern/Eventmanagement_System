@@ -64,6 +64,6 @@ jobs:
           script: |
             set -e
             cd /home/dev/docker/ems
-            docker compose pull app-${{ env.ENV_NAME }}
-            docker compose up -d app-${{ env.ENV_NAME }}
+            docker compose pull ems-${{ env.ENV_NAME }}
+            docker compose up -d ems-${{ env.ENV_NAME }}
             docker image prune -f
