@@ -1,5 +1,6 @@
 # Eventmanagement_System
 Repository for our Outdoor Evenentmanagement System.
+
 ---
 ### `main` (Production Branch)
 * **Purpose:** Contains stable, production-ready code.
