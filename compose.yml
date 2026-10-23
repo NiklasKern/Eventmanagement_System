@@ -1,0 +1,10 @@
+# Nur für die lokale Entwicklung
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ems
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: fhv2026
+    ports:
+      - "5432"

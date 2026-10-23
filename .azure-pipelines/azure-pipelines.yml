@@ -1,0 +1,60 @@
+# Mirror Azure DevOps -> GitHub
+# Lives in the repo root (NOT in .github/workflows).
+# Needs a secret pipeline variable named GITHUB_PAT.
+
+trigger:
+  branches:
+    include:
+      - '*'
+  tags:
+    include:
+      - '*'
+
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+    fetchDepth: 0
+    fetchTags: true
+    persistCredentials: true   # lets the script fetch all branches from Azure
+
+  - bash: |
+      set -euo pipefail
+
+      if [ -z "${GH_PAT:-}" ]; then
+        echo "##vso[task.logissue type=error]Secret variable GITHUB_PAT is not set"
+        exit 1
+      fi
+
+      # Strip stray spaces/newlines from the pasted secret and keep it masked
+      GH_PAT=$(printf '%s' "$GH_PAT" | tr -d '[:space:]')
+      echo "##vso[task.setsecret]$GH_PAT"
+
+      # Check that the PAT can see the GitHub repo
+      STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
+        -H "Authorization: Bearer $GH_PAT" \
+        "https://api.github.com/repos/$GITHUB_REPO")
+      case "$STATUS" in
+        200) echo "GitHub PAT has access to $GITHUB_REPO" ;;
+        401) echo "##vso[task.logissue type=error]GitHub rejected the PAT (HTTP 401): invalid or expired"; exit 1 ;;
+        403|404) echo "##vso[task.logissue type=error]PAT cannot see $GITHUB_REPO (HTTP $STATUS): wrong repo name or token not granted access to it"; exit 1 ;;
+        *) echo "##vso[task.logissue type=error]Unexpected HTTP $STATUS from GitHub"; exit 1 ;;
+      esac
+
+      # Make sure every Azure branch is available as refs/remotes/origin/*
+      git fetch origin '+refs/heads/*:refs/remotes/origin/*' --tags
+      git remote set-head origin --delete 2>/dev/null || true
+
+      export GIT_TERMINAL_PROMPT=0
+      git remote add github "https://x-access-token:$GH_PAT@github.com/$GITHUB_REPO.git"
+
+      # "-c http.extraheader=" clears Azure's own login header so it isn't sent to GitHub
+      git -c http.extraheader= push github "refs/remotes/origin/*:refs/heads/*"
+      git -c http.extraheader= push github --tags
+    displayName: Push all branches and tags to GitHub
+    env:
+      GH_PAT: $(GITHUB_PAT)            # secret variables must be mapped explicitly
+      GITHUB_REPO: <OWNER>/<REPO>      # <-- replace, e.g. myname/FHV_Project
