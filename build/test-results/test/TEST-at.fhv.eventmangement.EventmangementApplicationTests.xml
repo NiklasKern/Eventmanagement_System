@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="at.fhv.eventmangement.EventmangementApplicationTests" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-23T11:14:57.772Z" hostname="schleppy" time="3.51">
+<testsuite name="at.fhv.eventmangement.EventmangementApplicationTests" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-23T12:58:40.080Z" hostname="NOTSCHGE" time="8.297">
   <properties/>
-  <testcase name="contextLoads()" classname="at.fhv.eventmangement.EventmangementApplicationTests" time="0.323"/>
-  <system-out><![CDATA[13:14:57.987 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [at.fhv.eventmangement.EventmangementApplicationTests]: EventmangementApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-13:14:58.121 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration at.fhv.eventmangement.EventmangementApplication for test class at.fhv.eventmangement.EventmangementApplicationTests
-13:14:58.223 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [at.fhv.eventmangement.EventmangementApplicationTests]: EventmangementApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-13:14:58.226 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration at.fhv.eventmangement.EventmangementApplication for test class at.fhv.eventmangement.EventmangementApplicationTests
+  <testcase name="contextLoads()" classname="at.fhv.eventmangement.EventmangementApplicationTests" time="0.845"/>
+  <system-out><![CDATA[14:58:40.468 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [at.fhv.eventmangement.EventmangementApplicationTests]: EventmangementApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+14:58:40.683 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration at.fhv.eventmangement.EventmangementApplication for test class at.fhv.eventmangement.EventmangementApplicationTests
+14:58:40.878 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [at.fhv.eventmangement.EventmangementApplicationTests]: EventmangementApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+14:58:40.880 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration at.fhv.eventmangement.EventmangementApplication for test class at.fhv.eventmangement.EventmangementApplicationTests
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -16,35 +16,35 @@
 
  :: Spring Boot ::                (v4.1.2)
 
-2026-10-23T13:14:58.620+02:00  INFO 8932 --- [eventmangement] [    Test worker] a.f.e.EventmangementApplicationTests     : Starting EventmangementApplicationTests using Java 21.0.12.1 with PID 8932 (started by niklas in /home/niklas/Documents/FHV/Sem03/EventManagementProject/source/eventmangement)
-2026-10-23T13:14:58.622+02:00  INFO 8932 --- [eventmangement] [    Test worker] a.f.e.EventmangementApplicationTests     : No active profile set, falling back to 1 default profile: "default"
-2026-10-23T13:14:59.260+02:00  INFO 8932 --- [eventmangement] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-10-23T13:14:59.285+02:00  INFO 8932 --- [eventmangement] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 13 ms. Found 0 JPA repository interfaces.
-2026-10-23T13:14:59.651+02:00  INFO 8932 --- [eventmangement] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2026-10-23T13:14:59.816+02:00  INFO 8932 --- [eventmangement] [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:eb591498-896d-4081-bc87-2512a9de5e8d user=SA
-2026-10-23T13:14:59.818+02:00  INFO 8932 --- [eventmangement] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2026-10-23T13:14:59.852+02:00  INFO 8932 --- [eventmangement] [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
-2026-10-23T13:14:59.897+02:00  INFO 8932 --- [eventmangement] [    Test worker] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.4.13.Final
-2026-10-23T13:15:00.229+02:00  INFO 8932 --- [eventmangement] [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-10-23T13:15:00.291+02:00  INFO 8932 --- [eventmangement] [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
-	Database JDBC URL [jdbc:h2:mem:eb591498-896d-4081-bc87-2512a9de5e8d]
+2026-10-23T14:58:41.578+02:00  INFO 12596 --- [eventmangement] [    Test worker] a.f.e.EventmangementApplicationTests     : Starting EventmangementApplicationTests using Java 21.0.12.1 with PID 12596 (started by baums in C:\Users\baums\Documents\GitHub\Eventmanagement_System)
+2026-10-23T14:58:41.582+02:00  INFO 12596 --- [eventmangement] [    Test worker] a.f.e.EventmangementApplicationTests     : No active profile set, falling back to 1 default profile: "default"
+2026-10-23T14:58:42.746+02:00  INFO 12596 --- [eventmangement] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-23T14:58:42.792+02:00  INFO 12596 --- [eventmangement] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 22 ms. Found 0 JPA repository interfaces.
+2026-10-23T14:58:43.495+02:00  INFO 12596 --- [eventmangement] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-23T14:58:43.908+02:00  INFO 12596 --- [eventmangement] [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:ded5d518-803b-4e53-b722-0a90fcc40332 user=SA
+2026-10-23T14:58:43.912+02:00  INFO 12596 --- [eventmangement] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-23T14:58:44.024+02:00  INFO 12596 --- [eventmangement] [    Test worker] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-10-23T14:58:44.135+02:00  INFO 12596 --- [eventmangement] [    Test worker] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.4.13.Final
+2026-10-23T14:58:45.170+02:00  INFO 12596 --- [eventmangement] [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-23T14:58:45.393+02:00  INFO 12596 --- [eventmangement] [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:h2:mem:ded5d518-803b-4e53-b722-0a90fcc40332]
 	Database driver: H2 JDBC Driver
 	Database dialect: H2Dialect
 	Database version: 2.4.240
-	Default catalog/schema: EB591498-896D-4081-BC87-2512A9DE5E8D/PUBLIC
+	Default catalog/schema: DED5D518-803B-4E53-B722-0A90FCC40332/PUBLIC
 	Autocommit mode: undefined/unknown
 	Isolation level: READ_COMMITTED [default READ_COMMITTED]
 	JDBC fetch size: 100
 	Pool: DataSourceConnectionProvider
 	Minimum pool size: undefined/unknown
 	Maximum pool size: undefined/unknown
-2026-10-23T13:15:00.556+02:00  INFO 8932 --- [eventmangement] [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-10-23T13:15:00.571+02:00  INFO 8932 --- [eventmangement] [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-10-23T13:15:00.635+02:00  WARN 8932 --- [eventmangement] [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2026-10-23T13:15:00.950+02:00  INFO 8932 --- [eventmangement] [    Test worker] a.f.e.EventmangementApplicationTests     : Started EventmangementApplicationTests in 2.646 seconds (process running for 4.232)
+2026-10-23T14:58:46.245+02:00  INFO 12596 --- [eventmangement] [    Test worker] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-23T14:58:46.315+02:00  INFO 12596 --- [eventmangement] [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-23T14:58:46.495+02:00  WARN 12596 --- [eventmangement] [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-10-23T14:58:47.509+02:00  INFO 12596 --- [eventmangement] [    Test worker] a.f.e.EventmangementApplicationTests     : Started EventmangementApplicationTests in 6.46 seconds (process running for 9.322)
 ]]></system-out>
   <system-err><![CDATA[Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
-WARNING: A Java agent has been loaded dynamically (/home/niklas/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.18.15/de6980bb799c25bb1fe9e6c434201299cb5e694e/byte-buddy-agent-1.18.15.jar)
+WARNING: A Java agent has been loaded dynamically (C:\Users\baums\.gradle\caches\modules-2\files-2.1\net.bytebuddy\byte-buddy-agent\1.18.15\de6980bb799c25bb1fe9e6c434201299cb5e694e\byte-buddy-agent-1.18.15.jar)
 WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
 WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
 WARNING: Dynamic loading of agents will be disallowed by default in a future release

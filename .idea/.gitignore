@@ -9,7 +9,8 @@
 # Editor-based HTTP Client requests
 /httpRequests/
 
-# Created by codeshack.io
+# Gradle
+.gradle
 
 ### macOS ###
 .DS_Store
