@@ -11,6 +11,7 @@
 
 # Gradle
 .gradle
+!gradle/wrapper/gradle-wrapper.jar
 
 ### macOS ###
 .DS_Store
@@ -68,3 +69,5 @@ out/
 *.zip
 *.tar.gz
 *.rar
+
+build/
