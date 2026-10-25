@@ -7,4 +7,4 @@ services:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: fhv2026
     ports:
-      - "5432"
+      - "5432:5432"
