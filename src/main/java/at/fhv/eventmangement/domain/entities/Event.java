@@ -27,10 +27,11 @@ public class Event {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "location", nullable = false)
+    private String location;
+
     @Column(name = "date_time", nullable = false)
     private LocalDateTime dateTime;
-
-    //Location
 
     @Column(name = "price", nullable = false)
     private Float price;
@@ -50,5 +51,4 @@ public class Event {
 
     @Column(name = "updated", nullable = false)
     private LocalDateTime updated;
-
 }
