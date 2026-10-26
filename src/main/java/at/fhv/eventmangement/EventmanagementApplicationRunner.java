@@ -3,13 +3,16 @@ package at.fhv.eventmangement;
 import at.fhv.eventmangement.domain.dto.EventForm;
 import at.fhv.eventmangement.services.EventService;
 import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
 @Component
+@Profile("local")
 public class EventmanagementApplicationRunner implements ApplicationRunner {
 
     private final EventService eventService;
