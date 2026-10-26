@@ -6,6 +6,8 @@ a, a:hover {
     text-decoration: none;
 }
 
+
+/*Inhalt*/
 .AppHead {
     width: 100%;
     box-sizing: border-box;
@@ -16,7 +18,7 @@ a, a:hover {
 
 .HeadContainer {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
 }
 
@@ -72,6 +74,25 @@ a, a:hover {
     font-size: 18px;
     color: var(--color-text-icon);
 }
+
+.WildPathLogo{
+    display: flex;
+    align-items: center;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1;
+}
+
+.WildPathLogo img {
+    display: block;
+    margin-right: 8px;
+}
+
+.primary-green{
+    color: var(--color-primary);
+}
+
 
 /*Inhalt*/
 .AppContent {
