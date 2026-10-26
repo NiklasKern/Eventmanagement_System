@@ -4,7 +4,6 @@ import at.fhv.eventmangement.domain.entities.Event;
 import at.fhv.eventmangement.domain.entities.EventStatus;
 import at.fhv.eventmangement.services.EventService;
 import org.jspecify.annotations.NonNull;
-import lombok.NonNull;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
