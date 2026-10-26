@@ -2,7 +2,7 @@ package at.fhv.eventmangement.domain.dto;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 
@@ -11,25 +11,26 @@ import java.time.LocalDateTime;
 @Getter
 public class EventForm {
 
-    @NotBlank
-    String name;
+    @NotBlank(message = "please fill mandatory fields")
+    private String name;
 
-    String description;
+    private String description;
 
-    @NotEmpty
-    String location;
+    @NotBlank(message = "please fill mandatory fields")
+    private String location;
 
+    @NotNull(message = "please fill mandatory fields")
     @Future(message = "Date has to be in the future")
-    LocalDateTime dateTime;
+    private LocalDateTime dateTime;
 
-    @Positive
-    Float price;
+    @Positive(message = "must be greater than 0")
+    private Float price;
 
-    @Positive
-    Integer capacity;
+    @Positive(message = "must be greater than 0")
+    private Integer capacity;
 
-    @NotEmpty
-    String eventCategory;
+    @NotBlank(message = "please fill mandatory fields")
+    private String eventCategory;
 
     public EventForm setName(String name) {
         this.name = name;
@@ -58,6 +59,11 @@ public class EventForm {
 
     public EventForm setEventCategory(String eventCategory) {
         this.eventCategory = eventCategory;
+        return this;
+    }
+
+    public EventForm setLocation(String location) {
+        this.location = location;
         return this;
     }
 }

@@ -22,7 +22,7 @@ public class EventmanagementApplicationRunner implements ApplicationRunner {
     }
 
     @Override
-    public void run(@NonNull ApplicationArguments args) throws Exception {
+    public void run(@NonNull ApplicationArguments args){
 //        eventService.addEvent(new Event(
 //                null,
 //                "Event 1",
@@ -39,7 +39,8 @@ public class EventmanagementApplicationRunner implements ApplicationRunner {
 
         eventService.addEvent(new EventForm()
                 .setName("Event1")
-                .setDateTime(LocalDateTime.now())
+                .setLocation("Dornbirn, Vorarlberg")
+                .setDateTime(LocalDateTime.now().plusMonths(1))
                 .setPrice(150f)
                 .setCapacity(50)
                 .setEventCategory("Hiking"));

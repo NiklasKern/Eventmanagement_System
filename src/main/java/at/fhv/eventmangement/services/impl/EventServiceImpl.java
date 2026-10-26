@@ -3,12 +3,15 @@ package at.fhv.eventmangement.services.impl;
 import at.fhv.eventmangement.domain.dto.EventForm;
 import at.fhv.eventmangement.domain.entities.Event;
 import at.fhv.eventmangement.domain.entities.EventStatus;
+import at.fhv.eventmangement.exceptions.ValidationException;
 import at.fhv.eventmangement.repositories.EventRepository;
 import at.fhv.eventmangement.services.EventService;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -29,35 +32,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public Event addEvent(EventForm form) {
 
-        //Throw error if name is not set
-        if(form.getName() == null || form.getName().isBlank())
-        {
-            throw new IllegalArgumentException("Event name cannot be empty or null");
-        }
-
-        //Throw error if dateTime is not set
-        if(form.getDateTime()==null)
-        {
-            throw new IllegalArgumentException("Event date cannot be empty or null");
-        }
-
-        //Throw error if price is not set
-        if(form.getPrice() == null || form.getPrice() <= 0)
-        {
-            throw new IllegalArgumentException("Price cannot be empty or <= 0");
-        }
-
-        //Throw error if capacity is not set
-        if(form.getCapacity() == null || form.getCapacity() <= 0)
-        {
-            throw new IllegalArgumentException("Capacity cannot be empty or <= 0");
-        }
-
-        //Throw error if event category is not set
-        if(form.getEventCategory() == null || form.getEventCategory().isEmpty())
-        {
-            throw new IllegalArgumentException("Event category cannot be empty or null");
-        }
+        validate(form);
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -75,5 +50,31 @@ public class EventServiceImpl implements EventService {
                 now,
                 now
         ));
+    }
+
+    private void validate(EventForm form) {
+        Map<String, String> errors = new LinkedHashMap<>();
+
+        if (isBlank(form.getName()))
+            errors.put("name", "fill mandatory fields");
+        if (isBlank(form.getLocation()))
+            errors.put("location", "fill mandatory fields");
+        if (form.getDateTime() == null)
+            errors.put("dateTime", "fill mandatory fields");
+        else if (!form.getDateTime().isAfter(LocalDateTime.now()))
+            errors.put("dateTime", "Date has to be in the future");
+        if (form.getPrice() == null || form.getPrice() <= 0)
+            errors.put("price", "must be greater than 0");
+        if (form.getCapacity() == null || form.getCapacity() <= 0)
+            errors.put("capacity", "must be greater than 0");
+        if (isBlank(form.getEventCategory()))
+            errors.put("eventCategory", "fill mandatory fields");
+
+        if (!errors.isEmpty())
+            throw new ValidationException(errors);
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
     }
 }

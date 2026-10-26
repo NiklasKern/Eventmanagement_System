@@ -3,6 +3,7 @@ package at.fhv.eventmangement.controllers.template;
 import at.fhv.eventmangement.domain.dto.EventDto;
 import at.fhv.eventmangement.domain.dto.EventForm;
 import at.fhv.eventmangement.domain.entities.Event;
+import at.fhv.eventmangement.exceptions.ValidationException;
 import at.fhv.eventmangement.mappers.EventMapper;
 import at.fhv.eventmangement.services.EventService;
 import jakarta.validation.Valid;
@@ -43,8 +44,14 @@ public class EventController {
         if(bindingResult.hasErrors()) {
             return "CreateEvent";
         }
+        try {
+            eventService.addEvent(form);
+        } catch (ValidationException ex) {
+            ex.getFieldErrors().forEach((field, msg) ->
+                    bindingResult.rejectValue(field, "invalid", msg));
+            return "CreateEvent";
+        }
 
-        eventService.addEvent(form);
         return "redirect:/events";
     }
 
