@@ -1,0 +1,142 @@
+body {
+    margin: 0;
+    background: var(--color-bg);
+}
+a, a:hover {
+    text-decoration: none;
+}
+
+.AppHead {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 4%;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.HeadContainer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.AccountButton {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    box-shadow: 0 1px 3px var(--color-shadow);
+    cursor: pointer;
+    text-align: left;
+}
+
+.AccountButton:hover {
+    background: var(--color-hover);
+}
+
+.Avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--color-avatar-bg);
+    color: var(--color-text-avatar);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.AccountText {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.AccountLabel {
+    font-size: 10px;
+    color: var(--color-text-muted);
+}
+
+.AccountName {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.Chevron {
+    margin-left: 12px;
+    font-size: 18px;
+    color: var(--color-text-icon);
+}
+
+/*Inhalt*/
+.AppContent {
+    padding: 40px 4% 48px;
+}
+
+.ContentContainer {
+    width: 100%;
+}
+
+.PageTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.Eyebrow {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+}
+
+.PageTitleText h1 {
+    margin: 0 0 8px;
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+.PageTitleText p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--color-text-muted);
+}
+
+.CreateEventButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px var(--color-primary-shadow);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.CreateEventButton:hover {
+    background: var(--color-primary-hover);
+    color: var(--color-on-primary-hover);
+}
+
+.Plus {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1;
+}
