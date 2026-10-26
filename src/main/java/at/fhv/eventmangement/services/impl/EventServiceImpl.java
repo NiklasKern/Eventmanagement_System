@@ -52,21 +52,28 @@ public class EventServiceImpl implements EventService {
         ));
     }
 
+    // Checks rules for new event
+    // First collects all errors then throws them at the end.
+    // throws ValidationException if at least one field is invalid
     private void validate(EventForm form) {
         Map<String, String> errors = new LinkedHashMap<>();
 
+        // Mandatory
         if (isBlank(form.getName()))
             errors.put("name", "fill mandatory fields");
         if (isBlank(form.getLocation()))
             errors.put("location", "fill mandatory fields");
+        // Mandatory and in the future
         if (form.getDateTime() == null)
             errors.put("dateTime", "fill mandatory fields");
         else if (!form.getDateTime().isAfter(LocalDateTime.now()))
             errors.put("dateTime", "Date has to be in the future");
+        // Mandatory and > 0
         if (form.getPrice() == null || form.getPrice() <= 0)
             errors.put("price", "must be greater than 0");
         if (form.getCapacity() == null || form.getCapacity() <= 0)
             errors.put("capacity", "must be greater than 0");
+
         if (isBlank(form.getEventCategory()))
             errors.put("eventCategory", "fill mandatory fields");
 
@@ -74,6 +81,7 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException(errors);
     }
 
+    // True if string is null, empty or whitespace
     private static boolean isBlank(String s) {
         return s == null || s.isBlank();
     }

@@ -19,8 +19,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// Turns exceptions from REST controllers into ProblemDetail responses.
-// Thymeleaf controllers are excluded – they show errors in the form instead.
+// Central error handler for all REST controllers
+// Turns exceptions from REST controllers into ProblemDetail responses
+// Thymeleaf controllers are excluded – they show errors in the HTML form instead.
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
 
@@ -34,11 +35,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
         return pd;
     }
 
-    // 400 - Valid on a RequestBody failed
+    // 400 - Valid on a RequestBody failed (@NotBlank, @Positive, ...)
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex, HttpHeaders headers,
             HttpStatusCode status, WebRequest request) {
+        // Converts Springs field errors into a map: field -> message
+        // Keeps only the first error when several errors are thrown
         Map<String, String> errors = ex.getBindingResult().getFieldErrors().stream()
                 .collect(Collectors.toMap(
                         e -> e.getField(),
@@ -49,7 +52,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
         return ResponseEntity.badRequest().body(pd);
     }
 
-    // 500 - anything else: see log details
+    // 500 - anything else: see log details for details
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnexpected(Exception ex) {
         log.error("Unexpected error", ex);

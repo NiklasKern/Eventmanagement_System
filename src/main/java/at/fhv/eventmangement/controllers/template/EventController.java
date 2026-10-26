@@ -40,13 +40,17 @@ public class EventController {
         return MY_EVENTS;
     }
 
+    // Saves new event from Create Event form
+    // On error shows form again with invalid fields marked
+    // On success redirect to event list
     @PostMapping("/event/manage/create")
     public String createEvent(@Valid @ModelAttribute("event") EventForm form, BindingResult bindingResult) {
 
-        //Return create event form with error
+        // Check for annotations on EventForm(@NotBlank, @Postive, ...)
         if(bindingResult.hasErrors()) {
             return ADD_EVENT;
         }
+        // Check if form is valid ( Mandatory, Date in the future, ...)
         try {
             eventService.addEvent(form);
         } catch (ValidationException ex) {
