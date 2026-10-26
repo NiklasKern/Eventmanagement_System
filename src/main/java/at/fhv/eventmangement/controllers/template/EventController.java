@@ -49,7 +49,7 @@ public class EventController {
     }
 
 
-    @PostMapping(path = "/event/manage/create")
+    @GetMapping(path = "/event/manage/create")
     public String createEvent(Model model) {
         model.addAttribute("event",new EventForm());
         return "CreateEvent";
