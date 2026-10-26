@@ -16,6 +16,9 @@ public class EventForm {
 
     String description;
 
+    @NotEmpty
+    String location;
+
     @Future(message = "Date has to be in the future")
     LocalDateTime dateTime;
 

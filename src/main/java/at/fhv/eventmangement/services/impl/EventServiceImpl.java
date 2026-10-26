@@ -27,28 +27,51 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public Event addEvent(Event event) {
+    public Event addEvent(EventForm form) {
 
+        //Throw error if name is not set
+        if(form.getName() == null || form.getName().isBlank())
+        {
+            throw new IllegalArgumentException("Event name cannot be empty or null");
+        }
 
-//        Implement validation logic
+        //Throw error if dateTime is not set
+        if(form.getDateTime()==null)
+        {
+            throw new IllegalArgumentException("Event date cannot be empty or null");
+        }
 
-//        if(event.getName() == null || event.getName().isBlank())
-//        {
-//            throw new IllegalArgumentException("Event name cannot be empty or null");
-//        }
+        //Throw error if price is not set
+        if(form.getPrice() == null || form.getPrice() <= 0)
+        {
+            throw new IllegalArgumentException("Price cannot be empty or <= 0");
+        }
 
+        //Throw error if capacity is not set
+        if(form.getCapacity() == null || form.getCapacity() <= 0)
+        {
+            throw new IllegalArgumentException("Capacity cannot be empty or <= 0");
+        }
+
+        //Throw error if event category is not set
+        if(form.getEventCategory() == null || form.getEventCategory().isEmpty())
+        {
+            throw new IllegalArgumentException("Event category cannot be empty or null");
+        }
 
         LocalDateTime now = LocalDateTime.now();
 
+        //Create new event to prevent unexpected input
         return eventRepository.save(new Event(
                 null,
-                event.getName(),
-                event.getDescription(),
-                event.getDateTime(),
-                event.getPrice(),
-                event.getCapacity(),
-                event.getEventStatus(),
-                event.getEventCategory(),
+                form.getName(),
+                Optional.ofNullable(form.getDescription()).orElse(""),
+                form.getLocation(),
+                form.getDateTime(),
+                form.getPrice(),
+                form.getCapacity(),
+                EventStatus.OPEN,
+                form.getEventCategory(),
                 now,
                 now
         ));
