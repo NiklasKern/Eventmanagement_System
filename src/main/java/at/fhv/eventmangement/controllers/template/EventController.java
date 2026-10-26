@@ -41,7 +41,7 @@ public class EventController {
     }
 
     @PostMapping("/event/manage/create")
-    public String createAuthor(@Valid @ModelAttribute("event") EventForm form, BindingResult bindingResult) {
+    public String createEvent(@Valid @ModelAttribute("event") EventForm form, BindingResult bindingResult) {
 
         //Return create event form with error
         if(bindingResult.hasErrors()) {
@@ -52,7 +52,7 @@ public class EventController {
         } catch (ValidationException ex) {
             ex.getFieldErrors().forEach((field, msg) ->
                     bindingResult.rejectValue(field, "invalid", msg));
-            return "CreateEvent";
+            return ADD_EVENT;
         }
 
         return "redirect:/events";
