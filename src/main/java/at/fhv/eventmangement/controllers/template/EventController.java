@@ -19,6 +19,9 @@ import java.util.List;
 @Controller
 public class EventController {
 
+    private static final String ADD_EVENT = "add_event";
+    private static final String MY_EVENTS = "my_events";
+
     private final EventMapper eventMapper;
     private final EventService eventService;
 
@@ -34,15 +37,15 @@ public class EventController {
         List<EventDto> events = eventService
                 .getEvents().stream().map(eventMapper::toDto).toList();
         model.addAttribute("events", events);
-        return "Events";
+        return MY_EVENTS;
     }
 
-    @PostMapping("/manage/event/create")
+    @PostMapping("/event/manage/create")
     public String createAuthor(@Valid @ModelAttribute("event") EventForm form, BindingResult bindingResult) {
 
         //Return create event form with error
         if(bindingResult.hasErrors()) {
-            return "CreateEvent";
+            return ADD_EVENT;
         }
         try {
             eventService.addEvent(form);
@@ -59,7 +62,7 @@ public class EventController {
     @GetMapping(path = "/event/manage/create")
     public String createEvent(Model model) {
         model.addAttribute("event",new EventForm());
-        return "CreateEvent";
+        return ADD_EVENT;
     }
 }
 
