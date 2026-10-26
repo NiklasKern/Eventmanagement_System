@@ -41,6 +41,7 @@ public class EventServiceImpl implements EventService {
                 null,
                 event.getName(),
                 event.getDescription(),
+                event.getLocation(),
                 event.getDateTime(),
                 event.getPrice(),
                 event.getCapacity(),
