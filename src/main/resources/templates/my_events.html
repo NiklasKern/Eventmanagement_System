@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <link rel="stylesheet" href="colors.css">
-        <link rel="stylesheet" href="my_events.css">
+        <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet" />
+        <link th:href="@{/styles/cssandjs/my_events.css}" rel="stylesheet" />
         <title>Create Event</title>
     </head>
     <body>
     <header class="AppHead">
         <div class="HeadContainer">
             <div class="WildPathLogo">
-                <img src="grafics/leaf-icon.svg" alt="leave">
+                <img th:src="@{/images/leaf-icon.svg}" alt="leaf">
                 <span>WILD</span><span class="primary-green">PATH</span>
             </div>
             <button class="AccountButton" type="button">
