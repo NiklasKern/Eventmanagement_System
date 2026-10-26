@@ -1,4 +1,111 @@
-<Doctype !html>
-<html>
+<!DOCTYPE html>
+<html lang="en"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="https://www.thymeleaf.org">
+<head>
+    <link rel="stylesheet" href="colors.css">
+    <link rel="stylesheet" href="add_event.css">
+    <link rel="stylesheet" href="my_events.css">
+    <title>Create an Event</title>
+</head>
 
+<body>
+    <main class="event-form">
+        <h1>Create an Event</h1>
+        <p class="subtitle">Fill in the details to create your event.</p>
+
+        <form th:action="@{/event/manage/create}"
+              method="post">
+            <div class="form-group">
+                <label for="eventName">Event name *</label>
+                <input
+                        type="text"
+                        id="eventName"
+                        name="name"
+                        placeholder="e.g. Summer Party"
+                        required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="organizer">Event organizer *</label>
+                <input
+                        type="text"
+                        id="organizer"
+                        name="organizer"
+                        placeholder="Your name"
+                        required
+                >
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="eventDate">Date *</label>
+                    <input
+                            type="date"
+                            id="eventDate"
+                            name="date"
+                            required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="eventTime">Start time *</label>
+                    <input
+                            type="time"
+                            id="eventTime"
+                            name="time"
+                            required
+                    >
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Location *</label>
+                <input
+                        type="text"
+                        id="location"
+                        name="location"
+                        placeholder="e.g. FH Vorarlberg, Hochschulstrasse 1, 6850 Dornbirn, Austria"
+                        required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description *</label>
+                <textarea
+                        id="description"
+                        name="description"
+                        placeholder="Describe your event..."
+                ></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="price">Price</label>
+                <input
+                        type="number"
+                        id="price"
+                        name="pricePerCustomer"
+                        min="0"
+                        placeholder="e.g. 150 &#8364"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="participants">Maximum participants</label>
+                <input
+                        type="number"
+                        id="participants"
+                        name="maxParticipants"
+                        min="1"
+                        placeholder="e.g. 50"
+                >
+            </div>
+
+            <button type="submit">Create Event</button>
+
+            <p id="message" role="status" aria-live="polite"></p>
+        </form>
+    </main>
+</body>
 </html>
