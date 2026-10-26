@@ -1,4 +1,4 @@
-package at.fhv.eventmangement.controllers;
+package at.fhv.eventmangement.controllers.rest;
 
 import at.fhv.eventmangement.domain.dto.EventDto;
 import at.fhv.eventmangement.domain.entities.Event;
