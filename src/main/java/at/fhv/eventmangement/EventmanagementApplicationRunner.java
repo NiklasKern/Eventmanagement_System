@@ -1,8 +1,8 @@
 package at.fhv.eventmangement;
 
-import at.fhv.eventmangement.domain.entities.Event;
-import at.fhv.eventmangement.domain.entities.EventStatus;
+import at.fhv.eventmangement.domain.dto.EventForm;
 import at.fhv.eventmangement.services.EventService;
+import org.jspecify.annotations.NonNull;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -19,18 +19,26 @@ public class EventmanagementApplicationRunner implements ApplicationRunner {
     }
 
     @Override
-    public void run(ApplicationArguments args) throws Exception {
-        eventService.addEvent(new Event(
-                null,
-                "Event 1",
-                "This is the first evet ever!",
-                LocalDateTime.of(2027,1,10,17,0),
-                100f,
-                20,
-                EventStatus.OPEN,
-                "Hiking",
-                null,
-                null
-        ));
+    public void run(@NonNull ApplicationArguments args) throws Exception {
+//        eventService.addEvent(new Event(
+//                null,
+//                "Event 1",
+//                "This is the first event ever!",
+//                "Dornbirn, Vorarlberg",
+//                LocalDateTime.of(2027,1,10,17,0),
+//                100f,
+//                20,
+//                EventStatus.OPEN,
+//                "Hiking",
+//                null,
+//                null
+//        ));
+
+        eventService.addEvent(new EventForm()
+                .setName("Event1")
+                .setDateTime(LocalDateTime.now())
+                .setPrice(150f)
+                .setCapacity(50)
+                .setEventCategory("Hiking"));
     }
 }

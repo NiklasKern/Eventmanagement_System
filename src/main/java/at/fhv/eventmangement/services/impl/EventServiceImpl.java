@@ -1,12 +1,15 @@
 package at.fhv.eventmangement.services.impl;
 
+import at.fhv.eventmangement.domain.dto.EventForm;
 import at.fhv.eventmangement.domain.entities.Event;
+import at.fhv.eventmangement.domain.entities.EventStatus;
 import at.fhv.eventmangement.repositories.EventRepository;
 import at.fhv.eventmangement.services.EventService;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class EventServiceImpl implements EventService {

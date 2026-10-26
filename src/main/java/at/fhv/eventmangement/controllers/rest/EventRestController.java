@@ -12,26 +12,17 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-//@RequestMapping(path = "/event")
-public class EventController {
+public class EventRestController {
 
     private final EventService eventService;
     private final EventMapper eventMapper;
 
-    public EventController(EventService eventService, EventMapper eventMapper) {
+    public EventRestController(EventService eventService, EventMapper eventMapper) {
         this.eventService = eventService;
         this.eventMapper = eventMapper;
     }
 
-    @PostMapping(path = "/add-event")
-    public EventDto addEvent(@RequestBody EventDto eventDto)
-    {
-        Event newEvent = eventMapper.fromDto(eventDto);
-        eventService.addEvent(newEvent);
-        return eventMapper.toDto(newEvent);
-    }
-
-    @GetMapping(path = "/events")
+    @GetMapping(path = "/getEvents")
     public List<EventDto> getEvents()
     {
         return eventService.getEvents().stream().map(eventMapper::toDto).toList();

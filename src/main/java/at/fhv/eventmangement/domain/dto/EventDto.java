@@ -9,6 +9,7 @@ public record EventDto(
         UUID id,
         String name,
         String description,
+        String location,
         LocalDateTime dateTime,
         Float price,
         Integer capacity,
