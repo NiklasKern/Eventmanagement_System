@@ -19,6 +19,7 @@ public class EventOrganizer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
     @Column(name = "name", nullable = false, unique = true)
