@@ -4,9 +4,12 @@ import at.fhv.eventmangement.domain.dto.EventDto;
 import at.fhv.eventmangement.domain.dto.EventForm;
 import at.fhv.eventmangement.domain.entities.Event;
 import at.fhv.eventmangement.exceptions.ValidationException;
+import at.fhv.eventmangement.mappers.EventCategoryMapper;
 import at.fhv.eventmangement.mappers.EventMapper;
+import at.fhv.eventmangement.services.EventCategoryService;
 import at.fhv.eventmangement.services.EventService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
 
+@Slf4j
 @Controller
 public class EventController {
 
@@ -24,11 +28,15 @@ public class EventController {
 
     private final EventMapper eventMapper;
     private final EventService eventService;
+    private final EventCategoryMapper eventCategoryMapper;
+    private final EventCategoryService eventCategoryService;
 
     //Dependency injection
-    public EventController(EventMapper eventMapper, EventService eventService) {
+    public EventController(EventMapper eventMapper, EventService eventService, EventCategoryMapper eventCategoryMapper, EventCategoryService eventCategoryService) {
         this.eventMapper = eventMapper;
         this.eventService = eventService;
+        this.eventCategoryMapper = eventCategoryMapper;
+        this.eventCategoryService = eventCategoryService;
     }
 
     //Show
@@ -48,6 +56,7 @@ public class EventController {
 
         // Check for annotations on EventForm(@NotBlank, @Postive, ...)
         if(bindingResult.hasErrors()) {
+            log.info(bindingResult.getFieldErrors().toString());
             return ADD_EVENT;
         }
         // Check if form is valid ( Mandatory, Date in the future, ...)
@@ -66,6 +75,9 @@ public class EventController {
     @GetMapping(path = "/event/manage/create")
     public String createEvent(Model model) {
         model.addAttribute("event",new EventForm());
+        model.addAttribute("categories",eventCategoryService
+                .getAllEventCategories()
+                .stream().map(eventCategoryMapper::toDto).toList());
         return ADD_EVENT;
     }
 }

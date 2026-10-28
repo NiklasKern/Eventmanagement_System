@@ -1,6 +1,9 @@
 package at.fhv.eventmangement;
 
 import at.fhv.eventmangement.domain.dto.EventForm;
+import at.fhv.eventmangement.repositories.EventCategoryRepository;
+import at.fhv.eventmangement.repositories.EventRepository;
+import at.fhv.eventmangement.services.EventCategoryService;
 import at.fhv.eventmangement.services.EventService;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,9 +19,11 @@ import java.time.LocalDateTime;
 public class EventmanagementApplicationRunner implements ApplicationRunner {
 
     private final EventService eventService;
+    private final EventCategoryService eventCategoryService;
 
-    public EventmanagementApplicationRunner(EventService eventService) {
+    public EventmanagementApplicationRunner(EventService eventService, EventCategoryService eventCategoryService) {
         this.eventService = eventService;
+        this.eventCategoryService = eventCategoryService;
     }
 
     @Override
@@ -37,12 +42,16 @@ public class EventmanagementApplicationRunner implements ApplicationRunner {
 //                null
 //        ));
 
-        eventService.addEvent(new EventForm()
-                .setName("Event1")
-                .setLocation("Dornbirn, Vorarlberg")
-                .setDateTime(LocalDateTime.now().plusMonths(1))
-                .setPrice(150f)
-                .setCapacity(50)
-                .setEventCategory("Hiking"));
+
+        eventCategoryService.addCategory("Hiking");
+
+        eventService.addEvent(EventForm.builder()
+                .name("Event1")
+                .location("Dornbirn, Vorarlberg")
+                .dateTime(LocalDateTime.now().plusMonths(1))
+                .price(150f)
+                .capacity(50)
+                .eventCategoryId(eventCategoryService
+                        .getAllEventCategories().getFirst().getId()).build());
     }
 }

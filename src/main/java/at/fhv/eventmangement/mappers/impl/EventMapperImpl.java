@@ -2,11 +2,19 @@ package at.fhv.eventmangement.mappers.impl;
 
 import at.fhv.eventmangement.domain.dto.EventDto;
 import at.fhv.eventmangement.domain.entities.Event;
+import at.fhv.eventmangement.mappers.EventCategoryMapper;
 import at.fhv.eventmangement.mappers.EventMapper;
 import org.springframework.stereotype.Component;
 
 @Component
 public class EventMapperImpl implements EventMapper {
+
+    private final EventCategoryMapper eventCategoryMapper;
+
+    public EventMapperImpl(EventCategoryMapper eventCategoryMapper) {
+        this.eventCategoryMapper = eventCategoryMapper;
+    }
+
     @Override
     public EventDto toDto(Event event) {
         return new EventDto(
@@ -18,7 +26,8 @@ public class EventMapperImpl implements EventMapper {
                 event.getPrice(),
                 event.getCapacity(),
                 event.getEventStatus(),
-                event.getEventCategory()
+                eventCategoryMapper.toDto(event.getEventCategory()),
+                event.getEvent_organizer()
         );
     }
 
@@ -33,7 +42,8 @@ public class EventMapperImpl implements EventMapper {
                 eventDto.price(),
                 eventDto.capacity(),
                 eventDto.eventStatus(),
-                eventDto.eventCategory(),
+                eventCategoryMapper.fromDto(eventDto.eventCategory()),
+                eventDto.eventOrganizer(),
                 null,
                 null
         );

@@ -14,6 +14,7 @@ public record EventDto(
         Float price,
         Integer capacity,
         EventStatus eventStatus,
-        String eventCategory
+        EventCategoryDto eventCategory,
+        String eventOrganizer
 ) {
 }

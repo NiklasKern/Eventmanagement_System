@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en"
       xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:th="https://www.thymeleaf.org">
+      xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="UTF-8">
     <link th:href="@{/styles/cssandjs/my_events.css}" rel="stylesheet" />
     <link th:href="@{/styles/cssandjs/add_event.css}" rel="stylesheet" />
     <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet" />
@@ -10,102 +11,108 @@
 </head>
 
 <body>
-    <main class="event-form">
-        <h1>Create an Event</h1>
-        <p class="subtitle">Fill in the details to create your event.</p>
+<main class="event-form">
+    <h1>Create an Event</h1>
+    <p class="subtitle">Fill in the details to create your event.</p>
 
-        <form th:action="@{/event/manage/create}"
-              method="post">
-            <div class="form-group">
-                <label for="eventName">Event name *</label>
-                <input
-                        type="text"
-                        id="eventName"
-                        name="name"
-                        placeholder="e.g. Summer Party"
-                        required
-                >
-            </div>
+    <form th:action="@{/event/manage/create}"
+          th:object="${event}"
+          method="post">
 
-            <div class="form-group">
-                <label for="organizer">Event organizer *</label>
-                <input
-                        type="text"
-                        id="organizer"
-                        name="organizer"
-                        placeholder="Your name"
-                        required
-                >
-            </div>
+        <div class="form-group">
+            <label for="eventName">Event name *</label>
+            <input type="text"
+                   id="eventName"
+                   th:field="*{name}"
+                   placeholder="e.g. Summer Party"
+                   required>
+            <span class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+        </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="eventDate">Date *</label>
-                    <input
-                            type="date"
-                            id="eventDate"
-                            name="date"
-                            required
-                    >
-                </div>
+        <div class="form-group">
+            <label for="organizer">Event organizer *</label>
+            <input type="text"
+                   id="organizer"
+                   th:field="*{organizer}"
+                   placeholder="Your name"
+                   required>
+            <span class="error" th:if="${#fields.hasErrors('organizer')}" th:errors="*{organizer}"></span>
+        </div>
 
-                <div class="form-group">
-                    <label for="eventTime">Start time *</label>
-                    <input
-                            type="time"
-                            id="eventTime"
-                            name="time"
-                            required
-                    >
-                </div>
-            </div>
+        <div class="form-group">
+            <label for="category">Category *</label>
+            <select id="category" th:field="*{eventCategoryId}" required>
+                <option value="">-- please select --</option>
+                <option th:each="cat : ${categories}"
+                        th:value="${cat.id()}"
+                        th:text="${cat.categoryName()}">Category</option>
+            </select>
+            <span class="error" th:if="${#fields.hasErrors('eventCategoryId')}" th:errors="*{eventCategoryId}"></span>
+        </div>
 
-            <div class="form-group">
-                <label for="location">Location *</label>
-                <input
-                        type="text"
-                        id="location"
-                        name="location"
-                        placeholder="e.g. FH Vorarlberg, Hochschulstrasse 1, 6850 Dornbirn, Austria"
-                        required
-                >
-            </div>
+        <div class="form-group">
+            <label for="eventDate">Date *</label>
+            <input type="datetime-local"
+                   id="eventDate"
+                   th:field="*{dateTime}"
+                   required>
+            <span class="error" th:if="${#fields.hasErrors('dateTime')}" th:errors="*{dateTime}"></span>
+        </div>
 
-            <div class="form-group">
-                <label for="description">Description *</label>
-                <textarea
-                        id="description"
-                        name="description"
-                        placeholder="Describe your event..."
-                ></textarea>
-            </div>
+        <div class="form-group">
+            <label for="location">Location *</label>
+            <input type="text"
+                   id="location"
+                   th:field="*{location}"
+                   placeholder="e.g. FH Vorarlberg, Hochschulstrasse 1, 6850 Dornbirn, Austria"
+                   required>
+            <span class="error" th:if="${#fields.hasErrors('location')}" th:errors="*{location}"></span>
+        </div>
 
-            <div class="form-group">
-                <label for="price">Price</label>
-                <input
-                        type="number"
-                        id="price"
-                        name="pricePerCustomer"
-                        min="0"
-                        placeholder="e.g. 150 &#8364"
-                >
-            </div>
+        <div class="form-group">
+            <label for="description">Description *</label>
+            <textarea id="description"
+                      th:field="*{description}"
+                      placeholder="Describe your event..."></textarea>
+            <span class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></span>
+        </div>
 
-            <div class="form-group">
-                <label for="participants">Maximum participants</label>
-                <input
-                        type="number"
-                        id="participants"
-                        name="maxParticipants"
-                        min="1"
-                        placeholder="e.g. 50"
-                >
-            </div>
+        <div class="form-group">
+            <label for="price">Price</label>
+            <input type="number"
+                   id="price"
+                   th:field="*{price}"
+                   min="0"
+                   step="0.01"
+                   placeholder="e.g. 150 &#8364;">
+            <span class="error" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></span>
+        </div>
 
-            <button type="submit">Create Event</button>
+        <div class="form-group">
+            <label for="participants">Maximum participants *</label>
+            <input type="number"
+                   id="participants"
+                   th:field="*{capacity}"
+                   min="1"
+                   placeholder="e.g. 50"
+                   required>
+            <span class="error" th:if="${#fields.hasErrors('capacity')}" th:errors="*{capacity}"></span>
+        </div>
 
-            <p id="message" role="status" aria-live="polite"></p>
-        </form>
-    </main>
+<!--        <div class="form-group">-->
+<!--            <label for="participants">Maximum participants</label>-->
+<!--            <input type="number"-->
+<!--                   id="participants"-->
+<!--                   th:field="*{maxParticipants}"-->
+<!--                   min="1"-->
+<!--                   placeholder="e.g. 50">-->
+<!--            <span class="error" th:if="${#fields.hasErrors('maxParticipants')}" th:errors="*{maxParticipants}"></span>-->
+<!--        </div>-->
+
+        <button type="submit">Create Event</button>
+
+        <p id="message" role="status" aria-live="polite"></p>
+    </form>
+</main>
 </body>
 </html>

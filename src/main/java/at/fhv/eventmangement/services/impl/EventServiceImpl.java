@@ -4,9 +4,11 @@ import at.fhv.eventmangement.domain.dto.EventForm;
 import at.fhv.eventmangement.domain.entities.Event;
 import at.fhv.eventmangement.domain.entities.EventStatus;
 import at.fhv.eventmangement.exceptions.ValidationException;
+import at.fhv.eventmangement.repositories.EventCategoryRepository;
 import at.fhv.eventmangement.repositories.EventRepository;
 import at.fhv.eventmangement.services.EventService;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -14,13 +16,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@Component
+@Service
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
+    private final EventCategoryRepository  eventCategoryRepository;
 
-    public EventServiceImpl(EventRepository eventRepository) {
+    public EventServiceImpl(EventRepository eventRepository, EventCategoryRepository eventCategoryRepository) {
         this.eventRepository = eventRepository;
+        this.eventCategoryRepository = eventCategoryRepository;
     }
 
 
@@ -46,7 +50,9 @@ public class EventServiceImpl implements EventService {
                 form.getPrice(),
                 form.getCapacity(),
                 EventStatus.OPEN,
-                form.getEventCategory(),
+                //Already validated
+                eventCategoryRepository.findCategoryById(form.getEventCategoryId()).orElseThrow(),
+                form.getOrganizer(),
                 now,
                 now
         ));
@@ -74,8 +80,10 @@ public class EventServiceImpl implements EventService {
         if (form.getCapacity() == null || form.getCapacity() <= 0)
             errors.put("capacity", "must be greater than 0");
 
-        if (isBlank(form.getEventCategory()))
-            errors.put("eventCategory", "fill mandatory fields");
+        if (form.getEventCategoryId() == null)
+            errors.put("eventCategoryId", "fill mandatory fields");
+        else if (!eventCategoryRepository.existsById(form.getEventCategoryId()))
+            errors.put("eventCategoryId", "unknown category");
 
         if (!errors.isEmpty())
             throw new ValidationException(errors);

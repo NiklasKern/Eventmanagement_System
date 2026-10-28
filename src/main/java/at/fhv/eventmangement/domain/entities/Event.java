@@ -43,8 +43,12 @@ public class Event {
     @Column(name = "event_status", nullable = false)
     private EventStatus eventStatus;
 
-    @Column(name = "event_category", nullable = false)
-    private String eventCategory;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "category_id")
+    private EventCategory eventCategory;
+
+    @Column(name = "event_organizer")
+    private String event_organizer;
 
     @Column(name = "created", nullable = false)
     private LocalDateTime created;
