@@ -60,12 +60,12 @@ public class EventServiceImpl implements EventService {
 
         // Mandatory
         if (isBlank(form.getName()))
-            errors.put("name", "fill mandatory fields");
+            errors.put("name", "please fill mandatory fields");
         if (isBlank(form.getLocation()))
-            errors.put("location", "fill mandatory fields");
+            errors.put("location", "please fill mandatory fields");
         // Mandatory and in the future
         if (form.getDateTime() == null)
-            errors.put("dateTime", "fill mandatory fields");
+            errors.put("dateTime", "please fill mandatory fields");
         else if (!form.getDateTime().isAfter(LocalDateTime.now()))
             errors.put("dateTime", "Date has to be in the future");
         // Mandatory and > 0
@@ -75,7 +75,7 @@ public class EventServiceImpl implements EventService {
             errors.put("capacity", "must be greater than 0");
 
         if (isBlank(form.getEventCategory()))
-            errors.put("eventCategory", "fill mandatory fields");
+            errors.put("eventCategory", "please fill mandatory fields");
 
         if (!errors.isEmpty())
             throw new ValidationException(errors);
