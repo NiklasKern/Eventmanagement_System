@@ -46,6 +46,11 @@ public class EventServiceImpl implements EventService {
                     Map.of("maxParticipants", "must not be less than minimum participants"));
         }
 
+        if(eventRepository.existsByName(form.getName())) {
+            throw new ValidationException(
+                    Map.of("name", "event name already exists"));
+        }
+
         EventCategory category = eventCategoryRepository
                 .findById(form.getEventCategoryId())
                 .orElseThrow(() -> new ValidationException(
