@@ -2,8 +2,6 @@ package at.fhv.eventmangement.controllers.template;
 
 import at.fhv.eventmangement.domain.dto.EventDto;
 import at.fhv.eventmangement.domain.dto.EventForm;
-import at.fhv.eventmangement.domain.entities.Event;
-import at.fhv.eventmangement.exceptions.ValidationException;
 import at.fhv.eventmangement.mappers.EventMapper;
 import at.fhv.eventmangement.services.EventService;
 import jakarta.validation.Valid;
@@ -31,6 +29,12 @@ public class EventController {
         this.eventService = eventService;
     }
 
+    // Categories for the dropdown in the add_event.html
+    @ModelAttribute("categories")
+    public List<String> categories() {
+        return eventService.getEventCategories();
+    }
+
     //Show
     @GetMapping(path = "/events")
     public String getAllEventsTemplate(Model model) {
@@ -45,27 +49,18 @@ public class EventController {
     // On success redirect to event list
     @PostMapping("/event/manage/create")
     public String createEvent(@Valid @ModelAttribute("event") EventForm form, BindingResult bindingResult) {
-
         // Check for annotations on EventForm(@NotBlank, @Postive, ...)
-        if(bindingResult.hasErrors()) {
+        if (bindingResult.hasErrors()) {
             return ADD_EVENT;
         }
-        // Check if form is valid ( Mandatory, Date in the future, ...)
-        try {
-            eventService.addEvent(form);
-        } catch (ValidationException ex) {
-            ex.getFieldErrors().forEach((field, msg) ->
-                    bindingResult.rejectValue(field, "invalid", msg));
-            return ADD_EVENT;
-        }
-
+        eventService.addEvent(form);
         return "redirect:/events";
     }
 
 
     @GetMapping(path = "/event/manage/create")
     public String createEvent(Model model) {
-        model.addAttribute("event",new EventForm());
+        model.addAttribute("event", new EventForm());
         return ADD_EVENT;
     }
 }

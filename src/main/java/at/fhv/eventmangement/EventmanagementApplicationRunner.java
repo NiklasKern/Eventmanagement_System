@@ -3,13 +3,14 @@ package at.fhv.eventmangement;
 import at.fhv.eventmangement.domain.dto.EventForm;
 import at.fhv.eventmangement.services.EventService;
 import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Component
 @Profile("local")
@@ -39,8 +40,10 @@ public class EventmanagementApplicationRunner implements ApplicationRunner {
 
         eventService.addEvent(new EventForm()
                 .setName("Event1")
+                .setOrganizer("FH Vorarlberg")
                 .setLocation("Dornbirn, Vorarlberg")
-                .setDateTime(LocalDateTime.now().plusMonths(1))
+                .setDate(LocalDate.now().plusMonths(1))
+                .setTime(LocalTime.of(18, 0))
                 .setPrice(150f)
                 .setCapacity(50)
                 .setEventCategory("Hiking"));

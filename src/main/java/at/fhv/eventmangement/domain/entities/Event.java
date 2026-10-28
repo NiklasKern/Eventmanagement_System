@@ -27,6 +27,9 @@ public class Event {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "organizer", nullable = false)
+    private String organizer;
+
     @Column(name = "location", nullable = false)
     private String location;
 
