@@ -1,7 +1,6 @@
 package at.fhv.eventmangement.services.impl;
 
 import at.fhv.eventmangement.EventmanagementApplicationRunner;
-import at.fhv.eventmangement.domain.entities.EventOrganizer;
 import at.fhv.eventmangement.domain.form.EventForm;
 import at.fhv.eventmangement.domain.entities.Event;
 import at.fhv.eventmangement.domain.entities.EventCategory;
@@ -40,7 +39,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public Event addEvent(EventForm form) {
+    public void addEvent(EventForm form) {
 
         if (form.getMinParticipants() > form.getMaxParticipants()) {
             throw new ValidationException(
@@ -55,7 +54,7 @@ public class EventServiceImpl implements EventService {
         LocalDateTime now = LocalDateTime.now();
 
         //Create new event to prevent unexpected input
-        return eventRepository.save(new Event(
+        eventRepository.save(new Event(
                 null,
                 form.getName(),
                 Optional.ofNullable(form.getDescription()).orElse(""),

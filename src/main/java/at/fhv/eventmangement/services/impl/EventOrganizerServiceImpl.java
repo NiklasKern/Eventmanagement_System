@@ -21,7 +21,7 @@ public class EventOrganizerServiceImpl implements EventOrganizerService {
 
 
     @Override
-    public EventOrganizer addOrganizer(EventOrganizerForm form) {
+    public void addOrganizer(EventOrganizerForm form) {
 
         if(eventOrganizerRepository.existsByOrganizerNameIgnoreCase(form.getOrganizerName()))
         {
@@ -30,7 +30,7 @@ public class EventOrganizerServiceImpl implements EventOrganizerService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        return eventOrganizerRepository.save(new EventOrganizer(
+        eventOrganizerRepository.save(new EventOrganizer(
                 null,
                 form.getOrganizerName().trim(),
                 form.getAddress(),

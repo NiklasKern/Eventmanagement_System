@@ -26,7 +26,7 @@ public class EventCategoryServiceImpl implements EventCategoryService {
     }
 
     @Override
-    public EventCategory addCategory(EventCategoryForm form) {
+    public void addCategory(EventCategoryForm form) {
 
         String name = form.getCategoryName().trim();
 
@@ -37,7 +37,7 @@ public class EventCategoryServiceImpl implements EventCategoryService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        return eventCategoryRepository.save(new EventCategory(
+        eventCategoryRepository.save(new EventCategory(
                 null,
                 form.getCategoryName().trim(),
                 now,

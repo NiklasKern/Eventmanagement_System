@@ -9,6 +9,6 @@ import org.mapstruct.Mapping;
 public interface EventOrganizerMapper {
     @Mapping(target = "updated", ignore = true)
     @Mapping(target = "created", ignore = true)
-    public EventOrganizer fromDto(EventOrganizerDto eventOrganizerDto);
-    public EventOrganizerDto toDto(EventOrganizer eventOrganizer);
+    EventOrganizer fromDto(EventOrganizerDto eventOrganizerDto);
+    EventOrganizerDto toDto(EventOrganizer eventOrganizer);
 }

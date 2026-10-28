@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface EventCategoryService {
     List<EventCategory> getAllEventCategories();
-    EventCategory addCategory(EventCategoryForm form);
+    void addCategory(EventCategoryForm form);
 }

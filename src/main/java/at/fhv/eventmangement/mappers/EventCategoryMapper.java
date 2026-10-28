@@ -9,6 +9,6 @@ import org.mapstruct.Mapping;
 public interface EventCategoryMapper {
     @Mapping(target = "updated", ignore = true)
     @Mapping(target = "created", ignore = true)
-    public EventCategory fromDto(EventCategoryDto eventCategoryDto);
-    public EventCategoryDto toDto(EventCategory eventCategory);
+    EventCategory fromDto(EventCategoryDto eventCategoryDto);
+    EventCategoryDto toDto(EventCategory eventCategory);
 }

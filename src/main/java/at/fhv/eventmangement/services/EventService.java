@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface EventService {
     List<Event> getEvents();
-    Event addEvent(EventForm form);
+    void addEvent(EventForm form);
 }
