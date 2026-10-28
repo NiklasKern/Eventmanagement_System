@@ -3,6 +3,7 @@ package at.fhv.eventmangement.domain.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -30,14 +31,17 @@ public class Event {
     @Column(name = "location", nullable = false)
     private String location;
 
+    @Column(name = "price", nullable = false)
+    private BigDecimal price;
+
+    @Column(name = "min_participants", nullable = false)
+    private int minParticipants;
+
+    @Column(name = "max_participants", nullable = false)
+    private int maxParticipants;
+
     @Column(name = "date_time", nullable = false)
     private LocalDateTime dateTime;
-
-    @Column(name = "price", nullable = false)
-    private Float price;
-
-    @Column(name = "capacity", nullable = false)
-    private Integer capacity;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "event_status", nullable = false)
@@ -47,8 +51,9 @@ public class Event {
     @JoinColumn(name = "category_id")
     private EventCategory eventCategory;
 
-    @Column(name = "event_organizer")
-    private String event_organizer;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "event_organizer_id")
+    private EventOrganizer eventOrganizer;
 
     @Column(name = "created", nullable = false)
     private LocalDateTime created;

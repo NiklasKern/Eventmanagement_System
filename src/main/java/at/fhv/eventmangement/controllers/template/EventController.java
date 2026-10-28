@@ -1,8 +1,8 @@
 package at.fhv.eventmangement.controllers.template;
 
+import at.fhv.eventmangement.domain.dto.EventCategoryDto;
 import at.fhv.eventmangement.domain.dto.EventDto;
-import at.fhv.eventmangement.domain.dto.EventForm;
-import at.fhv.eventmangement.domain.entities.Event;
+import at.fhv.eventmangement.domain.form.EventForm;
 import at.fhv.eventmangement.exceptions.ValidationException;
 import at.fhv.eventmangement.mappers.EventCategoryMapper;
 import at.fhv.eventmangement.mappers.EventMapper;
@@ -56,6 +56,7 @@ public class EventController {
 
         // Check for annotations on EventForm(@NotBlank, @Postive, ...)
         if(bindingResult.hasErrors()) {
+            //Just logging
             log.info(bindingResult.getFieldErrors().toString());
             return ADD_EVENT;
         }
@@ -75,10 +76,15 @@ public class EventController {
     @GetMapping(path = "/event/manage/create")
     public String createEvent(Model model) {
         model.addAttribute("event",new EventForm());
-        model.addAttribute("categories",eventCategoryService
-                .getAllEventCategories()
-                .stream().map(eventCategoryMapper::toDto).toList());
         return ADD_EVENT;
+    }
+
+    // Categories for the dropdown
+    @ModelAttribute("categories")
+    public List<EventCategoryDto> categories() {
+        return eventCategoryService
+                .getAllEventCategories()
+                .stream().map(eventCategoryMapper::toDto).toList();
     }
 }
 

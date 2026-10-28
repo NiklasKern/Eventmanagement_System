@@ -2,6 +2,7 @@ package at.fhv.eventmangement.domain.dto;
 
 import at.fhv.eventmangement.domain.entities.EventStatus;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -11,10 +12,11 @@ public record EventDto(
         String description,
         String location,
         LocalDateTime dateTime,
-        Float price,
-        Integer capacity,
+        BigDecimal price,
+        Integer minParticipants,
+        Integer maxParticipants,
         EventStatus eventStatus,
         EventCategoryDto eventCategory,
-        String eventOrganizer
+        EventOrganizerDto eventOrganizer
 ) {
 }

@@ -1,6 +1,6 @@
 package at.fhv.eventmangement.services;
 
-import at.fhv.eventmangement.domain.dto.EventForm;
+import at.fhv.eventmangement.domain.form.EventForm;
 import at.fhv.eventmangement.domain.entities.Event;
 
 import java.util.List;

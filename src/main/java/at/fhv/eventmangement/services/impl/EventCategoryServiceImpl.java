@@ -1,13 +1,15 @@
 package at.fhv.eventmangement.services.impl;
 
+import at.fhv.eventmangement.domain.form.EventCategoryForm;
 import at.fhv.eventmangement.domain.entities.EventCategory;
+import at.fhv.eventmangement.exceptions.ValidationException;
 import at.fhv.eventmangement.repositories.EventCategoryRepository;
 import at.fhv.eventmangement.services.EventCategoryService;
-import jdk.jfr.Category;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class EventCategoryServiceImpl implements EventCategoryService {
@@ -24,15 +26,23 @@ public class EventCategoryServiceImpl implements EventCategoryService {
     }
 
     @Override
-    public EventCategory addCategory(String name) {
+    public EventCategory addCategory(EventCategoryForm form) {
+
+        String name = form.getCategoryName().trim();
+
+        if (eventCategoryRepository.existsByCategoryNameIgnoreCase(name)) {
+            throw new ValidationException(
+                    Map.of("categoryName", "category already exists"));
+        }
 
         LocalDateTime now = LocalDateTime.now();
 
         return eventCategoryRepository.save(new EventCategory(
                 null,
-                name,
+                form.getCategoryName().trim(),
                 now,
                 now
         ));
     }
+
 }

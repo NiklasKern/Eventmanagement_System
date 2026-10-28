@@ -30,16 +30,6 @@
         </div>
 
         <div class="form-group">
-            <label for="organizer">Event organizer *</label>
-            <input type="text"
-                   id="organizer"
-                   th:field="*{organizer}"
-                   placeholder="Your name"
-                   required>
-            <span class="error" th:if="${#fields.hasErrors('organizer')}" th:errors="*{organizer}"></span>
-        </div>
-
-        <div class="form-group">
             <label for="category">Category *</label>
             <select id="category" th:field="*{eventCategoryId}" required>
                 <option value="">-- please select --</option>
@@ -78,6 +68,26 @@
         </div>
 
         <div class="form-group">
+            <label for="minParticipants">Minimum participants</label>
+            <input type="number"
+                   id="minParticipants"
+                   th:field="*{minParticipants}"
+                   min="1"
+                   placeholder="e.g. 50">
+            <span class="error" th:if="${#fields.hasErrors('minParticipants')}" th:errors="*{minParticipants}"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="maxParticipants">Maximum participants</label>
+            <input type="number"
+                   id="maxParticipants"
+                   th:field="*{maxParticipants}"
+                   min="1"
+                   placeholder="e.g. 50">
+            <span class="error" th:if="${#fields.hasErrors('maxParticipants')}" th:errors="*{maxParticipants}"></span>
+        </div>
+
+        <div class="form-group">
             <label for="price">Price</label>
             <input type="number"
                    id="price"
@@ -87,27 +97,6 @@
                    placeholder="e.g. 150 &#8364;">
             <span class="error" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></span>
         </div>
-
-        <div class="form-group">
-            <label for="participants">Maximum participants *</label>
-            <input type="number"
-                   id="participants"
-                   th:field="*{capacity}"
-                   min="1"
-                   placeholder="e.g. 50"
-                   required>
-            <span class="error" th:if="${#fields.hasErrors('capacity')}" th:errors="*{capacity}"></span>
-        </div>
-
-<!--        <div class="form-group">-->
-<!--            <label for="participants">Maximum participants</label>-->
-<!--            <input type="number"-->
-<!--                   id="participants"-->
-<!--                   th:field="*{maxParticipants}"-->
-<!--                   min="1"-->
-<!--                   placeholder="e.g. 50">-->
-<!--            <span class="error" th:if="${#fields.hasErrors('maxParticipants')}" th:errors="*{maxParticipants}"></span>-->
-<!--        </div>-->
 
         <button type="submit">Create Event</button>
 

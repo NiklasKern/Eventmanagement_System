@@ -1,44 +1,89 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet" />
-        <link th:href="@{/styles/cssandjs/my_events.css}" rel="stylesheet" />
-        <title>Create Event</title>
-    </head>
+<html lang="en"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet" />
+    <link th:href="@{/styles/cssandjs/my_events.css}" rel="stylesheet" />
+    <title>My events</title>
+</head>
 
-    <body>
-    <header class="AppHead">
-        <div class="HeadContainer">
-            <div class="WildPathLogo">
-                <img th:src="@{/images/leaf-icon.svg}" alt="leaf">
-                <span>WILD</span><span class="primary-green">PATH</span>
-            </div>
-            <button class="AccountButton" type="button">
-                <span class="Avatar">E</span>
-                <span class="AccountText">
-                    <span class="AccountLabel">View</span>
-                    <span class="AccountName">Event provider</span>
-                </span>
-                <span class="Chevron">></span>
-            </button>
+<body>
+<header class="AppHead">
+    <div class="HeadContainer">
+        <div class="WildPathLogo">
+            <img th:src="@{/images/leaf-icon.svg}" alt="leaf">
+            <span>WILD</span><span class="primary-green">PATH</span>
         </div>
-    </header>
-    <main class="AppContent">
-        <div class="ContentContainer">
-            <div class="PageTitle">
-                <div class="PageTitleText">
-                    <span class="Eyebrow">Event provider</span>
-                    <h1>My events</h1>
-                    <p>Create and edit outdoor events, and view booking details.</p>
+        <button class="AccountButton" type="button">
+            <span class="Avatar">E</span>
+            <span class="AccountText">
+                <span class="AccountLabel">View</span>
+                <span class="AccountName">Event provider</span>
+            </span>
+            <span class="Chevron">&gt;</span>
+        </button>
+    </div>
+</header>
+
+<main class="AppContent">
+    <div class="ContentContainer">
+        <div class="PageTitle">
+            <div class="PageTitleText">
+                <span class="Eyebrow">Event provider</span>
+                <h1>My events</h1>
+                <p>Create and edit outdoor events, and view booking details.</p>
+            </div>
+            <a class="CreateEventButton" th:href="@{/event/manage/create}">
+                <span class="Plus">+</span>
+                <span>Create event</span>
+            </a>
+        </div>
+
+        <div class="EmptyState" th:if="${#lists.isEmpty(events)}">
+            <p>You have not created any events yet.</p>
+        </div>
+
+        <div class="EventList" th:unless="${#lists.isEmpty(events)}">
+            <article class="EventCard" th:each="e : ${events}">
+                <div class="EventCardHeader">
+                    <h2 class="EventName" th:text="${e.name}">Event name</h2>
                 </div>
-                <a th:href="@{/event/manage/create}">
-                    <button class="CreateEventButton" type="button">
-                        <span class="Plus">+</span>
-                        <span>Create event</span>
-                    </button>
-                </a>
-            </div>
+
+                <span class="EventCategory"
+                      th:if="${e.eventCategory != null}"
+                      th:text="${e.eventCategory.categoryName}">Category</span>
+
+                <ul class="EventDetails">
+                    <li>
+                        <span class="DetailLabel">Date</span>
+                        <span th:text="${#temporals.format(e.dateTime, 'dd.MM.yyyy, HH:mm')}">01.01.2027, 17:00</span>
+                    </li>
+                    <li>
+                        <span class="DetailLabel">Location</span>
+                        <span th:text="${e.location}">Location</span>
+                    </li>
+                    <li>
+                        <span class="DetailLabel">Price</span>
+                        <span th:text="${#numbers.formatDecimal(e.price, 1, 'POINT', 2, 'COMMA')} + ' €'">150,00 €</span>
+                    </li>
+                    <li>
+                        <span class="DetailLabel">Participants</span>
+                        <span th:text="${e.minParticipants} + ' – ' + ${e.maxParticipants}">5 – 50</span>
+                    </li>
+                    <li th:if="${e.eventOrganizer != null}">
+                        <span class="DetailLabel">Organizer</span>
+                        <span th:text="${e.eventOrganizer.organizerName}">Organizer</span>
+                    </li>
+                </ul>
+
+                <p class="EventDescription"
+                   th:if="${!#strings.isEmpty(e.description)}"
+                   th:text="${e.description}">Description</p>
+            </article>
         </div>
-    </main>
-    </body>
+    </div>
+</main>
+</body>
 </html>
