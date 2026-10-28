@@ -41,47 +41,50 @@
             </a>
         </div>
 
+        <div class="FlashMessage FlashSuccess" role="status"
+             th:if="${successMessage}" th:text="${successMessage}">
+            Event successfully saved
+        </div>
+
         <div class="EmptyState" th:if="${#lists.isEmpty(events)}">
             <p>You have not created any events yet.</p>
         </div>
 
-        <div class="EventList" th:unless="${#lists.isEmpty(events)}">
-            <article class="EventCard" th:each="e : ${events}">
-                <div class="EventCardHeader">
-                    <h2 class="EventName" th:text="${e.name}">Event name</h2>
-                </div>
-
-                <span class="EventCategory"
-                      th:if="${e.eventCategory != null}"
-                      th:text="${e.eventCategory.categoryName}">Category</span>
-
-                <ul class="EventDetails">
-                    <li>
-                        <span class="DetailLabel">Date</span>
-                        <span th:text="${#temporals.format(e.dateTime, 'dd.MM.yyyy, HH:mm')}">01.01.2027, 17:00</span>
-                    </li>
-                    <li>
-                        <span class="DetailLabel">Location</span>
-                        <span th:text="${e.location}">Location</span>
-                    </li>
-                    <li>
-                        <span class="DetailLabel">Price</span>
-                        <span th:text="${#numbers.formatDecimal(e.price, 1, 'POINT', 2, 'COMMA')} + ' €'">150,00 €</span>
-                    </li>
-                    <li>
-                        <span class="DetailLabel">Participants</span>
-                        <span th:text="${e.minParticipants} + ' – ' + ${e.maxParticipants}">5 – 50</span>
-                    </li>
-                    <li th:if="${e.eventOrganizer != null}">
-                        <span class="DetailLabel">Organizer</span>
-                        <span th:text="${e.eventOrganizer.organizerName}">Organizer</span>
-                    </li>
-                </ul>
-
-                <p class="EventDescription"
-                   th:if="${!#strings.isEmpty(e.description)}"
-                   th:text="${e.description}">Description</p>
-            </article>
+        <div class="TableWrapper" th:unless="${#lists.isEmpty(events)}">
+            <table class="EventTable">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Location</th>
+                    <th class="Num">Price</th>
+                    <th class="Num">Participants</th>
+                    <th>Organizer</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="e : ${events}">
+                    <td>
+                        <span class="EventName" th:text="${e.name}">Event name</span>
+                        <span class="EventDescription"
+                              th:if="${!#strings.isEmpty(e.description)}"
+                              th:text="${e.description}"
+                              th:title="${e.description}">Description</span>
+                    </td>
+                    <td>
+                        <span class="EventCategory"
+                              th:if="${e.eventCategory != null}"
+                              th:text="${e.eventCategory.categoryName}">Category</span>
+                    </td>
+                    <td class="NoWrap" th:text="${#temporals.format(e.dateTime, 'dd.MM.yyyy, HH:mm')}">01.01.2027, 17:00</td>
+                    <td th:text="${e.location}">Location</td>
+                    <td class="Num" th:text="${#numbers.formatDecimal(e.price, 1, 'POINT', 2, 'COMMA')} + ' €'">150,00 €</td>
+                    <td class="Num" th:text="${e.minParticipants} + ' – ' + ${e.maxParticipants}">5 – 50</td>
+                    <td th:text="${e.eventOrganizer != null} ? ${e.eventOrganizer.organizerName} : '–'">Organizer</td>
+                </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </main>

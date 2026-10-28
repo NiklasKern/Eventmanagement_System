@@ -41,7 +41,7 @@ public class EventForm {
     @Future(message = "Date has to be in the future")
     private LocalDateTime dateTime;
 
-    @NotNull
+    @NotNull(message = "please fill mandatory fields")
     private UUID eventCategoryId;
 
 }

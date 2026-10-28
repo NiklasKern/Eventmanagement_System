@@ -16,6 +16,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -52,7 +53,10 @@ public class EventController {
     // On error shows form again with invalid fields marked
     // On success redirect to event list
     @PostMapping("/event/manage/create")
-    public String createEvent(@Valid @ModelAttribute("event") EventForm form, BindingResult bindingResult) {
+    public String createEvent(@Valid @ModelAttribute("event") EventForm form,
+                              BindingResult bindingResult,
+                              RedirectAttributes redirectAttributes
+    ) {
 
         // Check for annotations on EventForm(@NotBlank, @Postive, ...)
         if(bindingResult.hasErrors()) {
@@ -69,6 +73,7 @@ public class EventController {
             return ADD_EVENT;
         }
 
+        redirectAttributes.addFlashAttribute("successMessage", "Event successfully saved");
         return "redirect:/events";
     }
 
