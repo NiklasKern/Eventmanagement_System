@@ -1,11 +1,11 @@
 package at.fhv.eventmangement;
 
-import at.fhv.eventmangement.domain.form.EventCategoryForm;
-import at.fhv.eventmangement.domain.form.EventOrganizerForm;
-import at.fhv.eventmangement.domain.form.EventForm;
-import at.fhv.eventmangement.services.EventCategoryService;
-import at.fhv.eventmangement.services.EventOrganizerService;
-import at.fhv.eventmangement.services.EventService;
+import at.fhv.eventmangement.application.form.EventCategoryForm;
+import at.fhv.eventmangement.application.form.EventOrganizerForm;
+import at.fhv.eventmangement.application.form.EventForm;
+import at.fhv.eventmangement.application.services.EventCategoryService;
+import at.fhv.eventmangement.application.services.EventOrganizerService;
+import at.fhv.eventmangement.application.services.EventService;
 import org.jspecify.annotations.NonNull;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -68,7 +68,7 @@ public class EventmanagementApplicationRunner implements ApplicationRunner {
                 .minParticipants(3)
                 .maxParticipants(50)
                 .eventCategoryId(eventCategoryService
-                        .getAllEventCategories().getFirst().getId())
+                        .getAllEventCategories().getFirst().id())
                 .build());
     }
 }
