@@ -134,3 +134,5 @@ button:active {
     font-size: 12px;
     line-height: 1.5;
 }
+
+.field-error { color: #b3261e; font-size: 0.875rem; margin: 0.25rem 0 0; }

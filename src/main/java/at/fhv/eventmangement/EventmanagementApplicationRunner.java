@@ -1,12 +1,9 @@
 package at.fhv.eventmangement;
 
-import at.fhv.eventmangement.domain.form.EventCategoryForm;
-import at.fhv.eventmangement.domain.form.EventForm;
-import at.fhv.eventmangement.domain.form.EventOrganizerForm;
-import at.fhv.eventmangement.services.EventCategoryService;
-import at.fhv.eventmangement.services.EventOrganizerService;
+import at.fhv.eventmangement.domain.dto.EventForm;
 import at.fhv.eventmangement.services.EventService;
 import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;

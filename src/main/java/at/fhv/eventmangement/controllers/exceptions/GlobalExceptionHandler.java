@@ -1,6 +1,5 @@
 package at.fhv.eventmangement.controllers.exceptions;
 
-import at.fhv.eventmangement.exceptions.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -10,7 +9,6 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -20,18 +18,23 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 // Central error handler for all REST controllers
-// Turns exceptions from REST controllers into ProblemDetail responses
 // Thymeleaf controllers are excluded – they show errors in the HTML form instead.
-@RestControllerAdvice
+// Unexpected errors in /event/manage/create now show Springs default error page (for our own design we could add templates/error.html)
+@RestControllerAdvice(basePackages = "at.fhv.eventmangement.controllers.rest")
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // 400 - Validation in service layer failed
-    @ExceptionHandler(ValidationException.class)
-    public ProblemDetail handleValidation(ValidationException ex) {
-        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
-        pd.setProperty("errors", ex.getFieldErrors());
+    // @Validated service rejected its input
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ProblemDetail handleConstraintViolation(jakarta.validation.ConstraintViolationException ex) {
+        Map<String, String> errors = ex.getConstraintViolations().stream()
+                .collect(Collectors.toMap(
+                        v -> v.getPropertyPath().toString(),
+                        v -> v.getMessage(),
+                        (first, second) -> first));
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
+        pd.setProperty("errors", errors);
         return pd;
     }
 
@@ -47,8 +50,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
                         e -> e.getField(),
                         e -> e.getDefaultMessage() == null ? "invalid" : e.getDefaultMessage(),
                         (first, second) -> first));
-        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "please fill mandatory fields");
-        pd.setProperty("error", errors);
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
+        pd.setProperty("errors", errors);
         return ResponseEntity.badRequest().body(pd);
     }
 

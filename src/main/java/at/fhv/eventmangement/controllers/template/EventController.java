@@ -1,22 +1,18 @@
 package at.fhv.eventmangement.controllers.template;
 
-import at.fhv.eventmangement.domain.dto.EventCategoryDto;
 import at.fhv.eventmangement.domain.dto.EventDto;
-import at.fhv.eventmangement.domain.form.EventForm;
+import at.fhv.eventmangement.domain.dto.EventForm;
+import at.fhv.eventmangement.domain.entities.Event;
 import at.fhv.eventmangement.exceptions.ValidationException;
-import at.fhv.eventmangement.mappers.EventCategoryMapper;
 import at.fhv.eventmangement.mappers.EventMapper;
-import at.fhv.eventmangement.services.EventCategoryService;
 import at.fhv.eventmangement.services.EventService;
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -38,6 +34,12 @@ public class EventController {
         this.eventService = eventService;
         this.eventCategoryMapper = eventCategoryMapper;
         this.eventCategoryService = eventCategoryService;
+    }
+
+    // Categories for the dropdown in the add_event.html
+    @ModelAttribute("categories")
+    public List<String> categories() {
+        return eventService.getEventCategories();
     }
 
     //Show
@@ -64,32 +66,15 @@ public class EventController {
             log.info(bindingResult.getFieldErrors().toString());
             return ADD_EVENT;
         }
-        // Check if form is valid ( Mandatory, Date in the future, ...)
-        try {
-            eventService.addEvent(form);
-        } catch (ValidationException ex) {
-            ex.getFieldErrors().forEach((field, msg) ->
-                    bindingResult.rejectValue(field, "invalid", msg));
-            return ADD_EVENT;
-        }
-
-        redirectAttributes.addFlashAttribute("successMessage", "Event successfully saved");
+        eventService.addEvent(form);
         return "redirect:/events";
     }
 
 
     @GetMapping(path = "/event/manage/create")
     public String createEvent(Model model) {
-        model.addAttribute("event",new EventForm());
+        model.addAttribute("event", new EventForm());
         return ADD_EVENT;
-    }
-
-    // Categories for the dropdown
-    @ModelAttribute("categories")
-    public List<EventCategoryDto> categories() {
-        return eventCategoryService
-                .getAllEventCategories()
-                .stream().map(eventCategoryMapper::toDto).toList();
     }
 }
 

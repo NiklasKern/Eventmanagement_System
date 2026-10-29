@@ -1,26 +1,22 @@
 package at.fhv.eventmangement.services.impl;
 
-import at.fhv.eventmangement.EventmanagementApplicationRunner;
-import at.fhv.eventmangement.domain.form.EventForm;
+import at.fhv.eventmangement.domain.dto.EventForm;
 import at.fhv.eventmangement.domain.entities.Event;
-import at.fhv.eventmangement.domain.entities.EventCategory;
 import at.fhv.eventmangement.domain.entities.EventStatus;
 import at.fhv.eventmangement.exceptions.ValidationException;
-import at.fhv.eventmangement.repositories.EventCategoryRepository;
-import at.fhv.eventmangement.repositories.EventOrganizerRepository;
 import at.fhv.eventmangement.repositories.EventRepository;
 import at.fhv.eventmangement.services.EventService;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@Validated
 @Service
 public class EventServiceImpl implements EventService {
-
-
 
     private final EventRepository eventRepository;
     private final EventCategoryRepository  eventCategoryRepository;
@@ -41,7 +37,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public void addEvent(EventForm form) {
 
-        if (form.getMinParticipants() > form.getMaxParticipants()) {
+        if (form.getMinParticipants() < form.getMaxParticipants()) {
             throw new ValidationException(
                     Map.of("maxParticipants", "must not be less than minimum participants"));
         }
@@ -59,10 +55,11 @@ public class EventServiceImpl implements EventService {
         LocalDateTime now = LocalDateTime.now();
 
         //Create new event to prevent unexpected input
-        eventRepository.save(new Event(
+        return eventRepository.save(new Event(
                 null,
                 form.getName(),
                 Optional.ofNullable(form.getDescription()).orElse(""),
+                form.getOrganizer(),
                 form.getLocation(),
                 form.getPrice(),
                 form.getMinParticipants(),
@@ -76,4 +73,9 @@ public class EventServiceImpl implements EventService {
         ));
     }
 
+    // Placeholder: later load categories from DB
+    @Override
+    public List<String> getEventCategories() {
+        return List.of("Hiking");
+    }
 }
