@@ -19,6 +19,7 @@
         <div class="form-group">
             <label for="name">Event name *</label>
             <input
+                    id="name"
                     type="text"
                     th:field="*{name}"
                     placeholder="e.g. Summer Party"
@@ -28,6 +29,7 @@
         <div class="form-group">
             <label for="organizer">Event organizer *</label>
             <input
+                    id="organizer"
                     type="text"
                     th:field="*{organizer}"
                     placeholder="Your name"
@@ -39,6 +41,7 @@
             <div class="form-group">
                 <label for="date">Date *</label>
                 <input
+                        id="date"
                         type="date"
                         th:field="*{date}"
                         required
@@ -48,6 +51,7 @@
             <div class="form-group">
                 <label for="time">Start time *</label>
                 <input
+                        id="time"
                         type="time"
                         th:field="*{time}"
                         required
@@ -61,6 +65,7 @@
         <div class="form-group">
             <label for="location">Location *</label>
             <input
+                    id="location"
                     type="text"
                     th:field="*{location}"
                     placeholder="e.g. FH Vorarlberg, Hochschulstrasse 1, 6850 Dornbirn, Austria"
@@ -70,7 +75,9 @@
 
         <div class="form-group">
             <label for="eventCategory">Category *</label>
-            <select th:field="*{eventCategory}" required>
+            <select
+                    id="eventCategory"
+                    th:field="*{eventCategory}" required>
                 <option value="">-- choose a category --</option>
                 <option th:each="c : ${categories}" th:value="${c}" th:text="${c}"></option>
             </select>
@@ -79,6 +86,7 @@
         <div class="form-group">
             <label for="description">Description</label>
             <textarea
+                    id="description"
                     th:field="*{description}"
                     placeholder="Describe your event..."
             ></textarea>
@@ -87,6 +95,7 @@
         <div class="form-group">
             <label for="price">Price *</label>
             <input
+                    id="price"
                     type="number"
                     th:field="*{price}"
                     min="0"
@@ -99,6 +108,7 @@
         <div class="form-group">
             <label for="capacity">Maximum participants *</label>
             <input
+                    id="capacity"
                     type="number"
                     th:field="*{capacity}"
                     min="1"
