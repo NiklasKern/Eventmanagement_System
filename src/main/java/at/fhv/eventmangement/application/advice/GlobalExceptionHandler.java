@@ -1,4 +1,4 @@
-package at.fhv.eventmangement.domain.exceptions;
+package at.fhv.eventmangement.application.advice;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
