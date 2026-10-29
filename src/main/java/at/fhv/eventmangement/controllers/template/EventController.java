@@ -63,23 +63,22 @@ public class EventController {
                               BindingResult bindingResult,
                               RedirectAttributes redirectAttributes
     ) {
-
         // Check for annotations on EventForm(@NotBlank, @Postive, ...)
         if(bindingResult.hasErrors()) {
             //Just logging
             log.info(bindingResult.getFieldErrors().toString());
             return ADD_EVENT;
         }
-
+        // Check if form is valid ( Mandatory, Date in the future, ...)
         try {
             eventService.addEvent(form);
-        }
-        catch (ValidationException e)
-        {
-            e.getFieldErrors().forEach((field,msg) -> bindingResult.rejectValue(field, "invalid",msg));
+        } catch (ValidationException ex) {
+            ex.getFieldErrors().forEach((field, msg) ->
+                    bindingResult.rejectValue(field, "invalid", msg));
             return ADD_EVENT;
         }
 
+        redirectAttributes.addFlashAttribute("successMessage", "Event successfully saved");
         return "redirect:/events";
     }
 
