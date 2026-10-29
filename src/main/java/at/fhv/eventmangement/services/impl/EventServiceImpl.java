@@ -7,7 +7,8 @@ import at.fhv.eventmangement.repositories.EventRepository;
 import at.fhv.eventmangement.services.EventService;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
-
+import java.util.UUID;
+import at.fhv.eventmangement.exceptions.EventManagementException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -55,4 +56,10 @@ public class EventServiceImpl implements EventService {
     public List<String> getEventCategories() {
         return List.of("Hiking");
     }
+    @Override
+    public Event getEventById(UUID id) {
+        return eventRepository.findById(id)
+                .orElseThrow(() -> new EventManagementException("Event with ID " + id + " not found"));
+    }
+
 }
