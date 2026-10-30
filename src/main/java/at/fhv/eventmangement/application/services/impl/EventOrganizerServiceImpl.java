@@ -5,13 +5,14 @@ import at.fhv.eventmangement.domain.model.EventOrganizer;
 import at.fhv.eventmangement.domain.exceptions.ValidationException;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
 import at.fhv.eventmangement.application.services.EventOrganizerService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
+@Transactional(readOnly = true)
 public class EventOrganizerServiceImpl implements EventOrganizerService {
 
     private final EventOrganizerRepository eventOrganizerRepository;
