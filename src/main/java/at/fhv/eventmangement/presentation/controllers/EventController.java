@@ -2,6 +2,7 @@ package at.fhv.eventmangement.presentation.controllers;
 
 import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.dto.EventDto;
+import at.fhv.eventmangement.application.exceptions.InvalidInputException;
 import at.fhv.eventmangement.application.form.EventBookingForm;
 import at.fhv.eventmangement.application.form.EventDateForm;
 import at.fhv.eventmangement.application.form.EventForm;
@@ -45,7 +46,7 @@ public class EventController {
         this.customerService = customerService;
     }
 
-    // Categories for the dropdown in the add_event
+    // Categories for the dropdown in the add_event.html
     @ModelAttribute("categories")
     public List<EventCategoryDto> categories() {
         return eventCategoryService.getAllEventCategories();

@@ -2,11 +2,11 @@ package at.fhv.eventmangement.application.services.impl;
 
 import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventDto;
+import at.fhv.eventmangement.application.exceptions.InvalidInputException;
 import at.fhv.eventmangement.application.form.EventDateForm;
 import at.fhv.eventmangement.application.mappers.EventMapper;
 import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.application.form.EventForm;
-import at.fhv.eventmangement.application.exceptions.InvalidInputException;
 import at.fhv.eventmangement.domain.repositories.EventCategoryRepository;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
 import at.fhv.eventmangement.domain.repositories.EventRepository;
@@ -100,9 +100,8 @@ public class EventServiceImpl implements EventService {
                     .build());
         }
 
-        //Save event to db
-        Event saved = eventRepository.save(event);
-        return eventMapper.toDto(saved);
-    }
 
+        //Save event to db and return saved eventdto
+        return eventMapper.toDto(eventRepository.save(event));
+    }
 }
