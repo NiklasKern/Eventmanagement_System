@@ -7,8 +7,5 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface EventCategoryMapper {
-    @Mapping(target = "updated", ignore = true)
-    @Mapping(target = "created", ignore = true)
-    EventCategory fromDto(EventCategoryDto eventCategoryDto);
     EventCategoryDto toDto(EventCategory eventCategory);
 }

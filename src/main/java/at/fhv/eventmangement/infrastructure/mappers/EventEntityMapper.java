@@ -5,7 +5,7 @@ import at.fhv.eventmangement.infrastructure.entities.EventEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring",uses = {EventOrganizerEntityMapper.class, EventOrganizerEntityMapper.class})
+@Mapper(componentModel = "spring",uses = {EventOrganizerEntityMapper.class, EventCategoryEntityMapper.class})
 public interface EventEntityMapper {
     Event toDomain(EventEntity entity);
 

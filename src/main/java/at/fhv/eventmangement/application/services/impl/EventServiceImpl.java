@@ -84,10 +84,8 @@ public class EventServiceImpl implements EventService {
                 .build();
 
         //Save event to db
-        eventRepository.save(event);
-
-        //return saved eventdto
-        return eventMapper.toDto(event);
+        Event saved = eventRepository.save(event);
+        return eventMapper.toDto(saved);
     }
 
 }

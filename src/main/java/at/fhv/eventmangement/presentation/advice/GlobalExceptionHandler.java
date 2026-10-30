@@ -1,4 +1,4 @@
-package at.fhv.eventmangement.application.advice;
+package at.fhv.eventmangement.presentation.advice;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
