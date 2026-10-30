@@ -1,14 +1,12 @@
 package at.fhv.eventmangement.application.form;
 
-import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import lombok.*;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -38,12 +36,17 @@ public class EventForm {
     @Positive(message = "must be greater than 0")
     private Integer maxParticipants;
 
-    @NotNull(message = "please fill mandatory fields")
-    @Future(message = "Date has to be in the future")
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime dateTime;
+    @AssertTrue(message = "must not be less than minimum participants")
+    public boolean isMaxParticipantsValid() {
+        return minParticipants == null || maxParticipants == null
+                || maxParticipants >= minParticipants;
+    }
 
     @NotNull(message = "please fill mandatory fields")
     private UUID eventCategoryId;
+
+    @NotEmpty(message = "please add at least one date")
+    @Builder.Default
+    private List<@Valid EventDateForm> eventDates = new ArrayList<>();
 
 }

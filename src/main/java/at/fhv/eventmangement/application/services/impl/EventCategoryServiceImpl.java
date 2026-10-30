@@ -10,7 +10,6 @@ import at.fhv.eventmangement.application.services.EventCategoryService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -41,14 +40,10 @@ public class EventCategoryServiceImpl implements EventCategoryService {
                     Map.of("categoryName", "category already exists"));
         }
 
-        LocalDateTime now = LocalDateTime.now();
-
-        eventCategoryRepository.save(new EventCategory(
-                null,
-                form.getCategoryName().trim(),
-                now,
-                now
-        ));
+        eventCategoryRepository.save(EventCategory.builder()
+                .categoryName(name)
+                .build()
+        );
     }
 
 }

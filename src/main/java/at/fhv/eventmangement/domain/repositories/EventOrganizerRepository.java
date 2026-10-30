@@ -6,6 +6,6 @@ import java.util.Optional;
 
 public interface EventOrganizerRepository {
     EventOrganizer save(EventOrganizer eventOrganizer);
-    Optional<EventOrganizer> findByOrganizerName(String organizerName);
-    boolean existsByOrganizerNameIgnoreCase(String organizerName);
+    Optional<EventOrganizer> findByContactInfoName(String name);
+    boolean existsByContactInfoNameIgnoreCase(String name);
 }

@@ -5,7 +5,7 @@ import at.fhv.eventmangement.domain.model.Event;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = {EventCategoryMapper.class, EventOrganizerMapper.class})
+@Mapper(componentModel = "spring", uses = {EventCategoryMapper.class, EventOrganizerMapper.class, EventDateMapper.class})
 public interface EventMapper {
     @Mapping(target = "updated", ignore = true)
     @Mapping(target = "created", ignore = true)

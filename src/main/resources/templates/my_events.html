@@ -77,11 +77,19 @@
                               th:if="${e.eventCategory != null}"
                               th:text="${e.eventCategory.categoryName}">Category</span>
                     </td>
-                    <td class="NoWrap" th:text="${#temporals.format(e.dateTime, 'dd.MM.yyyy, HH:mm')}">01.01.2027, 17:00</td>
+                    <td class="NoWrap">
+                        <div th:each="d, stat : ${e.eventDates}"
+                             th:text="'Day ' + ${stat.count} + ': '
+                  + ${#temporals.format(d.startTime, 'dd.MM.yyyy, HH:mm')}
+                  + ' – ' + ${#temporals.format(d.endTime, 'dd.MM.yyyy, HH:mm')}">
+                            Day 1: 01.01.2027, 09:00 – 01.01.2027, 17:00
+                        </div>
+                        <span th:if="${#lists.isEmpty(e.eventDates)}">–</span>
+                    </td>
                     <td th:text="${e.location}">Location</td>
                     <td class="Num" th:text="${#numbers.formatDecimal(e.price, 1, 'POINT', 2, 'COMMA')} + ' €'">150,00 €</td>
                     <td class="Num" th:text="${e.minParticipants} + ' – ' + ${e.maxParticipants}">5 – 50</td>
-                    <td th:text="${e.eventOrganizer != null} ? ${e.eventOrganizer.organizerName} : '–'">Organizer</td>
+                    <td th:text="${e.eventOrganizer != null} ? ${e.eventOrganizer.contactInfo.name} : '–'">Organizer</td>
                 </tr>
                 </tbody>
             </table>

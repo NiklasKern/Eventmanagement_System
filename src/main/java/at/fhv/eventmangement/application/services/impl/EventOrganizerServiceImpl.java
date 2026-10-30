@@ -1,6 +1,7 @@
 package at.fhv.eventmangement.application.services.impl;
 
 import at.fhv.eventmangement.application.form.EventOrganizerForm;
+import at.fhv.eventmangement.domain.model.ContactInfo;
 import at.fhv.eventmangement.domain.model.EventOrganizer;
 import at.fhv.eventmangement.domain.exceptions.ValidationException;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
@@ -8,7 +9,6 @@ import at.fhv.eventmangement.application.services.EventOrganizerService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
@@ -25,20 +25,21 @@ public class EventOrganizerServiceImpl implements EventOrganizerService {
     @Transactional
     public void addOrganizer(EventOrganizerForm form) {
 
-        if(eventOrganizerRepository.existsByOrganizerNameIgnoreCase(form.getOrganizerName()))
+        String name = form.getOrganizerName().trim();
+
+        if(eventOrganizerRepository.existsByContactInfoNameIgnoreCase(name))
         {
             throw new ValidationException(Map.of("organizerName","organizer name already exists"));
         }
 
-        LocalDateTime now = LocalDateTime.now();
-
-        eventOrganizerRepository.save(new EventOrganizer(
-                null,
-                form.getOrganizerName().trim(),
-                form.getAddress(),
-                form.getEmail(),
-                now,
-                now
-        ));
+        eventOrganizerRepository.save(EventOrganizer.builder()
+                .contactInfo(ContactInfo.builder()
+                        .name(name)
+                        .address(form.getAddress().trim())
+                        .email(form.getEmail().trim())
+                        .build()
+                )
+                .build()
+        );
     }
 }

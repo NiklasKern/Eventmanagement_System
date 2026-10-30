@@ -2,32 +2,15 @@ package at.fhv.eventmangement.domain.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
+@Entity
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@ToString
-@EqualsAndHashCode
-@Entity
-@Builder
+@SuperBuilder
 @Table(name = "event_category")
-public class EventCategory {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", updatable = false, nullable = false)
-    private UUID id;
-
+public class EventCategory extends BaseEntity{
     @Column(name = "category_name", unique = true)
     private String categoryName;
-
-    @Column(name = "created", nullable = false, updatable = false)
-    private LocalDateTime created;
-
-    @Column(name = "updated", nullable = false)
-    private LocalDateTime updated;
 }

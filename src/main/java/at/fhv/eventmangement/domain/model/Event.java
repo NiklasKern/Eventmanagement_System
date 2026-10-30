@@ -2,26 +2,19 @@ package at.fhv.eventmangement.domain.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
+@Entity
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@ToString
-@EqualsAndHashCode
-@Entity
-@Builder
+@SuperBuilder
 @Table(name = "events")
-public class Event {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", updatable = false, nullable = false)
-    private UUID id;
+public class Event extends BaseEntity{
 
     @Column(name = "name", nullable = false, unique = true)
     private String name;
@@ -41,9 +34,6 @@ public class Event {
     @Column(name = "max_participants", nullable = false)
     private int maxParticipants;
 
-    @Column(name = "date_time", nullable = false)
-    private LocalDateTime dateTime;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "event_status", nullable = false)
     private EventStatus eventStatus;
@@ -56,9 +46,7 @@ public class Event {
     @JoinColumn(name = "event_organizer_id")
     private EventOrganizer eventOrganizer;
 
-    @Column(name = "created", nullable = false, updatable = false)
-    private LocalDateTime created;
-
-    @Column(name = "updated", nullable = false)
-    private LocalDateTime updated;
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<EventDate> eventDates = new ArrayList<>();
 }
