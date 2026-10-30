@@ -1,6 +1,7 @@
 package at.fhv.eventmangement.application.services.impl;
 
 import at.fhv.eventmangement.application.form.EventOrganizerForm;
+import at.fhv.eventmangement.domain.model.ContactInfo;
 import at.fhv.eventmangement.domain.model.EventOrganizer;
 import at.fhv.eventmangement.application.exceptions.InvalidInputException;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
@@ -28,20 +29,19 @@ public class EventOrganizerServiceImpl implements EventOrganizerService {
 
         String name = form.getOrganizerName().trim();
 
-        if(eventOrganizerRepository.existsByOrganizerNameIgnoreCase(form.getOrganizerName()))
+        if(eventOrganizerRepository.existsByContactInfoNameIgnoreCase(form.getOrganizerName()))
         {
             throw new InvalidInputException(Map.of("organizerName","organizer name already exists"));
         }
 
-        LocalDateTime now = LocalDateTime.now();
-
-        eventOrganizerRepository.save(new EventOrganizer(
-                null,
-                name,
-                form.getAddress(),
-                form.getEmail(),
-                now,
-                now
-        ));
+        eventOrganizerRepository.save(EventOrganizer.builder()
+                .contactInfo(ContactInfo.builder()
+                        .name(name)
+                        .address(form.getAddress().trim())
+                        .email(form.getEmail().trim())
+                        .build()
+                )
+                .build()
+        );
     }
 }

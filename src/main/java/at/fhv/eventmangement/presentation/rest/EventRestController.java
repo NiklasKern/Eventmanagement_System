@@ -23,7 +23,7 @@ public class EventRestController {
     @GetMapping(path = "/getEvents")
     public List<EventDto> getEvents()
     {
-        return eventService.getEvents();
+        return eventService.getAllEvents();
     }
 
     // 400 - the service rejected input (deplicate name, min > max, etc.)

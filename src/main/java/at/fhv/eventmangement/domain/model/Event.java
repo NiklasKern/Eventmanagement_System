@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -21,6 +22,7 @@ public class Event {
     private EventStatus eventStatus;
     private EventCategory eventCategory;
     private EventOrganizer eventOrganizer;
+    private List<EventDate> eventDates;
     private LocalDateTime created;
     private LocalDateTime updated;
 }

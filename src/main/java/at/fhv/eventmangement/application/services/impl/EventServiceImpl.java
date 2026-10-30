@@ -2,11 +2,9 @@ package at.fhv.eventmangement.application.services.impl;
 
 import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventDto;
+import at.fhv.eventmangement.application.form.EventDateForm;
 import at.fhv.eventmangement.application.mappers.EventMapper;
-import at.fhv.eventmangement.domain.model.Event;
-import at.fhv.eventmangement.domain.model.EventCategory;
-import at.fhv.eventmangement.domain.model.EventOrganizer;
-import at.fhv.eventmangement.domain.model.EventStatus;
+import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.application.form.EventForm;
 import at.fhv.eventmangement.application.exceptions.InvalidInputException;
 import at.fhv.eventmangement.domain.repositories.EventCategoryRepository;
@@ -21,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Validated
 @Service
@@ -40,49 +39,66 @@ public class EventServiceImpl implements EventService {
         this.eventMapper = eventMapper;
     }
 
+    @Override
+    public EventDto getEventById(UUID id) {
+        return eventMapper.toDto(eventRepository.findById(id)
+                .orElseThrow(() -> new InvalidInputException(
+                        Map.of("event", "event id does not exist")))
+        );
+    }
 
     @Override
-    public List<EventDto> getEvents() {
+    public List<EventDto> getActiveEvents() {
+        return eventRepository.findByEventStatus(EventStatus.ACTIVE).stream().map(eventMapper::toDto).toList();
+    }
+
+    @Override
+    public List<EventDto> getAllEvents() {
         return eventRepository.findAll().stream().map(eventMapper::toDto).toList();
     }
 
     @Override
     @Transactional
-    public EventDto addEvent(EventForm form) {
+    public EventDto addEvent(EventForm eventForm) {
 
-        if (form.getMinParticipants() > form.getMaxParticipants()) {
+        if (eventForm.getMinParticipants() > eventForm.getMaxParticipants()) {
             throw new InvalidInputException(
                     Map.of("maxParticipants", "must not be less than minimum participants"));
         }
 
-        if (eventRepository.existsByName(form.getName())) {
+        if (eventRepository.existsByName(eventForm.getName())) {
             throw new InvalidInputException(
                     Map.of("name", "event name already exists"));
         }
 
         EventCategory category = eventCategoryRepository
-                .findById(form.getEventCategoryId())
+                .findById(eventForm.getEventCategoryId())
                 .orElseThrow(() -> new InvalidInputException(
                         Map.of("eventCategoryId", "unknown category")));
 
-        EventOrganizer organizer = eventOrganizerRepository.findByOrganizerName(EventmanagementApplicationRunner.DEFAULT_ORGANIZER).orElseThrow();
-        LocalDateTime now = LocalDateTime.now();
+        EventOrganizer organizer = eventOrganizerRepository.findByContactInfoName(EventmanagementApplicationRunner.DEFAULT_ORGANIZER).orElseThrow();
 
         //Create new event to prevent unexpected input
         Event event = Event.builder()
-                .name(form.getName())
-                .description(Optional.ofNullable(form.getDescription()).orElse(""))
-                .location(form.getLocation())
-                .price(form.getPrice())
-                .minParticipants(form.getMinParticipants())
-                .maxParticipants(form.getMaxParticipants())
-                .dateTime(form.getDateTime())
-                .eventStatus(EventStatus.OPEN)
+                .name(eventForm.getName())
+                .description(Optional.ofNullable(eventForm.getDescription()).orElse(""))
+                .location(eventForm.getLocation())
+                .price(eventForm.getPrice())
+                .minParticipants(eventForm.getMinParticipants())
+                .maxParticipants(eventForm.getMaxParticipants())
+                .eventStatus(EventStatus.ACTIVE)
                 .eventCategory(category)
                 .eventOrganizer(organizer)
-                .created(now)
-                .updated(now)
                 .build();
+
+        for(EventDateForm eventDateForm : eventForm.getEventDates())
+        {
+            event.getEventDates().add(EventDate.builder()
+                    .event(event)
+                    .startTime(eventDateForm.getStartTime())
+                    .endTime(eventDateForm.getEndTime())
+                    .build());
+        }
 
         //Save event to db
         Event saved = eventRepository.save(event);
