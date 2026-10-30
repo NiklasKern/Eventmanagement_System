@@ -19,7 +19,7 @@ public class EventRestController {
     @GetMapping(path = "/getEvents")
     public List<EventDto> getEvents()
     {
-        return eventService.getEvents();
+        return eventService.getAllEvents();
     }
 
 }

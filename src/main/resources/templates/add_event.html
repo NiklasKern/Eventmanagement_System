@@ -26,11 +26,39 @@
         </div>
 
         <div class="form-group">
-            <label for="dateTime">Date *</label>
-            <input type="datetime-local"
-                   th:field="*{dateTime}"
-                   required>
-            <span class="error" th:if="${#fields.hasErrors('dateTime')}" th:errors="*{dateTime}"></span>
+            <label>Dates *</label>
+
+            <div class="date-row" th:each="date, stat : *{eventDates}">
+
+                <div class="date-inputs">
+                    <span th:text="'Day ' + ${stat.count}">Day 1</span>
+                    <input type="datetime-local" th:field="*{eventDates[__${stat.index}__].startTime}">
+                    <span>to</span>
+                    <input type="datetime-local" th:field="*{eventDates[__${stat.index}__].endTime}">
+
+                    <button type="submit" name="removeDay" th:value="${stat.index}"
+                            th:unless="${stat.size == 1}" formnovalidate>− Remove</button>
+                </div>
+
+                <div class="date-errors">
+            <span class="error"
+                  th:if="${#fields.hasErrors('eventDates[__${stat.index}__].startTime')}"
+                  th:errors="*{eventDates[__${stat.index}__].startTime}"></span>
+                    <span class="error"
+                          th:if="${#fields.hasErrors('eventDates[__${stat.index}__].endTime')}"
+                          th:errors="*{eventDates[__${stat.index}__].endTime}"></span>
+                    <span class="error"
+                          th:if="${#fields.hasErrors('eventDates[__${stat.index}__].endTimeValid')}"
+                          th:errors="*{eventDates[__${stat.index}__].endTimeValid}"></span>
+                </div>
+
+            </div>
+
+            <button type="submit" name="addDay" formnovalidate>+ Add day</button>
+
+            <span class="error"
+                  th:if="${#fields.hasErrors('eventDates')}"
+                  th:errors="*{eventDates}"></span>
         </div>
 
         <div class="form-group">
@@ -75,7 +103,7 @@
                    min="1"
                    placeholder="e.g. 50"
                    required>
-            <span class="error" th:if="${#fields.hasErrors('maxParticipants')}" th:errors="*{maxParticipants}"></span>
+            <span class="error" th:if="${#fields.hasErrors('maxParticipantsValid')}" th:errors="*{maxParticipantsValid}"></span>
         </div>
 
         <div class="form-group">
