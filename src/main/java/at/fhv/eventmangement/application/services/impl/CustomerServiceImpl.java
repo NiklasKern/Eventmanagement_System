@@ -1,6 +1,9 @@
 package at.fhv.eventmangement.application.services.impl;
 
+import at.fhv.eventmangement.EventmanagementApplicationRunner;
+import at.fhv.eventmangement.application.dto.CustomerDto;
 import at.fhv.eventmangement.application.form.CustomerForm;
+import at.fhv.eventmangement.application.mappers.CustomerMapper;
 import at.fhv.eventmangement.application.services.CustomerService;
 import at.fhv.eventmangement.domain.exceptions.ValidationException;
 import at.fhv.eventmangement.domain.model.ContactInfo;
@@ -15,9 +18,11 @@ import java.util.Map;
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final CustomerMapper customerMapper;
 
-    public CustomerServiceImpl(CustomerRepository customerRepository) {
+    public CustomerServiceImpl(CustomerRepository customerRepository, CustomerMapper customerMapper) {
         this.customerRepository = customerRepository;
+        this.customerMapper = customerMapper;
     }
 
     @Override
@@ -42,5 +47,9 @@ public class CustomerServiceImpl implements CustomerService {
                 .customerType(form.getCustomerType())
                 .build()
         );
+    }
+
+    public CustomerDto getCurrentCustomer() {
+        return customerMapper.toDto(customerRepository.findByContactInfoName(EventmanagementApplicationRunner.DEFAULT_CUSTOMER).orElseThrow());
     }
 }

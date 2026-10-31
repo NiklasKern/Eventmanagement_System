@@ -5,6 +5,7 @@ import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.form.EventBookingForm;
 import at.fhv.eventmangement.application.form.EventDateForm;
 import at.fhv.eventmangement.application.form.EventForm;
+import at.fhv.eventmangement.application.services.CustomerService;
 import at.fhv.eventmangement.application.services.EventBookingService;
 import at.fhv.eventmangement.domain.exceptions.ValidationException;
 import at.fhv.eventmangement.application.services.EventCategoryService;
@@ -34,12 +35,14 @@ public class EventController {
     private final EventService eventService;
     private final EventCategoryService eventCategoryService;
     private final EventBookingService eventBookingService;
+    private final CustomerService customerService;
 
     //Dependency injection
-    public EventController(EventService eventService, EventCategoryService eventCategoryService, EventBookingService eventBookingService) {
+    public EventController(EventService eventService, EventCategoryService eventCategoryService, EventBookingService eventBookingService, CustomerService customerService) {
         this.eventService = eventService;
         this.eventCategoryService = eventCategoryService;
         this.eventBookingService = eventBookingService;
+        this.customerService = customerService;
     }
 
     // Categories for the dropdown in the add_event
@@ -122,7 +125,7 @@ public class EventController {
     }
 
     //Return active events
-    @GetMapping(path = "/customer/event-list")
+    @GetMapping(path = "/customer/events")
     public String showEvents(Model model)
     {
         model.addAttribute("events", eventService.getActiveEvents());
@@ -131,6 +134,7 @@ public class EventController {
 
     @GetMapping("/customer/event/{id}/book")
     public String bookingForm(@PathVariable UUID id, Model model) {
+        model.addAttribute("customer", customerService.getCurrentCustomer());
         model.addAttribute("event", eventService.getEventById(id));
         model.addAttribute("booking", new EventBookingForm());
         return BOOK_EVENT;
