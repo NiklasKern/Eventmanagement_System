@@ -6,10 +6,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import at.fhv.eventmangement.application.exceptions.InvalidInputException;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 public class EventRestController {
@@ -32,6 +34,12 @@ public class EventRestController {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
         pd.setProperty("errors", ex.getFieldErrors());
         return pd;
+    }
+
+    @GetMapping("/customer/event/{id}/info")
+    public EventDto getEventInfo(@PathVariable UUID id)
+    {
+        return eventService.getEventById(id);
     }
 
 }
