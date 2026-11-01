@@ -4,7 +4,7 @@ import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.mappers.EventCategoryMapper;
 import at.fhv.eventmangement.application.form.EventCategoryForm;
 import at.fhv.eventmangement.domain.model.EventCategory;
-import at.fhv.eventmangement.domain.exceptions.ValidationException;
+import at.fhv.eventmangement.application.exceptions.InvalidInputException;
 import at.fhv.eventmangement.domain.repositories.EventCategoryRepository;
 import at.fhv.eventmangement.application.services.EventCategoryService;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +38,7 @@ public class EventCategoryServiceImpl implements EventCategoryService {
         String name = form.getCategoryName().trim();
 
         if (eventCategoryRepository.existsByCategoryNameIgnoreCase(name)) {
-            throw new ValidationException(
+            throw new InvalidInputException(
                     Map.of("categoryName", "category already exists"));
         }
 

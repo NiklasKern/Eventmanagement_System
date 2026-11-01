@@ -3,7 +3,7 @@ package at.fhv.eventmangement.presentation.controllers;
 import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.form.EventForm;
-import at.fhv.eventmangement.domain.exceptions.ValidationException;
+import at.fhv.eventmangement.application.exceptions.InvalidInputException;
 import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventService;
 import jakarta.validation.Valid;
@@ -65,8 +65,8 @@ public class EventController {
         // Check if form is valid ( Mandatory, Date in the future, ...)
         try {
             eventService.addEvent(form);
-        } catch (ValidationException ex) {
-            ex.getFieldErrors().forEach((field, msg) ->
+        } catch (InvalidInputException ex) {
+            ex.getFiedErrors().forEach((field, msg) ->
                     bindingResult.rejectValue(field, "invalid", msg));
             return ADD_EVENT;
         }

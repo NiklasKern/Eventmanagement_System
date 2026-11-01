@@ -2,7 +2,7 @@ package at.fhv.eventmangement.application.services.impl;
 
 import at.fhv.eventmangement.application.form.EventOrganizerForm;
 import at.fhv.eventmangement.domain.model.EventOrganizer;
-import at.fhv.eventmangement.domain.exceptions.ValidationException;
+import at.fhv.eventmangement.application.exceptions.InvalidInputException;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
 import at.fhv.eventmangement.application.services.EventOrganizerService;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +28,7 @@ public class EventOrganizerServiceImpl implements EventOrganizerService {
 
         if(eventOrganizerRepository.existsByOrganizerNameIgnoreCase(form.getOrganizerName()))
         {
-            throw new ValidationException(Map.of("organizerName","organizer name already exists"));
+            throw new InvalidInputException(Map.of("organizerName","organizer name already exists"));
         }
 
         LocalDateTime now = LocalDateTime.now();

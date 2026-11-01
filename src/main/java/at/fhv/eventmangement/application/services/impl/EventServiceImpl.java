@@ -8,7 +8,7 @@ import at.fhv.eventmangement.domain.model.EventCategory;
 import at.fhv.eventmangement.domain.model.EventOrganizer;
 import at.fhv.eventmangement.domain.model.EventStatus;
 import at.fhv.eventmangement.application.form.EventForm;
-import at.fhv.eventmangement.domain.exceptions.ValidationException;
+import at.fhv.eventmangement.application.exceptions.InvalidInputException;
 import at.fhv.eventmangement.domain.repositories.EventCategoryRepository;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
 import at.fhv.eventmangement.domain.repositories.EventRepository;
@@ -51,18 +51,18 @@ public class EventServiceImpl implements EventService {
     public EventDto addEvent(EventForm form) {
 
         if (form.getMinParticipants() > form.getMaxParticipants()) {
-            throw new ValidationException(
+            throw new InvalidInputException(
                     Map.of("maxParticipants", "must not be less than minimum participants"));
         }
 
-        if(eventRepository.existsByName(form.getName())) {
-            throw new ValidationException(
+        if (eventRepository.existsByName(form.getName())) {
+            throw new InvalidInputException(
                     Map.of("name", "event name already exists"));
         }
 
         EventCategory category = eventCategoryRepository
                 .findById(form.getEventCategoryId())
-                .orElseThrow(() -> new ValidationException(
+                .orElseThrow(() -> new InvalidInputException(
                         Map.of("eventCategoryId", "unknown category")));
 
         EventOrganizer organizer = eventOrganizerRepository.findByOrganizerName(EventmanagementApplicationRunner.DEFAULT_ORGANIZER).orElseThrow();
