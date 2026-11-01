@@ -7,8 +7,6 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface EventDateMapper {
-    @Mapping(target = "updated", ignore = true)
-    @Mapping(target = "created", ignore = true)
     @Mapping(target = "event", ignore = true)
     EventDate fromDto(EventDateDto eventDateDto);
     EventDateDto toDto(EventDate eventDate);
