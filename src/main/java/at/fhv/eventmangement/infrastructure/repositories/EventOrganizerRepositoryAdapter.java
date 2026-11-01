@@ -28,12 +28,12 @@ public class EventOrganizerRepositoryAdapter implements EventOrganizerRepository
     }
 
     @Override
-    public Optional<EventOrganizer> findByOrganizerName(String organizerName) {
-        return jpa.findByOrganizerName(organizerName).map(mapper::toDomain);
+    public Optional<EventOrganizer> findByContactInfoName(String name) {
+        return jpa.findByContactInfoName(name).map(mapper::toDomain);
     }
 
     @Override
-    public boolean existsByOrganizerNameIgnoreCase(String organizerName) {
-        return jpa.existsByOrganizerNameIgnoreCase(organizerName);
+    public boolean existsByContactInfoNameIgnoreCase(String name) {
+        return jpa.existsByContactInfoNameIgnoreCase(name);
     }
 }
