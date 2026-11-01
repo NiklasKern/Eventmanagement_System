@@ -26,6 +26,8 @@ public class EventOrganizerServiceImpl implements EventOrganizerService {
     @Transactional
     public void addOrganizer(EventOrganizerForm form) {
 
+        String name = form.getOrganizerName().trim();
+
         if(eventOrganizerRepository.existsByOrganizerNameIgnoreCase(form.getOrganizerName()))
         {
             throw new InvalidInputException(Map.of("organizerName","organizer name already exists"));
