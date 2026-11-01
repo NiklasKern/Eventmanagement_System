@@ -4,17 +4,19 @@ import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventBookingDto;
 import at.fhv.eventmangement.application.form.EventBookingForm;
 import at.fhv.eventmangement.application.mappers.EventBookingMapper;
+import at.fhv.eventmangement.application.services.BookingNumberGenerator;
 import at.fhv.eventmangement.application.services.EventBookingService;
 import at.fhv.eventmangement.domain.exceptions.ValidationException;
 import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.domain.repositories.CustomerRepository;
 import at.fhv.eventmangement.domain.repositories.EventBookingRepository;
 import at.fhv.eventmangement.domain.repositories.EventDateRepository;
-import at.fhv.eventmangement.infrastructure.BookingNumberGenerator;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -70,6 +72,16 @@ public class EventBookingServiceImpl implements EventBookingService {
                 .build();
 
         return eventBookingMapper.toDto(eventBookingRepository.save(booking));
+    }
+
+    @Override
+    public List<String> getBookingTypes() {
+        return Arrays.stream(EventBookingType.values()).map(Enum::name).toList();
+    }
+
+    @Override
+    public List<String> getPaymentMethods() {
+        return Arrays.stream(PaymentMethod.values()).map(Enum::name).toList();
     }
 
     // Only until there is a login

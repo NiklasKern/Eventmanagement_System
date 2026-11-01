@@ -10,8 +10,6 @@ import at.fhv.eventmangement.application.services.EventBookingService;
 import at.fhv.eventmangement.domain.exceptions.ValidationException;
 import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventService;
-import at.fhv.eventmangement.domain.model.EventBookingType;
-import at.fhv.eventmangement.domain.model.PaymentMethod;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -53,13 +51,13 @@ public class EventController {
 
     // Dropdown values for the book_event
     @ModelAttribute("bookingTypes")
-    public EventBookingType[] bookingTypes() {
-        return EventBookingType.values();
+    public List<String> bookingTypes() {
+        return eventBookingService.getBookingTypes();
     }
 
     @ModelAttribute("paymentMethods")
-    public PaymentMethod[] paymentMethods() {
-        return PaymentMethod.values();
+    public List<String> paymentMethods() {
+        return eventBookingService.getPaymentMethods();
     }
 
     //Show
@@ -152,7 +150,7 @@ public class EventController {
                 String bookingNumber = eventBookingService.book(id, form).bookingNumber();
                 redirectAttributes.addFlashAttribute("successMessage",
                         "Event successfully booked (" + bookingNumber + ")");
-                return "redirect:/customer/event-list";
+                return "redirect:/customer/events";
             } catch (ValidationException ex) {
                 ex.getFieldErrors().forEach((field, msg) ->
                         bindingResult.rejectValue(field, "invalid", msg));
