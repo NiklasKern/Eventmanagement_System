@@ -4,14 +4,14 @@ import java.util.Map;
 
 // Thrown when user input cant be accepted (duplicate, min > max, etc.)
 public class InvalidInputException  extends RuntimeException{
-    private final Map<String, String> fiedErrors;
+    private final Map<String, String> fieldErrors;
 
     public InvalidInputException(Map<String, String> fiedErrors) {
         super("Invalid input");
-        this.fiedErrors = fiedErrors;
+        this.fieldErrors = fiedErrors;
     }
 
-    public Map<String, String> getFiedErrors() {
-        return fiedErrors;
+    public Map<String, String> getFieldErrors() {
+        return fieldErrors;
     }
 }

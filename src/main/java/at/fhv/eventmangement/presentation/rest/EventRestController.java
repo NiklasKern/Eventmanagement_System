@@ -30,7 +30,7 @@ public class EventRestController {
     @ExceptionHandler(InvalidInputException.class)
     public ProblemDetail handleInvalidInput(InvalidInputException ex) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
-        pd.setProperty("errors", ex.getFiedErrors());
+        pd.setProperty("errors", ex.getFieldErrors());
         return pd;
     }
 

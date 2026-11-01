@@ -66,7 +66,7 @@ public class EventController {
         try {
             eventService.addEvent(form);
         } catch (InvalidInputException ex) {
-            ex.getFiedErrors().forEach((field, msg) ->
+            ex.getFieldErrors().forEach((field, msg) ->
                     bindingResult.rejectValue(field, "invalid", msg));
             return ADD_EVENT;
         }
