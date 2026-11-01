@@ -37,7 +37,7 @@ public class EventOrganizerServiceImpl implements EventOrganizerService {
 
         eventOrganizerRepository.save(new EventOrganizer(
                 null,
-                form.getOrganizerName().trim(),
+                name,
                 form.getAddress(),
                 form.getEmail(),
                 now,
