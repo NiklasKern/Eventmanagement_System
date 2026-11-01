@@ -1,16 +1,11 @@
 package at.fhv.eventmangement.domain.model;
 
 import lombok.*;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
+import lombok.experimental.SuperBuilder;
 
 @Getter
-@Builder
+@SuperBuilder
 @AllArgsConstructor
-public class EventCategory {
-    private UUID id;
+public class EventCategory extends BaseModel {
     private String categoryName;
-    private LocalDateTime created;
-    private LocalDateTime updated;
 }
