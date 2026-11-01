@@ -1,4 +1,4 @@
-package at.fhv.eventmangement.infrastructure;
+package at.fhv.eventmangement.application.services;
 
 import at.fhv.eventmangement.domain.repositories.EventBookingRepository;
 import org.springframework.stereotype.Component;
