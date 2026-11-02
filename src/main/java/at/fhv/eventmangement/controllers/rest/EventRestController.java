@@ -8,7 +8,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.http.ResponseEntity;
-
+import at.fhv.eventmangement.domain.dto.EventForm;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,5 +36,10 @@ public class EventRestController {
     public ResponseEntity<EventDto> getEventById(@PathVariable UUID id) {
         Event event = eventService.getEventById(id);
         return ResponseEntity.ok(eventMapper.toDto(event));
+    }
+    @PutMapping(path = "/events/{id}")
+    public ResponseEntity<EventDto> updateEvent(@PathVariable UUID id, @Valid @RequestBody EventForm form) {
+        Event updatedEvent = eventService.updateEvent(id, form);
+        return ResponseEntity.ok(eventMapper.toDto(updatedEvent));
     }
 }
