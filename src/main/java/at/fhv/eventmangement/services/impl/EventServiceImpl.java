@@ -61,5 +61,20 @@ public class EventServiceImpl implements EventService {
         return eventRepository.findById(id)
                 .orElseThrow(() -> new EventManagementException("Event with ID " + id + " not found"));
     }
+    @Override
+    public Event updateEvent(UUID id, EventForm form) {
+        Event existingEvent = getEventById(id);
+
+        existingEvent.setName(form.getName());
+        existingEvent.setDescription(Optional.ofNullable(form.getDescription()).orElse(""));
+        existingEvent.setOrganizer(form.getOrganizer());
+        existingEvent.setLocation(form.getLocation());
+        existingEvent.setDateTime(form.getDateTime());
+        existingEvent.setPrice(form.getPrice());
+        existingEvent.setCapacity(form.getCapacity());
+        existingEvent.setEventCategory(form.getEventCategory());
+
+        return eventRepository.save(existingEvent);
+    }
 
 }

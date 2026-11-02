@@ -12,4 +12,5 @@ public interface EventService {
     Event addEvent(@Valid EventForm form);
     List<String> getEventCategories();
     Event getEventById(UUID id);
+    Event updateEvent(UUID id, @Valid EventForm form);
 }
