@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/add-event"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+        "name": "Event 2",
+        "description": "This is the second evet ever!",
+        "dateTime": "2027-01-10T17:00:00",
+        "price": 60.0,
+        "capacity": 100,
+        "eventStatus": "OPEN",
+        "eventCategory": "Party"
+    }
+order: 2000
