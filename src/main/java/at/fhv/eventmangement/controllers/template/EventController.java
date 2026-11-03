@@ -19,6 +19,7 @@ public class EventController {
 
     private static final String ADD_EVENT = "add_event";
     private static final String MY_EVENTS = "my_events";
+    private static final String MODIFY_EVENT = "modify_event";
 
     private final EventMapper eventMapper;
     private final EventService eventService;
@@ -62,6 +63,12 @@ public class EventController {
     public String createEvent(Model model) {
         model.addAttribute("event", new EventForm());
         return ADD_EVENT;
+    }
+
+    @GetMapping(path = "/event/manage/modify")
+    public String modifyEvent(Model model) {
+        model.addAttribute("event", new EventForm());
+        return MODIFY_EVENT;
     }
 }
 
