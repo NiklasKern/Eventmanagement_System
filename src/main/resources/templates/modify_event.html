@@ -4,14 +4,14 @@
         <link th:href="@{/styles/cssandjs/my_events.css}" rel="stylesheet"/>
         <link th:href="@{/styles/cssandjs/add_event.css}" rel="stylesheet"/>
         <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet"/>
-        <title>Create an Event</title>
+        <title>Modify an Event</title>
     </head>
     <body>
         <main class="event-form">
             <h1>Modify an Event</h1>
-            <p class="subtitle">Edit in the details to modify your event.</p>
+            <p class="subtitle">Edit the details to modify your event.</p>
 
-            <form th:action="@{/event/manage/create}" th:object="${event}"
+            <form th:action="@{/event/manage/modify}" th:object="${event}"
                   method="post">
                 <div class="form-group">
                     <label for="name">Event name *</label>
@@ -120,7 +120,7 @@
                    th:each="err : ${#sets.toSet(#fields.errors('*'))}"
                    th:text="${err}"></p>
 
-                <button type="submit">Create Event</button>
+                <button type="submit">Modify Event</button>
 
                 <p id="message" role="status" aria-live="polite"></p>
             </form>
