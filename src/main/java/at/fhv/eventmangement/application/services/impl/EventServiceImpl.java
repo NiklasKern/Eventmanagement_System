@@ -47,6 +47,36 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    public EventDto updateEvent(UUID id, EventForm form) {
+            Event existingEvent = eventMapper.fromDto(getEventById(id));
+
+            existingEvent.setName(form.getName());
+            existingEvent.setDescription(Optional.ofNullable(form.getDescription()).orElse(""));
+            existingEvent.setLocation(form.getLocation());
+            existingEvent.setPrice(form.getPrice());
+            existingEvent.setMinParticipants(form.getMinParticipants());
+            existingEvent.setMaxParticipants(form.getMaxParticipants());
+
+
+        for(EventDateForm eventDateForm : form.getEventDates())
+        {
+            existingEvent.getEventDates().add(EventDate.builder()
+                    .event(existingEvent)
+                    .startTime(eventDateForm.getStartTime())
+                    .endTime(eventDateForm.getEndTime())
+                    .build());
+        }
+        EventCategory category = eventCategoryRepository
+                .findById(form.getEventCategoryId())
+                .orElseThrow(() -> new ValidationException(
+                        Map.of("eventCategoryId", "unknown category")));
+        existingEvent.setEventCategory(category);
+            return eventMapper.toDto(eventRepository.save(existingEvent));
+
+
+    }
+
+    @Override
     public List<EventDto> getActiveEvents() {
         return eventRepository.findByEventStatus(EventStatus.ACTIVE).stream().map(eventMapper::toDto).toList();
     }

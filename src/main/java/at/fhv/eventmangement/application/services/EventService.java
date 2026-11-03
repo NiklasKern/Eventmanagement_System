@@ -12,4 +12,5 @@ public interface EventService {
     List<EventDto> getActiveEvents();
     EventDto addEvent(@Valid EventForm form);
     EventDto getEventById(UUID id);
+    EventDto updateEvent(UUID id, @Valid EventForm form);
 }
