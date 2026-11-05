@@ -1,6 +1,8 @@
 package at.fhv.eventmangement.presentation.rest;
 
+import at.fhv.eventmangement.application.dto.ContactInfoDto;
 import at.fhv.eventmangement.application.dto.EventCategoryDto;
+import at.fhv.eventmangement.application.dto.EventDateDto;
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.dto.EventOrganizerDto;
 import at.fhv.eventmangement.application.exceptions.InvalidInputException;
@@ -38,10 +40,13 @@ class EventRestControllerTest {
     void getEvents_returnsEventsAsJson() throws Exception {
         UUID id = UUID.randomUUID();
         EventDto event = new EventDto(id, "Summer Hike", "A nice walk", "Dornbirn",
-                LocalDateTime.of(2027, 1, 10, 17, 0), new BigDecimal("150.00"), 5, 50, "OPEN",
+                new BigDecimal("150.00"), 5, 50, "ACTIVE",
                 new EventCategoryDto(UUID.randomUUID(), "Hiking"),
-                new EventOrganizerDto(UUID.randomUUID(), "Alpine Club", "Street 1", "a@b.at"));
-        when(eventService.getEvents()).thenReturn(List.of(event));
+                new EventOrganizerDto(UUID.randomUUID(), new ContactInfoDto("Alpine Club", "Street 1", "a@b.at")),
+                List.of(new EventDateDto(UUID.randomUUID(),
+                        LocalDateTime.of(2027, 1, 10, 17, 0),
+                        LocalDateTime.of(2027, 1, 10, 20, 0))));
+        when(eventService.getAllEvents()).thenReturn(List.of(event));
 
         mockMvc.perform(get("/getEvents"))
                 .andExpect(status().isOk())
@@ -52,14 +57,16 @@ class EventRestControllerTest {
                 .andExpect(jsonPath("$[0].price").value(150.00))
                 .andExpect(jsonPath("$[0].minParticipants").value(5))
                 .andExpect(jsonPath("$[0].maxParticipants").value(50))
-                .andExpect(jsonPath("$[0].eventStatus").value("OPEN"))
+                .andExpect(jsonPath("$[0].eventStatus").value("ACTIVE"))
                 .andExpect(jsonPath("$[0].eventCategory.categoryName").value("Hiking"))
-                .andExpect(jsonPath("$[0].eventOrganizer.organizerName").value("Alpine Club"));
+                .andExpect(jsonPath("$[0].eventOrganizer.contactInfo.name").value("Alpine Club"))
+                .andExpect(jsonPath("$[0].eventDates.length()").value(1))
+                .andExpect(jsonPath("$[0].eventDates[0].startTime").value("2027-01-10T17:00:00"));
     }
 
     @Test
     void getEvents_returnsEmptyArrayWhenNoEvents() throws Exception {
-        when(eventService.getEvents()).thenReturn(List.of());
+        when(eventService.getAllEvents()).thenReturn(List.of());
 
         mockMvc.perform(get("/getEvents"))
                 .andExpect(status().isOk())
@@ -68,7 +75,7 @@ class EventRestControllerTest {
 
     @Test
     void invalidInput_returns400WithFieldErrors() throws Exception {
-        when(eventService.getEvents())
+        when(eventService.getAllEvents())
                 .thenThrow(new InvalidInputException(Map.of("name", "event name already exists")));
 
         mockMvc.perform(get("/getEvents"))
@@ -80,7 +87,7 @@ class EventRestControllerTest {
 
     @Test
     void unexpectedError_returns500WithoutInternalDetails() throws Exception {
-        when(eventService.getEvents()).thenThrow(new IllegalStateException("database password is wrong"));
+        when(eventService.getAllEvents()).thenThrow(new IllegalStateException("database password is wrong"));
 
         mockMvc.perform(get("/getEvents"))
                 .andExpect(status().isInternalServerError())

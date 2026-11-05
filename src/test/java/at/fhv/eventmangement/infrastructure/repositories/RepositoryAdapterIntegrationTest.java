@@ -1,8 +1,10 @@
 package at.fhv.eventmangement.infrastructure.repositories;
 
 import at.fhv.eventmangement.TestcontainersConfiguration;
+import at.fhv.eventmangement.domain.model.ContactInfo;
 import at.fhv.eventmangement.domain.model.Event;
 import at.fhv.eventmangement.domain.model.EventCategory;
+import at.fhv.eventmangement.domain.model.EventDate;
 import at.fhv.eventmangement.domain.model.EventOrganizer;
 import at.fhv.eventmangement.domain.model.EventStatus;
 import at.fhv.eventmangement.domain.repositories.EventCategoryRepository;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,11 +43,11 @@ class RepositoryAdapterIntegrationTest {
     private final LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
     private EventCategory saveCategory(String name) {
-        return categoryRepository.save(new EventCategory(null, name, now, now));
+        return categoryRepository.save(new EventCategory(name));
     }
 
     private EventOrganizer saveOrganizer(String name) {
-        return organizerRepository.save(new EventOrganizer(null, name, "Street 1", "a@b.at", now, now));
+        return organizerRepository.save(new EventOrganizer(new ContactInfo(name, "Street 1", "a@b.at")));
     }
 
     private Event newEvent(String name, EventCategory category, EventOrganizer organizer) {
@@ -55,12 +58,13 @@ class RepositoryAdapterIntegrationTest {
                 .price(new BigDecimal("25.50"))
                 .minParticipants(3)
                 .maxParticipants(20)
-                .dateTime(now.plusDays(10))
-                .eventStatus(EventStatus.OPEN)
+                .eventDates(List.of(EventDate.builder()
+                        .startTime(now.plusDays(10))
+                        .endTime(now.plusDays(10).plusHours(3))
+                        .build()))
+                .eventStatus(EventStatus.ACTIVE)
                 .eventCategory(category)
                 .eventOrganizer(organizer)
-                .created(now)
-                .updated(now)
                 .build();
     }
 
@@ -75,7 +79,7 @@ class RepositoryAdapterIntegrationTest {
                 .get()
                 .satisfies(found -> {
                     assertThat(found.getCategoryName()).isEqualTo("Climbing");
-                    assertThat(found.getCreated()).isEqualTo(now);
+                    assertThat(found.getCreated()).as("set by @CreationTimestamp").isNotNull();
                 });
         assertThat(categoryRepository.findAll())
                 .extracting(EventCategory::getCategoryName)
@@ -98,22 +102,22 @@ class RepositoryAdapterIntegrationTest {
         EventOrganizer saved = saveOrganizer("Alpine Club");
 
         assertThat(saved.getId()).isNotNull();
-        assertThat(organizerRepository.findByOrganizerName("Alpine Club"))
+        assertThat(organizerRepository.findByContactInfoName("Alpine Club"))
                 .get()
                 .satisfies(found -> {
                     assertThat(found.getId()).isEqualTo(saved.getId());
-                    assertThat(found.getAddress()).isEqualTo("Street 1");
-                    assertThat(found.getEmail()).isEqualTo("a@b.at");
+                    assertThat(found.getContactInfo().getAddress()).isEqualTo("Street 1");
+                    assertThat(found.getContactInfo().getEmail()).isEqualTo("a@b.at");
                 });
-        assertThat(organizerRepository.findByOrganizerName("Nobody")).isEmpty();
+        assertThat(organizerRepository.findByContactInfoName("Nobody")).isEmpty();
     }
 
     @Test
     void organizer_existsCheckIgnoresCase() {
         saveOrganizer("Alpine Club");
 
-        assertThat(organizerRepository.existsByOrganizerNameIgnoreCase("alpine club")).isTrue();
-        assertThat(organizerRepository.existsByOrganizerNameIgnoreCase("Other Club")).isFalse();
+        assertThat(organizerRepository.existsByContactInfoNameIgnoreCase("alpine club")).isTrue();
+        assertThat(organizerRepository.existsByContactInfoNameIgnoreCase("Other Club")).isFalse();
     }
 
     // events
@@ -129,7 +133,7 @@ class RepositoryAdapterIntegrationTest {
         assertThat(saved.getEventCategory().getId()).isEqualTo(category.getId());
         assertThat(saved.getEventCategory().getCategoryName()).isEqualTo("Climbing");
         assertThat(saved.getEventOrganizer().getId()).isEqualTo(organizer.getId());
-        assertThat(saved.getEventOrganizer().getOrganizerName()).isEqualTo("Alpine Club");
+        assertThat(saved.getEventOrganizer().getContactInfo().getName()).isEqualTo("Alpine Club");
     }
 
     @Test
@@ -148,10 +152,13 @@ class RepositoryAdapterIntegrationTest {
                     assertThat(found.getPrice()).isEqualByComparingTo("25.50");
                     assertThat(found.getMinParticipants()).isEqualTo(3);
                     assertThat(found.getMaxParticipants()).isEqualTo(20);
-                    assertThat(found.getDateTime()).isEqualTo(now.plusDays(10));
-                    assertThat(found.getEventStatus()).isEqualTo(EventStatus.OPEN);
+                    assertThat(found.getEventDates()).singleElement().satisfies(d -> {
+                        assertThat(d.getStartTime()).isEqualTo(now.plusDays(10));
+                        assertThat(d.getEndTime()).isEqualTo(now.plusDays(10).plusHours(3));
+                    });
+                    assertThat(found.getEventStatus()).isEqualTo(EventStatus.ACTIVE);
                     assertThat(found.getEventCategory().getCategoryName()).isEqualTo("Climbing");
-                    assertThat(found.getEventOrganizer().getOrganizerName()).isEqualTo("Alpine Club");
+                    assertThat(found.getEventOrganizer().getContactInfo().getName()).isEqualTo("Alpine Club");
                 });
     }
 

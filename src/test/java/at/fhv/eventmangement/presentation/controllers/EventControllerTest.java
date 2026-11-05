@@ -1,12 +1,13 @@
 package at.fhv.eventmangement.presentation.controllers;
 
-import at.fhv.eventmangement.application.dto.EventCategoryDto;
-import at.fhv.eventmangement.application.dto.EventDto;
-import at.fhv.eventmangement.application.dto.EventOrganizerDto;
+import at.fhv.eventmangement.application.dto.*;
 import at.fhv.eventmangement.application.exceptions.InvalidInputException;
 import at.fhv.eventmangement.application.form.EventForm;
+import at.fhv.eventmangement.application.services.CustomerService;
+import at.fhv.eventmangement.application.services.EventBookingService;
 import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventService;
+import at.fhv.eventmangement.domain.model.ContactInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,10 @@ class EventControllerTest {
     private EventService eventService;
     @MockitoBean
     private EventCategoryService eventCategoryService;
+    @MockitoBean
+    private EventBookingService eventBookingService;
+    @MockitoBean
+    private CustomerService customerService;
 
     private final UUID categoryId = UUID.randomUUID();
 
@@ -60,15 +65,19 @@ class EventControllerTest {
                 .thenReturn(List.of(new EventCategoryDto(categoryId, "Hiking")));
     }
 
-    private static String futureDate() {
+    private static String futureStart() {
         return LocalDateTime.now().plusDays(10).withSecond(0).withNano(0).toString();
+    }
+
+    private static String futureEnd() {
+        return LocalDateTime.now().plusDays(10).plusHours(3).withSecond(0).withNano(0).toString();
     }
 
     // "Create Event" button opens the form
 
     @Test
     void eventList_hasCreateEventButtonLinkingToTheForm() throws Exception {
-        when(eventService.getEvents()).thenReturn(List.of());
+        when(eventService.getAllEvents()).thenReturn(List.of());
 
         mockMvc.perform(get("/events"))
                 .andExpect(status().isOk())
@@ -96,7 +105,7 @@ class EventControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("add_event"))
                 .andExpect(model().attributeHasFieldErrors("event",
-                        "name", "location", "dateTime", "price",
+                        "name", "location", "eventDates", "price",
                         "minParticipants", "maxParticipants", "eventCategoryId"))
                 .andExpect(model().attributeExists("categories"))
                 .andExpect(content().string(containsString(MANDATORY)));
@@ -108,7 +117,8 @@ class EventControllerTest {
     void submitWithoutName_rejectsOnlyName() throws Exception {
         mockMvc.perform(post("/event/manage/create")
                         .param("location", "Dornbirn")
-                        .param("dateTime", futureDate())
+                        .param("eventDates[0].startTime", futureStart())
+                        .param("eventDates[0].endTime", futureEnd())
                         .param("price", "25")
                         .param("minParticipants", "3")
                         .param("maxParticipants", "20")
@@ -126,7 +136,8 @@ class EventControllerTest {
         mockMvc.perform(post("/event/manage/create")
                         .param("name", "Summer Hike")
                         .param("location", "Dornbirn")
-                        .param("dateTime", futureDate())
+                        .param("eventDates[0].startTime", futureStart())
+                        .param("eventDates[0].endTime", futureEnd())
                         .param("price", "0")
                         .param("minParticipants", "3")
                         .param("maxParticipants", "0")
@@ -144,7 +155,8 @@ class EventControllerTest {
         mockMvc.perform(post("/event/manage/create")
                         .param("name", "Summer Hike")
                         .param("location", "Dornbirn")
-                        .param("dateTime", futureDate())
+                        .param("eventDates[0].startTime", futureStart())
+                        .param("eventDates[0].endTime", futureEnd())
                         .param("price", "abc")
                         .param("minParticipants", "3")
                         .param("maxParticipants", "20")
@@ -163,7 +175,8 @@ class EventControllerTest {
         mockMvc.perform(post("/event/manage/create")
                         .param("name", "Summer Hike")
                         .param("location", "Dornbirn")
-                        .param("dateTime", futureDate())
+                        .param("eventDates[0].startTime", futureStart())
+                        .param("eventDates[0].endTime", futureEnd())
                         .param("price", "25")
                         .param("minParticipants", "3")
                         .param("maxParticipants", "20")
@@ -182,7 +195,8 @@ class EventControllerTest {
                         .param("name", "Summer Hike")
                         .param("description", "A nice walk")
                         .param("location", "Dornbirn")
-                        .param("dateTime", futureDate())
+                        .param("eventDates[0].startTime", futureStart())
+                        .param("eventDates[0].endTime", futureEnd())
                         .param("price", "25.50")
                         .param("minParticipants", "3")
                         .param("maxParticipants", "20")
@@ -201,7 +215,7 @@ class EventControllerTest {
 
     @Test
     void eventList_showsSuccessMessageAfterRedirect() throws Exception {
-        when(eventService.getEvents()).thenReturn(List.of());
+        when(eventService.getAllEvents()).thenReturn(List.of());
 
         mockMvc.perform(get("/events").flashAttr("successMessage", "Event successfully saved"))
                 .andExpect(status().isOk())
@@ -210,7 +224,7 @@ class EventControllerTest {
 
     @Test
     void eventList_withoutFlash_showsNoSuccessMessage() throws Exception {
-        when(eventService.getEvents()).thenReturn(List.of());
+        when(eventService.getAllEvents()).thenReturn(List.of());
 
         mockMvc.perform(get("/events"))
                 .andExpect(content().string(not(containsString("Event successfully saved"))));
@@ -219,10 +233,14 @@ class EventControllerTest {
     @Test
     void eventList_showsEventsFromService() throws Exception {
         EventDto event = new EventDto(UUID.randomUUID(), "Summer Hike", "A nice walk", "Dornbirn",
-                LocalDateTime.of(2027, 1, 10, 17, 0), new BigDecimal("150"), 5, 50, "OPEN",
+                new BigDecimal("150"), 5, 50,"OPEN",
                 new EventCategoryDto(categoryId, "Hiking"),
-                new EventOrganizerDto(UUID.randomUUID(), "Alpine Club", "Street 1", "a@b.at"));
-        when(eventService.getEvents()).thenReturn(List.of(event));
+                new EventOrganizerDto(UUID.randomUUID(), new ContactInfoDto("Alpine Club", "Street 1", "a@b.at")),
+                List.of(new EventDateDto(UUID.randomUUID(), LocalDateTime.of(2027, 1, 10, 17, 0),
+                                                            LocalDateTime.of(2027, 1, 10, 20, 0)))
+        );
+
+        when(eventService.getAllEvents()).thenReturn(List.of(event));
 
         mockMvc.perform(get("/events"))
                 .andExpect(status().isOk())
@@ -237,7 +255,7 @@ class EventControllerTest {
 
     @Test
     void eventList_withoutEvents_showsEmptyState() throws Exception {
-        when(eventService.getEvents()).thenReturn(List.of());
+        when(eventService.getAllEvents()).thenReturn(List.of());
 
         mockMvc.perform(get("/events"))
                 .andExpect(content().string(containsString("You have not created any events yet.")));

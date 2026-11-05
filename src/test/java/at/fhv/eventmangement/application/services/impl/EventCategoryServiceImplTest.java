@@ -38,7 +38,7 @@ class EventCategoryServiceImplTest {
     @Test
     void getAllEventCategories_mapsEveryCategory() {
         LocalDateTime now = LocalDateTime.now();
-        EventCategory hiking = new EventCategory(UUID.randomUUID(), "Hiking", now, now);
+        EventCategory hiking = new EventCategory("Hiking");
         EventCategoryDto hikingDto = new EventCategoryDto(hiking.getId(), "Hiking");
         when(eventCategoryRepository.findAll()).thenReturn(List.of(hiking));
         when(eventCategoryMapper.toDto(hiking)).thenReturn(hikingDto);
@@ -47,7 +47,7 @@ class EventCategoryServiceImplTest {
     }
 
     @Test
-    void addCategory_savesTrimmedNameWithTimestamps() {
+    void addCategory_savesTrimmedName() {
         when(eventCategoryRepository.existsByCategoryNameIgnoreCase("Climbing")).thenReturn(false);
 
         eventCategoryService.addCategory(new EventCategoryForm("  Climbing  "));
@@ -57,8 +57,7 @@ class EventCategoryServiceImplTest {
         EventCategory saved = captor.getValue();
         assertThat(saved.getId()).isNull();
         assertThat(saved.getCategoryName()).isEqualTo("Climbing");
-        assertThat(saved.getCreated()).isNotNull();
-        assertThat(saved.getUpdated()).isEqualTo(saved.getCreated());
+        // created/updated are set by the database (@CreationTimestamp/@UpdateTimestamp)
     }
 
     @Test
