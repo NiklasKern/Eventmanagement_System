@@ -1,9 +1,9 @@
 package at.fhv.eventmangement.application.services.impl;
 
+import at.fhv.eventmangement.application.exceptions.InvalidInputException;
 import at.fhv.eventmangement.application.form.EventOrganizerForm;
 import at.fhv.eventmangement.domain.model.ContactInfo;
 import at.fhv.eventmangement.domain.model.EventOrganizer;
-import at.fhv.eventmangement.application.exceptions.InvalidInputException;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
 import at.fhv.eventmangement.application.services.EventOrganizerService;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +29,7 @@ public class EventOrganizerServiceImpl implements EventOrganizerService {
 
         String name = form.getOrganizerName().trim();
 
-        if(eventOrganizerRepository.existsByContactInfoNameIgnoreCase(form.getOrganizerName()))
+        if(eventOrganizerRepository.existsByContactInfoNameIgnoreCase(name))
         {
             throw new InvalidInputException(Map.of("organizerName","organizer name already exists"));
         }

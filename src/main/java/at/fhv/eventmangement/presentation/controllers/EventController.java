@@ -44,7 +44,7 @@ public class EventController {
         this.customerService = customerService;
     }
 
-    // Categories for the dropdown in the add_event.html
+    // Categories for the dropdown in the add_event
     @ModelAttribute("categories")
     public List<EventCategoryDto> categories() {
         return eventCategoryService.getAllEventCategories();

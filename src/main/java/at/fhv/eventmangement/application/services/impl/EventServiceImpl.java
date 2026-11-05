@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,7 +52,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventDto> getAllEvents() {
+    public List<EventDto> getEvents() {
         return eventRepository.findAll().stream().map(eventMapper::toDto).toList();
     }
 
@@ -61,12 +60,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventDto addEvent(EventForm eventForm) {
 
-        if (eventForm.getMinParticipants() > eventForm.getMaxParticipants()) {
-            throw new InvalidInputException(
-                    Map.of("maxParticipants", "must not be less than minimum participants"));
-        }
-
-        if (eventRepository.existsByName(eventForm.getName())) {
+        if(eventRepository.existsByName(eventForm.getName())) {
             throw new InvalidInputException(
                     Map.of("name", "event name already exists"));
         }
