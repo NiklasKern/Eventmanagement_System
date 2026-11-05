@@ -2,7 +2,8 @@ package at.fhv.eventmangement.application.services.impl;
 
 import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventDto;
-import at.fhv.eventmangement.application.exceptions.InvalidInputException;
+import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
+import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
 import at.fhv.eventmangement.application.form.EventDateForm;
 import at.fhv.eventmangement.application.form.EventForm;
 import at.fhv.eventmangement.application.mappers.EventMapper;
@@ -80,7 +81,7 @@ class EventServiceImplTest {
     // getEvents
 
     @Test
-    void getAllEvents_mapsEveryEventFromRepository() {
+    void getAllEvents_mapsEveryEventFromRepository() throws Exception {
         Event first = Event.builder().name("A").build();
         Event second = Event.builder().name("B").build();
         EventDto firstDto = mock(EventDto.class);
@@ -95,7 +96,7 @@ class EventServiceImplTest {
     }
 
     @Test
-    void getEvents_returnsEmptyListWhenNoAllEvents() {
+    void getEvents_returnsEmptyListWhenNoAllEvents() throws Exception {
         when(eventRepository.findAll()).thenReturn(List.of());
 
         assertThat(eventService.getAllEvents()).isEmpty();
@@ -104,7 +105,7 @@ class EventServiceImplTest {
     // addEvent
 
     @Test
-    void addEvent_savesOpenEventWithCategoryAndDefaultOrganizer() {
+    void addEvent_savesOpenEventWithCategoryAndDefaultOrganizer() throws Exception {
         EventForm form = validForm();
         when(eventRepository.existsByName(form.getName())).thenReturn(false);
         when(eventCategoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
@@ -135,7 +136,7 @@ class EventServiceImplTest {
     }
 
     @Test
-    void addEvent_returnsDtoOfTheSavedEventNotTheUnsavedOne() {
+    void addEvent_returnsDtoOfTheSavedEventNotTheUnsavedOne() throws Exception {
         EventForm form = validForm();
         Event savedWithId = Event.builder().id(UUID.randomUUID()).name(form.getName()).build();
         EventDto expected = mock(EventDto.class);
@@ -150,7 +151,7 @@ class EventServiceImplTest {
     }
 
     @Test
-    void addEvent_storesEmptyStringWhenDescriptionIsMissing() {
+    void addEvent_storesEmptyStringWhenDescriptionIsMissing() throws Exception {
         EventForm form = validForm();
         form.setDescription(null);
         when(eventCategoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
@@ -165,7 +166,7 @@ class EventServiceImplTest {
     }
 
     @Test
-    void addEvent_acceptsMinEqualToMax() {
+    void addEvent_acceptsMinEqualToMax() throws Exception {
         EventForm form = validForm();
         form.setMinParticipants(10);
         form.setMaxParticipants(10);
@@ -183,26 +184,24 @@ class EventServiceImplTest {
     // min > max is validated by EventForm (@AssertTrue), see EventFormValidationTest
 
     @Test
-    void addEvent_rejectsDuplicateName() {
+    void addEvent_rejectsDuplicateName() throws Exception {
         EventForm form = validForm();
         when(eventRepository.existsByName("Summer Hike")).thenReturn(true);
 
         assertThatThrownBy(() -> eventService.addEvent(form))
-                .isInstanceOf(InvalidInputException.class)
-                .satisfies(ex -> assertThat(((InvalidInputException) ex).getFieldErrors())
-                        .containsEntry("name", "event name already exists"));
+                .isInstanceOf(EventAlreadyExistsException.class)
+                .hasMessage("event name already exists");
         verify(eventRepository, never()).save(any());
     }
 
     @Test
-    void addEvent_rejectsUnknownCategory() {
+    void addEvent_rejectsUnknownCategory() throws Exception {
         EventForm form = validForm();
         when(eventCategoryRepository.findById(category.getId())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> eventService.addEvent(form))
-                .isInstanceOf(InvalidInputException.class)
-                .satisfies(ex -> assertThat(((InvalidInputException) ex).getFieldErrors())
-                        .containsEntry("eventCategoryId", "unknown category"));
+                .isInstanceOf(EventCategoryNotFoundException.class)
+                .hasMessage("unknown category");
         verify(eventRepository, never()).save(any());
     }
 }

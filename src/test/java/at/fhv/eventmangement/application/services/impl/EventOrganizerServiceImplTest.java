@@ -1,6 +1,6 @@
 package at.fhv.eventmangement.application.services.impl;
 
-import at.fhv.eventmangement.application.exceptions.InvalidInputException;
+import at.fhv.eventmangement.domain.exceptions.EventOrganizerAlreadyExistsException;
 import at.fhv.eventmangement.application.form.EventOrganizerForm;
 import at.fhv.eventmangement.domain.model.ContactInfo;
 import at.fhv.eventmangement.domain.model.EventOrganizer;
@@ -29,7 +29,7 @@ class EventOrganizerServiceImplTest {
     private EventOrganizerServiceImpl eventOrganizerService;
 
     @Test
-    void addOrganizer_savesTrimmedNameAndContactData() {
+    void addOrganizer_savesTrimmedNameAndContactData() throws Exception {
         eventOrganizerService.addOrganizer(
                 new EventOrganizerForm("Alpine Club", "Hauptstrasse 1", "info@alpine.at"));
 
@@ -43,14 +43,13 @@ class EventOrganizerServiceImplTest {
     }
 
     @Test
-    void addOrganizer_rejectsDuplicateName() {
+    void addOrganizer_rejectsDuplicateName() throws Exception {
         when(eventOrganizerRepository.existsByContactInfoNameIgnoreCase("Alpine Club")).thenReturn(true);
 
         assertThatThrownBy(() -> eventOrganizerService.addOrganizer(
                 new EventOrganizerForm("Alpine Club", "Hauptstrasse 1", "info@alpine.at")))
-                .isInstanceOf(InvalidInputException.class)
-                .satisfies(ex -> assertThat(((InvalidInputException) ex).getFieldErrors())
-                        .containsEntry("organizerName", "organizer name already exists"));
+                .isInstanceOf(EventOrganizerAlreadyExistsException.class)
+                .hasMessage("organizer name already exists");
         verify(eventOrganizerRepository, never()).save(any());
     }
 }

@@ -2,7 +2,8 @@ package at.fhv.eventmangement;
 
 import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.dto.EventDto;
-import at.fhv.eventmangement.application.exceptions.InvalidInputException;
+import at.fhv.eventmangement.domain.exceptions.EventCategoryAlreadyExistsException;
+import at.fhv.eventmangement.domain.exceptions.EventOrganizerAlreadyExistsException;
 import at.fhv.eventmangement.application.form.EventCategoryForm;
 import at.fhv.eventmangement.application.form.EventOrganizerForm;
 import at.fhv.eventmangement.application.services.EventCategoryService;
@@ -55,16 +56,16 @@ class CreateEventAcceptanceTest {
     private UUID categoryId;
 
     @BeforeEach
-    void ensureReferenceData() {
+    void ensureReferenceData() throws Exception {
         try {
             organizerService.addOrganizer(new EventOrganizerForm(
                     EventmanagementApplicationRunner.DEFAULT_ORGANIZER, "Street 1", "org@test.com"));
-        } catch (InvalidInputException alreadyThere) {
+        } catch (EventOrganizerAlreadyExistsException alreadyThere) {
             // created by an earlier test
         }
         try {
             categoryService.addCategory(new EventCategoryForm(CATEGORY));
-        } catch (InvalidInputException alreadyThere) {
+        } catch (EventCategoryAlreadyExistsException alreadyThere) {
             // created by an earlier test
         }
         categoryId = categoryService.getAllEventCategories().stream()

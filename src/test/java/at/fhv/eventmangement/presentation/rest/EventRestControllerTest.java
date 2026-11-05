@@ -5,7 +5,7 @@ import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.dto.EventDateDto;
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.dto.EventOrganizerDto;
-import at.fhv.eventmangement.application.exceptions.InvalidInputException;
+import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
 import at.fhv.eventmangement.application.services.EventService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +16,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.Mockito.when;
@@ -25,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * REST API tests: (local InvalidInputException handler + GlobalExceptionHandler).
+ * REST API tests (GlobalExceptionHandler).
  */
 @WebMvcTest(EventRestController.class)
 class EventRestControllerTest {
@@ -74,15 +73,14 @@ class EventRestControllerTest {
     }
 
     @Test
-    void invalidInput_returns400WithFieldErrors() throws Exception {
-        when(eventService.getAllEvents())
-                .thenThrow(new InvalidInputException(Map.of("name", "event name already exists")));
+    void unknownEvent_returns404() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(eventService.getEventById(id)).thenThrow(new EventNotFoundException());
 
-        mockMvc.perform(get("/getEvents"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.detail").value("Validation failed"))
-                .andExpect(jsonPath("$.errors.name").value("event name already exists"));
+        mockMvc.perform(get("/customer/event/{id}/info", id))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.detail").value("event does not exist"));
     }
 
     @Test

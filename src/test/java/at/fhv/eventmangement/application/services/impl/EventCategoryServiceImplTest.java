@@ -1,7 +1,7 @@
 package at.fhv.eventmangement.application.services.impl;
 
 import at.fhv.eventmangement.application.dto.EventCategoryDto;
-import at.fhv.eventmangement.application.exceptions.InvalidInputException;
+import at.fhv.eventmangement.domain.exceptions.EventCategoryAlreadyExistsException;
 import at.fhv.eventmangement.application.form.EventCategoryForm;
 import at.fhv.eventmangement.application.mappers.EventCategoryMapper;
 import at.fhv.eventmangement.domain.model.EventCategory;
@@ -15,7 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -36,7 +35,7 @@ class EventCategoryServiceImplTest {
     private EventCategoryServiceImpl eventCategoryService;
 
     @Test
-    void getAllEventCategories_mapsEveryCategory() {
+    void getAllEventCategories_mapsEveryCategory() throws Exception {
         LocalDateTime now = LocalDateTime.now();
         EventCategory hiking = new EventCategory("Hiking");
         EventCategoryDto hikingDto = new EventCategoryDto(hiking.getId(), "Hiking");
@@ -47,7 +46,7 @@ class EventCategoryServiceImplTest {
     }
 
     @Test
-    void addCategory_savesTrimmedName() {
+    void addCategory_savesTrimmedName() throws Exception {
         when(eventCategoryRepository.existsByCategoryNameIgnoreCase("Climbing")).thenReturn(false);
 
         eventCategoryService.addCategory(new EventCategoryForm("  Climbing  "));
@@ -61,23 +60,22 @@ class EventCategoryServiceImplTest {
     }
 
     @Test
-    void addCategory_rejectsDuplicateName() {
+    void addCategory_rejectsDuplicateName() throws Exception {
         when(eventCategoryRepository.existsByCategoryNameIgnoreCase("Hiking")).thenReturn(true);
 
         assertThatThrownBy(() -> eventCategoryService.addCategory(new EventCategoryForm("Hiking")))
-                .isInstanceOf(InvalidInputException.class)
-                .satisfies(ex -> assertThat(((InvalidInputException) ex).getFieldErrors())
-                        .containsEntry("categoryName", "category already exists"));
+                .isInstanceOf(EventCategoryAlreadyExistsException.class)
+                .hasMessage("category already exists");
         verify(eventCategoryRepository, never()).save(any());
     }
 
     @Test
-    void addCategory_checksDuplicatesWithTheTrimmedName() {
+    void addCategory_checksDuplicatesWithTheTrimmedName() throws Exception {
         // "Hiking " must be recognised as the existing "Hiking"
         when(eventCategoryRepository.existsByCategoryNameIgnoreCase("Hiking")).thenReturn(true);
 
         assertThatThrownBy(() -> eventCategoryService.addCategory(new EventCategoryForm("Hiking ")))
-                .isInstanceOf(InvalidInputException.class);
+                .isInstanceOf(EventCategoryAlreadyExistsException.class);
         verify(eventCategoryRepository, never()).save(any());
     }
 }
