@@ -52,7 +52,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventDto> getEvents() {
+    public List<EventDto> getAllEvents() {
         return eventRepository.findAll().stream().map(eventMapper::toDto).toList();
     }
 
