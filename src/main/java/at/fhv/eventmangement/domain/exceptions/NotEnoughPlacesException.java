@@ -1,4 +1,4 @@
-package at.fhv.eventmangement.application.exceptions;
+package at.fhv.eventmangement.domain.exceptions;
 
 // Thrown when the booking needs more places than are left
 public class NotEnoughPlacesException extends EventManagementException {

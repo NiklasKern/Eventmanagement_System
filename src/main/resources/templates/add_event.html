@@ -119,7 +119,7 @@
 
         <!-- Each different error message gets shown only once -->
         <p class="field-error"
-           th:each="err : ${#sets.toSet(#fields.errors('*'))}"
+           th:each="err : ${#sets.toSet(#fields.errors('all'))}"
            th:text="${err}"></p>
 
         <button type="submit">Create Event</button>

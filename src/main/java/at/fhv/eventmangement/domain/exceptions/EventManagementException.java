@@ -1,4 +1,4 @@
-package at.fhv.eventmangement.application.exceptions;
+package at.fhv.eventmangement.domain.exceptions;
 
 // Base for all application specific exceptions.
 // Checked on purpose: every caller has to declare or handle each exception explicitly.

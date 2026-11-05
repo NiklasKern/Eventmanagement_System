@@ -1,4 +1,4 @@
-package at.fhv.eventmangement.application.exceptions;
+package at.fhv.eventmangement.domain.exceptions;
 
 // Thrown when the (default) customer does not exist
 public class CustomerNotFoundException extends EventManagementException {

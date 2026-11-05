@@ -1,6 +1,6 @@
 package at.fhv.eventmangement.presentation.advice;
 
-import at.fhv.eventmangement.application.exceptions.EventNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;

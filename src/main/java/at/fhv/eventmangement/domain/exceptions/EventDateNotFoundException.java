@@ -1,4 +1,4 @@
-package at.fhv.eventmangement.application.exceptions;
+package at.fhv.eventmangement.domain.exceptions;
 
 // Thrown when the selected date does not exist or does not belong to the event
 public class EventDateNotFoundException extends EventManagementException {

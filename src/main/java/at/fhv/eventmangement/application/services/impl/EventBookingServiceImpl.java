@@ -2,22 +2,24 @@ package at.fhv.eventmangement.application.services.impl;
 
 import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventBookingDto;
+import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.EventDateNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.EventNotBookableException;
+import at.fhv.eventmangement.domain.exceptions.NotEnoughPlacesException;
 import at.fhv.eventmangement.application.form.EventBookingForm;
 import at.fhv.eventmangement.application.mappers.EventBookingMapper;
 import at.fhv.eventmangement.application.services.BookingNumberGenerator;
 import at.fhv.eventmangement.application.services.EventBookingService;
-import at.fhv.eventmangement.domain.exceptions.ValidationException;
 import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.domain.repositories.CustomerRepository;
 import at.fhv.eventmangement.domain.repositories.EventBookingRepository;
 import at.fhv.eventmangement.domain.repositories.EventDateRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -38,17 +40,18 @@ public class EventBookingServiceImpl implements EventBookingService {
     }
 
     @Override
-    @Transactional
-    public EventBookingDto book(UUID eventId, EventBookingForm form) {
+    @Transactional(rollbackFor = Exception.class)
+    public EventBookingDto book(UUID eventId, EventBookingForm form)
+            throws EventDateNotFoundException, EventNotBookableException, NotEnoughPlacesException, CustomerNotFoundException {
 
         EventDate eventDate = eventDateRepository.findById(form.getEventDateId())
                 .filter(date -> date.getEvent().getId().equals(eventId))
-                .orElseThrow(() -> new ValidationException(Map.of("eventDateId", "unknown event date")));
+                .orElseThrow(EventDateNotFoundException::new);
 
         Event event = eventDate.getEvent();
 
         if (event.getEventStatus() != EventStatus.ACTIVE) {
-            throw new ValidationException(Map.of("eventDateId", "event is not open for booking"));
+            throw new EventNotBookableException();
         }
 
         // Only group bookings choose the number of places
@@ -56,8 +59,7 @@ public class EventBookingServiceImpl implements EventBookingService {
 
         int booked = eventBookingRepository.sumBookedPlaces(eventDate.getId());
         if (booked + places > event.getMaxParticipants()) {
-            throw new ValidationException(Map.of("places",
-                    "only " + (event.getMaxParticipants() - booked) + " places left"));
+            throw new NotEnoughPlacesException(event.getMaxParticipants() - booked);
         }
 
         EventBooking booking = EventBooking.builder()
@@ -86,7 +88,8 @@ public class EventBookingServiceImpl implements EventBookingService {
 
     // Only until there is a login
     //every booking belongs to the default customer!!
-    private Customer currentCustomer() {
-        return customerRepository.findByContactInfoName(EventmanagementApplicationRunner.DEFAULT_CUSTOMER).orElseThrow();
+    private Customer currentCustomer() throws CustomerNotFoundException {
+        return customerRepository.findByContactInfoName(EventmanagementApplicationRunner.DEFAULT_CUSTOMER)
+                .orElseThrow(CustomerNotFoundException::new);
     }
 }

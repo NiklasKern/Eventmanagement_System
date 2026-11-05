@@ -41,7 +41,7 @@ public class EventmanagementApplicationRunner implements ApplicationRunner {
     }
 
     @Override
-    public void run(@NonNull ApplicationArguments args){
+    public void run(@NonNull ApplicationArguments args) throws Exception {
 //        eventService.addEvent(new Event(
 //                null,
 //                "Event 1",

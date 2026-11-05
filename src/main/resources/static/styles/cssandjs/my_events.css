@@ -171,6 +171,12 @@ a, a:hover {
     color: var(--color-primary);
 }
 
+.FlashError {
+    border-color: var(--color-error-border);
+    background: var(--color-error-bg);
+    color: var(--color-error-text);
+}
+
 /*Event table*/
 .TableWrapper {
     overflow-x: auto;
