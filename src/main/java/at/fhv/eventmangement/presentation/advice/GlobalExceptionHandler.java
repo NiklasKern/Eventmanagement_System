@@ -1,5 +1,6 @@
 package at.fhv.eventmangement.presentation.advice;
 
+import at.fhv.eventmangement.application.exceptions.EventNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -36,6 +37,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
         pd.setProperty("errors", errors);
         return pd;
+    }
+
+    // 404 - requested event does not exist
+    @ExceptionHandler(EventNotFoundException.class)
+    public ProblemDetail handleEventNotFound(EventNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     // 400 - Valid on a RequestBody failed (@NotBlank, @Positive, ...)
