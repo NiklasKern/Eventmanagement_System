@@ -136,3 +136,23 @@ button:active {
 }
 
 .field-error { color: #b3261e; font-size: 0.875rem; margin: 0.25rem 0 0; }
+
+/*Date input*/
+.date-inputs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.date-inputs input[type="datetime-local"] {
+    width: auto;
+    display: inline-block;
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+.date-inputs span,
+.date-inputs button {
+    flex: 0 0 auto;
+}

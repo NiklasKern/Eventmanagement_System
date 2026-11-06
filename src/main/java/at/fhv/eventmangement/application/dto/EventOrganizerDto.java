@@ -4,8 +4,6 @@ import java.util.UUID;
 
 public record EventOrganizerDto(
         UUID id,
-        String organizerName,
-        String address,
-        String email
+        ContactInfoDto contactInfo
 ) {
 }

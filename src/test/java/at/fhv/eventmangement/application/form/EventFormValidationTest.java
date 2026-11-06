@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -44,7 +45,11 @@ class EventFormValidationTest {
                 .name("Summer Hike")
                 .description("A nice walk")
                 .location("Dornbirn")
-                .dateTime(LocalDateTime.now().plusDays(10))
+                .eventDates(List.of(EventDateForm.builder()
+                        .startTime(LocalDateTime.now().plusDays(10))
+                        .endTime(LocalDateTime.now().plusDays(10).plusHours(3))
+                        .build()
+                ))
                 .price(new BigDecimal("25.00"))
                 .minParticipants(3)
                 .maxParticipants(20)
@@ -73,7 +78,7 @@ class EventFormValidationTest {
         assertThat(errors)
                 .containsEntry("name", MANDATORY)
                 .containsEntry("location", MANDATORY)
-                .containsEntry("dateTime", MANDATORY)
+                .containsEntry("eventDates", "please add at least one date")
                 .containsEntry("price", MANDATORY)
                 .containsEntry("minParticipants", MANDATORY)
                 .containsEntry("maxParticipants", MANDATORY)
@@ -147,8 +152,20 @@ class EventFormValidationTest {
     @Test
     void pastDate_isRejected() {
         EventForm form = validForm();
-        form.setDateTime(LocalDateTime.now().minusDays(1));
+        form.setEventDates(List.of(EventDateForm.builder()
+                .startTime(LocalDateTime.now().minusDays(1))
+                .endTime(LocalDateTime.now().minusDays(1).plusHours(3))
+                .build()
+        ));
+        assertThat(errorsOf(form)).containsEntry("eventDates[0].startTime", "Date has to be in the future");
+    }
 
-        assertThat(errorsOf(form)).containsEntry("dateTime", "Date has to be in the future");
+    @Test
+    void minGreaterThanMax_isRejected() {
+        EventForm form = validForm();
+        form.setMinParticipants(30);
+        form.setMaxParticipants(20);
+
+        assertThat(errorsOf(form)).containsEntry("maxParticipantsValid", "must not be less than minimum participants");
     }
 }

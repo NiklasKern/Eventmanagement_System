@@ -2,13 +2,12 @@ package at.fhv.eventmangement.application.services.impl;
 
 import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventDto;
-import at.fhv.eventmangement.application.exceptions.InvalidInputException;
+import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
+import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
+import at.fhv.eventmangement.application.form.EventDateForm;
 import at.fhv.eventmangement.application.form.EventForm;
 import at.fhv.eventmangement.application.mappers.EventMapper;
-import at.fhv.eventmangement.domain.model.Event;
-import at.fhv.eventmangement.domain.model.EventCategory;
-import at.fhv.eventmangement.domain.model.EventOrganizer;
-import at.fhv.eventmangement.domain.model.EventStatus;
+import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.domain.repositories.EventCategoryRepository;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
 import at.fhv.eventmangement.domain.repositories.EventRepository;
@@ -58,9 +57,8 @@ class EventServiceImplTest {
     @BeforeEach
     void setUp() {
         LocalDateTime now = LocalDateTime.now();
-        category = new EventCategory(UUID.randomUUID(), "Hiking", now, now);
-        organizer = new EventOrganizer(UUID.randomUUID(),
-                EventmanagementApplicationRunner.DEFAULT_ORGANIZER, "Street 1", "org@test.com", now, now);
+        category = new EventCategory("Hiking");
+        organizer = new EventOrganizer(new ContactInfo(EventmanagementApplicationRunner.DEFAULT_ORGANIZER, "Street 1", "org@test.com"));
     }
 
     private EventForm validForm() {
@@ -68,7 +66,11 @@ class EventServiceImplTest {
                 .name("Summer Hike")
                 .description("A nice walk")
                 .location("Dornbirn")
-                .dateTime(LocalDateTime.now().plusDays(10))
+                .eventDates(List.of(EventDateForm.builder()
+                        .startTime(LocalDateTime.now().plusDays(10))
+                        .endTime(LocalDateTime.now().plusDays(10).plusHours(3))
+                        .build()
+                ))
                 .price(new BigDecimal("25.00"))
                 .minParticipants(3)
                 .maxParticipants(20)
@@ -79,7 +81,7 @@ class EventServiceImplTest {
     // getEvents
 
     @Test
-    void getEvents_mapsEveryEventFromRepository() {
+    void getAllEvents_mapsEveryEventFromRepository() throws Exception {
         Event first = Event.builder().name("A").build();
         Event second = Event.builder().name("B").build();
         EventDto firstDto = mock(EventDto.class);
@@ -88,26 +90,26 @@ class EventServiceImplTest {
         when(eventMapper.toDto(first)).thenReturn(firstDto);
         when(eventMapper.toDto(second)).thenReturn(secondDto);
 
-        List<EventDto> result = eventService.getEvents();
+        List<EventDto> result = eventService.getAllEvents();
 
         assertThat(result).containsExactly(firstDto, secondDto);
     }
 
     @Test
-    void getEvents_returnsEmptyListWhenNoEvents() {
+    void getEvents_returnsEmptyListWhenNoAllEvents() throws Exception {
         when(eventRepository.findAll()).thenReturn(List.of());
 
-        assertThat(eventService.getEvents()).isEmpty();
+        assertThat(eventService.getAllEvents()).isEmpty();
     }
 
     // addEvent
 
     @Test
-    void addEvent_savesOpenEventWithCategoryAndDefaultOrganizer() {
+    void addEvent_savesOpenEventWithCategoryAndDefaultOrganizer() throws Exception {
         EventForm form = validForm();
         when(eventRepository.existsByName(form.getName())).thenReturn(false);
         when(eventCategoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
-        when(eventOrganizerRepository.findByOrganizerName(EventmanagementApplicationRunner.DEFAULT_ORGANIZER))
+        when(eventOrganizerRepository.findByContactInfoName(EventmanagementApplicationRunner.DEFAULT_ORGANIZER))
                 .thenReturn(Optional.of(organizer));
         when(eventRepository.save(any(Event.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -123,21 +125,23 @@ class EventServiceImplTest {
         assertThat(saved.getPrice()).isEqualByComparingTo("25.00");
         assertThat(saved.getMinParticipants()).isEqualTo(3);
         assertThat(saved.getMaxParticipants()).isEqualTo(20);
-        assertThat(saved.getDateTime()).isEqualTo(form.getDateTime());
-        assertThat(saved.getEventStatus()).isEqualTo(EventStatus.OPEN);
+        assertThat(saved.getEventDates()).singleElement().satisfies(date -> {
+            assertThat(date.getStartTime()).isEqualTo(form.getEventDates().get(0).getStartTime());
+            assertThat(date.getEndTime()).isEqualTo(form.getEventDates().get(0).getEndTime());
+            assertThat(date.getEvent()).isSameAs(saved);
+        });
+        assertThat(saved.getEventStatus()).isEqualTo(EventStatus.ACTIVE);
         assertThat(saved.getEventCategory()).isSameAs(category);
         assertThat(saved.getEventOrganizer()).isSameAs(organizer);
-        assertThat(saved.getCreated()).isNotNull();
-        assertThat(saved.getUpdated()).isEqualTo(saved.getCreated());
     }
 
     @Test
-    void addEvent_returnsDtoOfTheSavedEventNotTheUnsavedOne() {
+    void addEvent_returnsDtoOfTheSavedEventNotTheUnsavedOne() throws Exception {
         EventForm form = validForm();
         Event savedWithId = Event.builder().id(UUID.randomUUID()).name(form.getName()).build();
         EventDto expected = mock(EventDto.class);
         when(eventCategoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
-        when(eventOrganizerRepository.findByOrganizerName(any())).thenReturn(Optional.of(organizer));
+        when(eventOrganizerRepository.findByContactInfoName(any())).thenReturn(Optional.of(organizer));
         when(eventRepository.save(any(Event.class))).thenReturn(savedWithId);
         when(eventMapper.toDto(savedWithId)).thenReturn(expected);
 
@@ -147,11 +151,11 @@ class EventServiceImplTest {
     }
 
     @Test
-    void addEvent_storesEmptyStringWhenDescriptionIsMissing() {
+    void addEvent_storesEmptyStringWhenDescriptionIsMissing() throws Exception {
         EventForm form = validForm();
         form.setDescription(null);
         when(eventCategoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
-        when(eventOrganizerRepository.findByOrganizerName(any())).thenReturn(Optional.of(organizer));
+        when(eventOrganizerRepository.findByContactInfoName(any())).thenReturn(Optional.of(organizer));
         when(eventRepository.save(any(Event.class))).thenAnswer(inv -> inv.getArgument(0));
 
         eventService.addEvent(form);
@@ -162,12 +166,12 @@ class EventServiceImplTest {
     }
 
     @Test
-    void addEvent_acceptsMinEqualToMax() {
+    void addEvent_acceptsMinEqualToMax() throws Exception {
         EventForm form = validForm();
         form.setMinParticipants(10);
         form.setMaxParticipants(10);
         when(eventCategoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
-        when(eventOrganizerRepository.findByOrganizerName(any())).thenReturn(Optional.of(organizer));
+        when(eventOrganizerRepository.findByContactInfoName(any())).thenReturn(Optional.of(organizer));
         when(eventRepository.save(any(Event.class))).thenAnswer(inv -> inv.getArgument(0));
 
         eventService.addEvent(form);
@@ -177,40 +181,27 @@ class EventServiceImplTest {
 
     // addEvent: rejected input
 
-    @Test
-    void addEvent_rejectsMinGreaterThanMax() {
-        EventForm form = validForm();
-        form.setMinParticipants(30);
-        form.setMaxParticipants(20);
-
-        assertThatThrownBy(() -> eventService.addEvent(form))
-                .isInstanceOf(InvalidInputException.class)
-                .satisfies(ex -> assertThat(((InvalidInputException) ex).getFieldErrors())
-                        .containsKey("maxParticipants"));
-        verify(eventRepository, never()).save(any());
-    }
+    // min > max is validated by EventForm (@AssertTrue), see EventFormValidationTest
 
     @Test
-    void addEvent_rejectsDuplicateName() {
+    void addEvent_rejectsDuplicateName() throws Exception {
         EventForm form = validForm();
         when(eventRepository.existsByName("Summer Hike")).thenReturn(true);
 
         assertThatThrownBy(() -> eventService.addEvent(form))
-                .isInstanceOf(InvalidInputException.class)
-                .satisfies(ex -> assertThat(((InvalidInputException) ex).getFieldErrors())
-                        .containsEntry("name", "event name already exists"));
+                .isInstanceOf(EventAlreadyExistsException.class)
+                .hasMessage("event name already exists");
         verify(eventRepository, never()).save(any());
     }
 
     @Test
-    void addEvent_rejectsUnknownCategory() {
+    void addEvent_rejectsUnknownCategory() throws Exception {
         EventForm form = validForm();
         when(eventCategoryRepository.findById(category.getId())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> eventService.addEvent(form))
-                .isInstanceOf(InvalidInputException.class)
-                .satisfies(ex -> assertThat(((InvalidInputException) ex).getFieldErrors())
-                        .containsEntry("eventCategoryId", "unknown category"));
+                .isInstanceOf(EventCategoryNotFoundException.class)
+                .hasMessage("unknown category");
         verify(eventRepository, never()).save(any());
     }
 }

@@ -2,7 +2,8 @@ package at.fhv.eventmangement;
 
 import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.dto.EventDto;
-import at.fhv.eventmangement.application.exceptions.InvalidInputException;
+import at.fhv.eventmangement.domain.exceptions.EventCategoryAlreadyExistsException;
+import at.fhv.eventmangement.domain.exceptions.EventOrganizerAlreadyExistsException;
 import at.fhv.eventmangement.application.form.EventCategoryForm;
 import at.fhv.eventmangement.application.form.EventOrganizerForm;
 import at.fhv.eventmangement.application.services.EventCategoryService;
@@ -55,16 +56,16 @@ class CreateEventAcceptanceTest {
     private UUID categoryId;
 
     @BeforeEach
-    void ensureReferenceData() {
+    void ensureReferenceData() throws Exception {
         try {
             organizerService.addOrganizer(new EventOrganizerForm(
                     EventmanagementApplicationRunner.DEFAULT_ORGANIZER, "Street 1", "org@test.com"));
-        } catch (InvalidInputException alreadyThere) {
+        } catch (EventOrganizerAlreadyExistsException alreadyThere) {
             // created by an earlier test
         }
         try {
             categoryService.addCategory(new EventCategoryForm(CATEGORY));
-        } catch (InvalidInputException alreadyThere) {
+        } catch (EventCategoryAlreadyExistsException alreadyThere) {
             // created by an earlier test
         }
         categoryId = categoryService.getAllEventCategories().stream()
@@ -87,7 +88,8 @@ class CreateEventAcceptanceTest {
                 .param("name", name)
                 .param("description", "A nice walk")
                 .param("location", "Dornbirn")
-                .param("dateTime", LocalDateTime.now().plusDays(10).withSecond(0).withNano(0).toString())
+                .param("eventDates[0].startTime", LocalDateTime.now().plusDays(10).withSecond(0).withNano(0).toString())
+                .param("eventDates[0].endTime", LocalDateTime.now().plusDays(10).plusHours(3).withSecond(0).withNano(0).toString())
                 .param("price", "25.50")
                 .param("minParticipants", String.valueOf(min))
                 .param("maxParticipants", String.valueOf(max))
@@ -122,29 +124,30 @@ class CreateEventAcceptanceTest {
                 .andExpect(content().string(containsString(name)))
                 .andExpect(content().string(containsString(CATEGORY)));
 
-        // 5. And it really is in the database, with status OPEN and the default organizer
-        assertThat(eventService.getEvents())
+        // 5. And it really is in the database, with status ACTIVE and the default organizer
+        assertThat(eventService.getAllEvents())
                 .filteredOn(e -> e.name().equals(name))
                 .singleElement()
                 .satisfies(e -> {
                     assertThat(e.id()).isNotNull();
-                    assertThat(e.eventStatus()).isEqualTo("OPEN");
+                    assertThat(e.eventStatus()).isEqualTo("ACTIVE");
+                    assertThat(e.eventDates()).hasSize(1);
                     assertThat(e.eventCategory().categoryName()).isEqualTo(CATEGORY);
-                    assertThat(e.eventOrganizer().organizerName())
+                    assertThat(e.eventOrganizer().contactInfo().name())
                             .isEqualTo(EventmanagementApplicationRunner.DEFAULT_ORGANIZER);
                 });
     }
 
     @Test
     void createEvent_withMissingMandatoryFields_savesNothing() throws Exception {
-        int before = eventService.getEvents().size();
+        int before = eventService.getAllEvents().size();
 
         mockMvc.perform(post("/event/manage/create").param("description", "only a description"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("add_event"))
                 .andExpect(content().string(containsString("please fill mandatory fields")));
 
-        assertThat(eventService.getEvents()).hasSize(before);
+        assertThat(eventService.getAllEvents()).hasSize(before);
     }
 
     @Test
@@ -157,7 +160,7 @@ class CreateEventAcceptanceTest {
                 .andExpect(view().name("add_event"))
                 .andExpect(content().string(containsString("event name already exists")));
 
-        assertThat(eventService.getEvents())
+        assertThat(eventService.getAllEvents())
                 .extracting(EventDto::name)
                 .filteredOn(name::equals)
                 .hasSize(1);
@@ -171,6 +174,6 @@ class CreateEventAcceptanceTest {
                 .andExpect(view().name("add_event"))
                 .andExpect(content().string(containsString("must not be less than minimum participants")));
 
-        assertThat(eventService.getEvents()).extracting(EventDto::name).doesNotContain(name);
+        assertThat(eventService.getAllEvents()).extracting(EventDto::name).doesNotContain(name);
     }
 }

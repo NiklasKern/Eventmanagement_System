@@ -24,6 +24,12 @@ public class EventCategoryRepositoryAdapter implements EventCategoryRepository {
     }
 
     @Override
+    @Transactional
+    public EventCategory save(EventCategory category) {
+        return mapper.toDomain(jpa.save(mapper.toEntity(category)));
+    }
+
+    @Override
     public List<EventCategory> findAll() {
         return jpa.findAll().stream().map(mapper::toDomain).toList();
     }
@@ -31,12 +37,6 @@ public class EventCategoryRepositoryAdapter implements EventCategoryRepository {
     @Override
     public Optional<EventCategory> findById(UUID id) {
         return jpa.findById(id).map(mapper::toDomain);
-    }
-
-    @Override
-    @Transactional
-    public EventCategory save(EventCategory category) {
-        return mapper.toDomain(jpa.save(mapper.toEntity(category)));
     }
 
     @Override
