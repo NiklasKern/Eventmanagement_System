@@ -2,6 +2,7 @@ package at.fhv.eventmangement.presentation.controllers;
 
 import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.dto.EventDto;
+import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
 import at.fhv.eventmangement.application.form.EventBookingForm;
 import at.fhv.eventmangement.application.form.EventDateForm;
 import at.fhv.eventmangement.application.form.EventForm;
@@ -193,13 +194,23 @@ public class EventController {
         if (bindingResult.hasErrors()) {
             return MODIFY_EVENT;
         }
+
+        EventUpdateResultDto result;
         try {
-            eventService.updateEvent(id, form);
+            result = eventService.updateEvent(id, form);
         } catch (ValidationException ex) {
             ex.getFieldErrors().forEach((field, msg) -> bindingResult.rejectValue(field, "invalid", msg));
             return MODIFY_EVENT;
         }
-        redirectAttributes.addFlashAttribute("successMessage", "Event successfully updated");
+
+        String message = "Successfully saved";
+        if (!result.notifiedCustomers().isEmpty()) {
+            message += ". " + result.notifiedCustomers().size()
+                    + " customers who booked this event have been notified: "
+                    + String.join(", ", result.notifiedCustomers());
+        }
+
+        redirectAttributes.addFlashAttribute("successMessage", message);
         return "redirect:/events";
     }
 
