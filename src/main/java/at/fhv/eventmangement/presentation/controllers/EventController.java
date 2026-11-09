@@ -34,7 +34,6 @@ public class EventController {
 
     private static final String ADD_EVENT = "add_event";
     private static final String MY_EVENTS = "my_events";
-    private static final String BOOK_EVENT = "book_event";
     private static final String CUSTOMER_EVENTS = "customer_events";
     private static final String REDIRECT_CUSTOMER_EVENTS = "redirect:/customer/events";
 
@@ -57,7 +56,7 @@ public class EventController {
         return eventCategoryService.getAllEventCategories();
     }
 
-    // Dropdown values for the book_event
+    // Dropdown values for the booking dialog in customer_events
     @ModelAttribute("bookingTypes")
     public List<String> bookingTypes() {
         return eventBookingService.getBookingTypes();
@@ -145,6 +144,7 @@ public class EventController {
         return CUSTOMER_EVENTS;
     }
 
+    // Shows the event list with the booking dialog for the event opened
     @GetMapping("/customer/event/{id}/book")
     public String bookingForm(@PathVariable UUID id, Model model, RedirectAttributes redirectAttributes) {
         try {
@@ -159,7 +159,8 @@ public class EventController {
             return REDIRECT_CUSTOMER_EVENTS;
         }
         model.addAttribute("booking", new EventBookingForm());
-        return BOOK_EVENT;
+        model.addAttribute("events", eventService.getActiveEvents());
+        return CUSTOMER_EVENTS;
     }
 
     // Saves booking, on error shows form again with invalid fields marked
@@ -186,13 +187,14 @@ public class EventController {
                 bindingResult.reject("customer", ex.getMessage());
             }
         }
-        // Show the form again with the errors
+        // Show the booking dialog again with the errors
         try {
             model.addAttribute("event", eventService.getEventById(id));
         } catch (EventNotFoundException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return REDIRECT_CUSTOMER_EVENTS;
         }
-        return BOOK_EVENT;
+        model.addAttribute("events", eventService.getActiveEvents());
+        return CUSTOMER_EVENTS;
     }
 }

@@ -299,7 +299,7 @@ class EventControllerTest {
 
         mockMvc.perform(get("/customer/event/{id}/book", eventId))
                 .andExpect(status().isOk())
-                .andExpect(view().name("book_event"))
+                .andExpect(view().name("customer_events"))
                 .andExpect(content().string(containsString("Book Summer Hike")))
                 .andExpect(content().string(containsString("test-customer")));
     }
@@ -342,7 +342,7 @@ class EventControllerTest {
 
         postGroupBooking(4)
                 .andExpect(status().isOk())
-                .andExpect(view().name("book_event"))
+                .andExpect(view().name("customer_events"))
                 .andExpect(model().attributeHasFieldErrorCode("booking", "places", "notEnoughPlaces"))
                 .andExpect(content().string(containsString("only 3 places left")));
     }
@@ -353,7 +353,7 @@ class EventControllerTest {
         when(eventService.getEventById(eventId)).thenReturn(bookableEvent());
 
         postGroupBooking(2)
-                .andExpect(view().name("book_event"))
+                .andExpect(view().name("customer_events"))
                 .andExpect(model().attributeHasFieldErrorCode("booking", "eventDateId", "notBookable"))
                 .andExpect(content().string(containsString("event is not open for booking")));
     }
@@ -364,7 +364,7 @@ class EventControllerTest {
         when(eventService.getEventById(eventId)).thenReturn(bookableEvent());
 
         postGroupBooking(2)
-                .andExpect(view().name("book_event"))
+                .andExpect(view().name("customer_events"))
                 .andExpect(model().attributeHasErrors("booking"))
                 .andExpect(content().string(containsString("customer does not exist")));
     }
@@ -374,7 +374,7 @@ class EventControllerTest {
         when(eventService.getEventById(eventId)).thenReturn(bookableEvent());
 
         mockMvc.perform(post("/customer/event/{id}/book", eventId))
-                .andExpect(view().name("book_event"))
+                .andExpect(view().name("customer_events"))
                 .andExpect(model().attributeHasFieldErrors("booking", "eventDateId", "eventBookingType", "paymentMethod"));
 
         verify(eventBookingService, never()).book(any(), any());

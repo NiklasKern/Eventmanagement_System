@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet" />
+    <link th:href="@{/styles/cssandjs/my_events.css}" rel="stylesheet" />
+    <link th:href="@{/styles/cssandjs/booking_dialog.css}" rel="stylesheet" />
+    <title>Events</title>
+</head>
+
+<body>
+<header class="AppHead">
+    <div class="HeadContainer">
+        <div class="WildPathLogo">
+            <img th:src="@{/images/leaf-icon.svg}" alt="leaf">
+            <span>WILD</span><span class="primary-green">PATH</span>
+        </div>
+        <button class="AccountButton" type="button">
+            <span class="Avatar">C</span>
+            <span class="AccountText">
+                <span class="AccountLabel">View</span>
+                <span class="AccountName">Customer</span>
+            </span>
+            <span class="Chevron">&gt;</span>
+        </button>
+    </div>
+</header>
+
+<main class="AppContent">
+    <div class="ContentContainer">
+        <div class="PageTitle">
+            <div class="PageTitleText">
+                <span class="Eyebrow">Customer</span>
+                <h1>Events</h1>
+                <p>Choose an event and book your places.</p>
+            </div>
+        </div>
+
+        <div class="FlashMessage FlashSuccess" role="status"
+             th:if="${successMessage}" th:text="${successMessage}">
+            Event successfully booked
+        </div>
+
+        <div class="FlashMessage FlashError" role="alert"
+             th:if="${errorMessage}" th:text="${errorMessage}">
+            Something went wrong
+        </div>
+
+        <div class="EmptyState" th:if="${#lists.isEmpty(events)}">
+            <p>There are no events to book yet.</p>
+        </div>
+
+        <div class="TableWrapper" th:unless="${#lists.isEmpty(events)}">
+            <table class="EventTable">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Location</th>
+                    <th class="Num">Price</th>
+                    <th class="Num">Participants</th>
+                    <th>Organizer</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="e : ${events}">
+                    <td>
+                        <span class="EventName" th:text="${e.name}">Event name</span>
+                        <span class="EventDescription"
+                              th:if="${!#strings.isEmpty(e.description)}"
+                              th:text="${e.description}"
+                              th:title="${e.description}">Description</span>
+                    </td>
+                    <td>
+                        <span class="EventCategory"
+                              th:if="${e.eventCategory != null}"
+                              th:text="${e.eventCategory.categoryName}">Category</span>
+                    </td>
+                    <td class="NoWrap">
+                        <div th:each="d, stat : ${e.eventDates}"
+                             th:text="'Day ' + ${stat.count} + ': '
+                  + ${#temporals.format(d.startTime, 'dd.MM.yyyy, HH:mm')}
+                  + ' – ' + ${#temporals.format(d.endTime, 'dd.MM.yyyy, HH:mm')}">
+                            Day 1: 01.01.2027, 09:00 – 01.01.2027, 17:00
+                        </div>
+                        <span th:if="${#lists.isEmpty(e.eventDates)}">–</span>
+                    </td>
+                    <td th:text="${e.location}">Location</td>
+                    <td class="Num" th:text="${#numbers.formatDecimal(e.price, 1, 'POINT', 2, 'COMMA')} + ' €'">150,00 €</td>
+                    <td class="Num" th:text="${e.minParticipants} + ' – ' + ${e.maxParticipants}">5 – 50</td>
+                    <td th:text="${e.eventOrganizer != null} ? ${e.eventOrganizer.contactInfo.name} : '–'">Organizer</td>
+                    <td>
+                        <a class="CreateEventButton" th:href="@{/customer/event/{id}/book(id=${e.id})}">Book</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+<dialog id="bookingDialog" class="BookingDialog" th:if="${booking != null and event != null}">
+    <div class="DialogHeader">
+        <div>
+            <h2 th:text="'Book ' + ${event.name}">Book event</h2>
+            <p class="subtitle">
+                <span th:text="${event.location}">Location</span> ·
+                <span th:text="${#numbers.formatDecimal(event.price, 1, 'POINT', 2, 'COMMA')} + ' € per place'">150,00 € per place</span>
+            </p>
+        </div>
+        <form method="dialog">
+            <button class="DialogClose" type="submit" aria-label="Close">&times;</button>
+        </form>
+    </div>
+
+    <div class="DialogBody">
+        <p class="subtitle" th:if="${!#strings.isEmpty(event.description)}" th:text="${event.description}">Description</p>
+
+        <div class="form-group" th:if="${customer != null}">
+            <label>Your details</label>
+            <p class="subtitle">
+                <span th:text="${customer.contactInfo.name}">Name</span><br>
+                <span th:text="${customer.contactInfo.address}">Address</span><br>
+                <span th:text="${customer.contactInfo.email}">Email</span>
+                <th:block th:if="${!#strings.isEmpty(customer.phone)}">
+                    <br><span th:text="${customer.phone}">Phone</span>
+                </th:block>
+            </p>
+        </div>
+
+        <form th:action="@{/customer/event/{id}/book(id=${event.id})}" th:object="${booking}" method="post">
+
+            <div class="form-group">
+                <label for="eventDateId">Date *</label>
+                <select th:field="*{eventDateId}" required>
+                    <option value="">-- choose a date --</option>
+                    <option th:each="d : ${event.eventDates}" th:value="${d.id}"
+                            th:text="${#temporals.format(d.startTime, 'dd.MM.yyyy, HH:mm')} + ' – ' + ${#temporals.format(d.endTime, 'dd.MM.yyyy, HH:mm')}"></option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="eventBookingType">Booking type *</label>
+                <select th:field="*{eventBookingType}" required>
+                    <option value="">-- choose a booking type --</option>
+                    <option th:each="t : ${bookingTypes}" th:value="${t}" th:text="${t}"></option>
+                </select>
+            </div>
+
+            <div class="form-group" id="placesGroup">
+                <label for="places">Places *</label>
+                <input type="number" th:field="*{places}" min="1" placeholder="e.g. 5">
+            </div>
+
+            <div class="form-group">
+                <label for="paymentMethod">Payment method *</label>
+                <select th:field="*{paymentMethod}" required>
+                    <option th:each="p : ${paymentMethods}" th:value="${p}" th:text="${p}"></option>
+                </select>
+            </div>
+
+            <p class="field-error"
+               th:each="err : ${#sets.toSet(#fields.errors('*'))}"
+               th:text="${err}"></p>
+
+            <div class="DialogActions">
+                <button class="SecondaryButton" type="submit" formmethod="dialog" formnovalidate>Cancel</button>
+                <button class="CreateEventButton" type="submit">Book Event</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<script th:if="${booking != null and event != null}" th:inline="javascript">
+    (function () {
+        const dialog = document.getElementById('bookingDialog');
+        const type = document.getElementById('eventBookingType');
+        const placesGroup = document.getElementById('placesGroup');
+        const places = document.getElementById('places');
+        const eventsUrl = '/customer/events';
+
+        // Places field only for group bookings
+        function togglePlaces() {
+            const isGroup = type.value === 'GROUP';
+            placesGroup.hidden = !isGroup;
+            places.disabled = !isGroup;
+            places.required = isGroup;
+        }
+        type.addEventListener('change', togglePlaces);
+        togglePlaces();
+
+        dialog.addEventListener('close', function () {
+            history.replaceState(null, '', eventsUrl);
+        });
+
+        dialog.showModal();
+    })();
+</script>
+</body>
+</html>
