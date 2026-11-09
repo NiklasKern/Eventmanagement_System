@@ -47,4 +47,10 @@ public class EventBookingRepositoryAdapter implements EventBookingRepository {
         return jpa.existsByEventDateIdAndEventBookingStatusNotIn(eventDateId,
                 List.of(EventBookingStatus.CANCELLED, EventBookingStatus.EXPIRED));
     }
+
+    @Override
+    public List<EventBooking> findActiveBookingsByEventId(UUID eventId) {
+        return jpa.findActiveByEventId(eventId, List.of(EventBookingStatus.CANCELLED, EventBookingStatus.EXPIRED))
+                .stream().map(mapper::toDomain).toList();
+    }
 }
