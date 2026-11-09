@@ -1,5 +1,7 @@
 package at.fhv.eventmangement.presentation.advice;
 
+import at.fhv.eventmangement.domain.exceptions.NotFoundException;
+import at.fhv.eventmangement.domain.exceptions.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -60,5 +62,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
     public ProblemDetail handleUnexpected(Exception ex) {
         log.error("Unexpected error", ex);
         return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
+    }
+
+    // 400 - buisness validation failed in a service
+    @ExceptionHandler(ValidationException.class)
+    public ProblemDetail handleValidation(ValidationException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
+        pd.setProperty("errors", ex.getFieldErrors());
+        return pd;
+    }
+
+    // 404 - requested object does not exist
+    @ExceptionHandler(NotFoundException.class)
+    public ProblemDetail handleNotFound(NotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 }

@@ -4,6 +4,7 @@ import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.form.EventDateForm;
 import at.fhv.eventmangement.application.mappers.EventMapper;
+import at.fhv.eventmangement.domain.exceptions.NotFoundException;
 import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.application.form.EventForm;
 import at.fhv.eventmangement.domain.exceptions.ValidationException;
@@ -41,25 +42,23 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventDto getEventById(UUID id) {
         return eventMapper.toDto(eventRepository.findById(id)
-                .orElseThrow(() -> new ValidationException(
-                        Map.of("event", "event id does not exist")))
+                .orElseThrow(() -> new NotFoundException("event" + id + " not found"))
         );
     }
 
     @Override
     public EventDto updateEvent(UUID id, EventForm form) {
-            Event existingEvent = eventMapper.fromDto(getEventById(id));
+        Event existingEvent = eventMapper.fromDto(getEventById(id));
 
-            existingEvent.setName(form.getName());
-            existingEvent.setDescription(Optional.ofNullable(form.getDescription()).orElse(""));
-            existingEvent.setLocation(form.getLocation());
-            existingEvent.setPrice(form.getPrice());
-            existingEvent.setMinParticipants(form.getMinParticipants());
-            existingEvent.setMaxParticipants(form.getMaxParticipants());
+        existingEvent.setName(form.getName());
+        existingEvent.setDescription(Optional.ofNullable(form.getDescription()).orElse(""));
+        existingEvent.setLocation(form.getLocation());
+        existingEvent.setPrice(form.getPrice());
+        existingEvent.setMinParticipants(form.getMinParticipants());
+        existingEvent.setMaxParticipants(form.getMaxParticipants());
 
 
-        for(EventDateForm eventDateForm : form.getEventDates())
-        {
+        for (EventDateForm eventDateForm : form.getEventDates()) {
             existingEvent.getEventDates().add(EventDate.builder()
                     .event(existingEvent)
                     .startTime(eventDateForm.getStartTime())
@@ -71,7 +70,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new ValidationException(
                         Map.of("eventCategoryId", "unknown category")));
         existingEvent.setEventCategory(category);
-            return eventMapper.toDto(eventRepository.save(existingEvent));
+        return eventMapper.toDto(eventRepository.save(existingEvent));
 
 
     }
@@ -90,7 +89,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventDto addEvent(EventForm eventForm) {
 
-        if(eventRepository.existsByName(eventForm.getName())) {
+        if (eventRepository.existsByName(eventForm.getName())) {
             throw new ValidationException(
                     Map.of("name", "event name already exists"));
         }
@@ -115,8 +114,7 @@ public class EventServiceImpl implements EventService {
                 .eventOrganizer(organizer)
                 .build();
 
-        for(EventDateForm eventDateForm : eventForm.getEventDates())
-        {
+        for (EventDateForm eventDateForm : eventForm.getEventDates()) {
             event.getEventDates().add(EventDate.builder()
                     .event(event)
                     .startTime(eventDateForm.getStartTime())
