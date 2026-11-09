@@ -31,6 +31,7 @@
             <div class="date-row" th:each="date, stat : *{eventDates}">
 
                 <div class="date-inputs">
+                    <input type="hidden" th:field="*{eventDates[__${stat.index}__].id}">
                     <span th:text="'Day ' + ${stat.count}">Day 1</span>
                     <input type="datetime-local" th:field="*{eventDates[__${stat.index}__].startTime}">
                     <span>to</span>

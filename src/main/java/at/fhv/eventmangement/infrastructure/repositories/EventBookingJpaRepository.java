@@ -5,6 +5,7 @@ import at.fhv.eventmangement.infrastructure.entities.EventBookingEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,4 +14,5 @@ public interface EventBookingJpaRepository extends JpaRepository<EventBookingEnt
     // Cancelled bookings free their places again
     List<EventBookingEntity> findByEventDateIdAndEventBookingStatusNot(UUID eventDateId, EventBookingStatus status);
     boolean existsByBookingNumber(String bookingNumber);
+    boolean existsByEventDateIdAndEventBookingStatusNotIn(UUID eventDateId, Collection<EventBookingStatus> statuses);
 }

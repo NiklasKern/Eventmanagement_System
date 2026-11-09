@@ -8,4 +8,5 @@ public interface EventBookingRepository {
     boolean existsByBookingNumber(String bookingNumber);
     EventBooking save(EventBooking eventBooking);
     int sumBookedPlaces(UUID eventDateId);
+    boolean hasActiveBookings(UUID eventDateId);
 }

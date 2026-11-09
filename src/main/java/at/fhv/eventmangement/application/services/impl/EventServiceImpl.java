@@ -8,6 +8,7 @@ import at.fhv.eventmangement.domain.exceptions.NotFoundException;
 import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.application.form.EventForm;
 import at.fhv.eventmangement.domain.exceptions.ValidationException;
+import at.fhv.eventmangement.domain.repositories.EventBookingRepository;
 import at.fhv.eventmangement.domain.repositories.EventCategoryRepository;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
 import at.fhv.eventmangement.domain.repositories.EventRepository;
@@ -16,10 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Validated
 @Service
@@ -29,13 +28,19 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final EventCategoryRepository eventCategoryRepository;
     private final EventOrganizerRepository eventOrganizerRepository;
+    private final EventBookingRepository eventBookingRepository;
 
     private final EventMapper eventMapper;
 
-    public EventServiceImpl(EventRepository eventRepository, EventCategoryRepository eventCategoryRepository, EventOrganizerRepository eventOrganizerRepository, EventMapper eventMapper) {
+    public EventServiceImpl(EventRepository eventRepository,
+                            EventCategoryRepository eventCategoryRepository,
+                            EventOrganizerRepository eventOrganizerRepository,
+                            EventBookingRepository eventBookingRepository,
+                            EventMapper eventMapper) {
         this.eventRepository = eventRepository;
         this.eventCategoryRepository = eventCategoryRepository;
         this.eventOrganizerRepository = eventOrganizerRepository;
+        this.eventBookingRepository = eventBookingRepository;
         this.eventMapper = eventMapper;
     }
 
@@ -43,7 +48,7 @@ public class EventServiceImpl implements EventService {
     public EventDto getEventById(UUID id) {
         return eventMapper.toDto(eventRepository.findById(id)
                 .orElseThrow(() ->
-                        new NotFoundException("event" + id + " not found"))
+                        new NotFoundException("event " + id + " not found"))
         );
     }
 
@@ -51,7 +56,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventDto updateEvent(UUID id, EventForm form) {
         Event event = eventRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("event" + id + " not found"));
+                .orElseThrow(() -> new NotFoundException("event " + id + " not found"));
 
         String name = form.getName().trim();
         if (!event.getName().equalsIgnoreCase(name) && eventRepository.existsByName(name)) {
@@ -69,16 +74,32 @@ public class EventServiceImpl implements EventService {
         event.setMaxParticipants(form.getMaxParticipants());
         event.setEventCategory(category);
 
-        // Currently deletes the old date rows, so once booking points to one of the dates it might not work anymore
-        // and we need to give the EventDateForm an id.
-        event.getEventDates().clear();
+        Map<UUID, EventDate> existing = event.getEventDates().stream().collect(Collectors.toMap(EventDate::getId, d -> d));
+
+        List<EventDate> updatedDates = new ArrayList<>();
         for (EventDateForm dateForm : form.getEventDates()) {
-            event.getEventDates().add(EventDate.builder()
-                    .event(event)
-                    .startTime(dateForm.getStartTime())
-                    .endTime(dateForm.getEndTime())
-                    .build());
+            EventDate date = dateForm.getId() == null ? null : existing.remove(dateForm.getId());
+            if (date != null) {
+                date.setStartTime(dateForm.getStartTime());
+                date.setEndTime(dateForm.getEndTime());
+                updatedDates.add(date);
+            } else {
+                updatedDates.add(EventDate.builder()
+                        .event(event)
+                        .startTime(dateForm.getStartTime())
+                        .endTime(dateForm.getEndTime())
+                        .build());
+            }
         }
+
+        for (EventDate removed : existing.values()) {
+            if (eventBookingRepository.hasActiveBookings(removed.getId())) {
+                throw new ValidationException(Map.of("eventDates", "a date with bookings cannot be removed"));
+            }
+        }
+
+        event.getEventDates().clear();
+        event.getEventDates().addAll(updatedDates);
 
         return eventMapper.toDto(eventRepository.save(event));
     }

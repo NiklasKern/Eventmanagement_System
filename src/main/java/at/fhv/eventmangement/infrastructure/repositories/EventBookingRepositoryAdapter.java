@@ -8,6 +8,7 @@ import at.fhv.eventmangement.infrastructure.mappers.EventBookingEntityMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -39,5 +40,11 @@ public class EventBookingRepositoryAdapter implements EventBookingRepository {
                 .stream()
                 .mapToInt(EventBookingEntity::getPlaces)
                 .sum();
+    }
+
+    @Override
+    public boolean hasActiveBookings(UUID eventDateId) {
+        return jpa.existsByEventDateIdAndEventBookingStatusNotIn(eventDateId,
+                List.of(EventBookingStatus.CANCELLED, EventBookingStatus.EXPIRED));
     }
 }

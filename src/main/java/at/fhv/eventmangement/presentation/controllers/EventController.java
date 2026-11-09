@@ -174,7 +174,7 @@ public class EventController {
                 .maxParticipants(dto.maxParticipants())
                 .eventCategoryId(dto.eventCategory().id())
                 .eventDates(new ArrayList<>(dto.eventDates().stream()
-                        .map(d -> new EventDateForm(d.startTime(), d.endTime()))
+                        .map(d -> EventDateForm.builder().id(d.id()).startTime(d.startTime()).endTime(d.endTime()).build())
                         .toList()))
                 .build();
         model.addAttribute("event", form);

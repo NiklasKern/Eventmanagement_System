@@ -6,6 +6,7 @@ import lombok.experimental.SuperBuilder;
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 @SuperBuilder
 @AllArgsConstructor
 public class EventDate extends BaseModel {
