@@ -2,8 +2,10 @@ package at.fhv.eventmangement.application.services.impl;
 
 import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventDto;
+import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
 import at.fhv.eventmangement.application.form.EventDateForm;
 import at.fhv.eventmangement.application.mappers.EventMapper;
+import at.fhv.eventmangement.application.services.NotificationService;
 import at.fhv.eventmangement.domain.exceptions.NotFoundException;
 import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.application.form.EventForm;
@@ -29,6 +31,7 @@ public class EventServiceImpl implements EventService {
     private final EventCategoryRepository eventCategoryRepository;
     private final EventOrganizerRepository eventOrganizerRepository;
     private final EventBookingRepository eventBookingRepository;
+    private final NotificationService notificationService;
 
     private final EventMapper eventMapper;
 
@@ -36,11 +39,13 @@ public class EventServiceImpl implements EventService {
                             EventCategoryRepository eventCategoryRepository,
                             EventOrganizerRepository eventOrganizerRepository,
                             EventBookingRepository eventBookingRepository,
+                            NotificationService notificationService,
                             EventMapper eventMapper) {
         this.eventRepository = eventRepository;
         this.eventCategoryRepository = eventCategoryRepository;
         this.eventOrganizerRepository = eventOrganizerRepository;
         this.eventBookingRepository = eventBookingRepository;
+        this.notificationService = notificationService;
         this.eventMapper = eventMapper;
     }
 
@@ -54,7 +59,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public EventDto updateEvent(UUID id, EventForm form) {
+    public EventUpdateResultDto updateEvent(UUID id, EventForm form) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("event " + id + " not found"));
 
@@ -101,7 +106,17 @@ public class EventServiceImpl implements EventService {
         event.getEventDates().clear();
         event.getEventDates().addAll(updatedDates);
 
-        return eventMapper.toDto(eventRepository.save(event));
+        Event saved = eventRepository.save(event);
+
+        Map<UUID, Customer> customers = new LinkedHashMap<>();
+        eventBookingRepository.findActiveBookingsByEventId(id)
+                .forEach(b -> customers.putIfAbsent(b.getCustomer().getId(), b.getCustomer()));
+        customers.values().forEach(c -> notificationService.notifyEventChanged(c, saved));
+
+        List<String> notified = customers.values().stream()
+                .map(c -> c.getContactInfo().getName())
+                .toList();
+        return new EventUpdateResultDto(eventMapper.toDto(saved), notified);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package at.fhv.eventmangement.presentation.rest;
 
 import at.fhv.eventmangement.application.dto.EventDto;
+import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
 import at.fhv.eventmangement.application.form.EventForm;
 import at.fhv.eventmangement.application.services.EventService;
 import jakarta.validation.Valid;
@@ -37,9 +38,8 @@ public class EventRestController {
         return ResponseEntity.ok(event);
     }
     @PutMapping(path = "/events/{id}")
-    public ResponseEntity<EventDto> updateEvent(@PathVariable UUID id, @Valid @RequestBody EventForm form) {
-        EventDto updatedEvent = eventService.updateEvent(id, form);
-        return ResponseEntity.ok(updatedEvent);
+    public ResponseEntity<EventUpdateResultDto> updateEvent(@PathVariable UUID id, @Valid @RequestBody EventForm form) {
+        return ResponseEntity.ok(eventService.updateEvent(id, form));
     }
 
 }

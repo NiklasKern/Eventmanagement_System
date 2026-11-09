@@ -1,6 +1,7 @@
 package at.fhv.eventmangement.application.services;
 
 import at.fhv.eventmangement.application.dto.EventDto;
+import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
 import at.fhv.eventmangement.application.form.EventForm;
 import jakarta.validation.Valid;
 
@@ -12,5 +13,5 @@ public interface EventService {
     List<EventDto> getActiveEvents();
     EventDto addEvent(@Valid EventForm form);
     EventDto getEventById(UUID id);
-    EventDto updateEvent(UUID id, @Valid EventForm form);
+    EventUpdateResultDto updateEvent(UUID id, @Valid EventForm form);
 }
