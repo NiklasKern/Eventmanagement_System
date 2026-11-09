@@ -18,6 +18,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +30,7 @@ public class EventController {
     private static final String MY_EVENTS = "my_events";
     private static final String BOOK_EVENT = "book_event";
     private static final String CUSTOMER_EVENTS = "customer_events";
+    private static final String MODIFY_EVENT = "modify_event";
 
     private final EventService eventService;
     private final EventCategoryService eventCategoryService;
@@ -158,5 +160,46 @@ public class EventController {
         }
         model.addAttribute("event", eventService.getEventById(id));
         return BOOK_EVENT;
+    }
+
+    // Show form to modify event, prefilled with existing data
+    @GetMapping("event/manage/{id}/modify")
+    public String modifyEvent(@PathVariable UUID id, Model model) {
+        EventDto dto = eventService.getEventById(id);
+        EventForm form = EventForm.builder()
+                .name(dto.name())
+                .description(dto.description())
+                .location(dto.location())
+                .price(dto.price())
+                .minParticipants(dto.minParticipants())
+                .maxParticipants(dto.maxParticipants())
+                .eventCategoryId(dto.eventCategory().id())
+                .eventDates(new ArrayList<>(dto.eventDates().stream()
+                        .map(d -> new EventDateForm(d.startTime(), d.endTime()))
+                        .toList()))
+                .build();
+        model.addAttribute("event", form);
+        model.addAttribute("eventId", id);
+        return MODIFY_EVENT;
+    }
+
+    @PostMapping("event/manage/{id}/modify")
+    public String modifyEvent(@PathVariable UUID id,
+                              @Valid @ModelAttribute("event") EventForm form,
+                              BindingResult bindingResult,
+                              Model model,
+                              RedirectAttributes redirectAttributes) {
+        model.addAttribute("eventId", id);
+        if (bindingResult.hasErrors()) {
+            return MODIFY_EVENT;
+        }
+        try {
+            eventService.updateEvent(id, form);
+        } catch (ValidationException ex) {
+            ex.getFieldErrors().forEach((field, msg) -> bindingResult.rejectValue(field, "invalid", msg));
+            return MODIFY_EVENT;
+        }
+        redirectAttributes.addFlashAttribute("successMessage", "Event successfully updated");
+        return "redirect:/events";
     }
 }
