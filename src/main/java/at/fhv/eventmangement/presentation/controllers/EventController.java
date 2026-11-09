@@ -79,7 +79,7 @@ public class EventController {
                               RedirectAttributes redirectAttributes
     ) {
         // Check for annotations on EventForm(@NotBlank, @Postive, ...)
-        if(bindingResult.hasErrors()) {
+        if (bindingResult.hasErrors()) {
             //Just logging
             log.info(bindingResult.getFieldErrors().toString());
             return ADD_EVENT;
@@ -126,8 +126,7 @@ public class EventController {
 
     //Return active events
     @GetMapping(path = "/customer/events")
-    public String showEvents(Model model)
-    {
+    public String showEvents(Model model) {
         model.addAttribute("events", eventService.getActiveEvents());
         return CUSTOMER_EVENTS;
     }
@@ -163,7 +162,7 @@ public class EventController {
     }
 
     // Show form to modify event, prefilled with existing data
-    @GetMapping("event/manage/{id}/modify")
+    @GetMapping("/event/manage/{id}/modify")
     public String modifyEvent(@PathVariable UUID id, Model model) {
         EventDto dto = eventService.getEventById(id);
         EventForm form = EventForm.builder()
@@ -183,7 +182,8 @@ public class EventController {
         return MODIFY_EVENT;
     }
 
-    @PostMapping("event/manage/{id}/modify")
+    // Saves modified event or show an error message
+    @PostMapping("/event/manage/{id}/modify")
     public String modifyEvent(@PathVariable UUID id,
                               @Valid @ModelAttribute("event") EventForm form,
                               BindingResult bindingResult,
@@ -201,5 +201,22 @@ public class EventController {
         }
         redirectAttributes.addFlashAttribute("successMessage", "Event successfully updated");
         return "redirect:/events";
+    }
+
+    @PostMapping(path = "/event/manage/{id}/modify", params = "addDay")
+    public String addDayOnModify(@PathVariable UUID id, @ModelAttribute("event") EventForm form, Model model) {
+        form.getEventDates().add(new EventDateForm());
+        model.addAttribute("eventId", id);
+        return MODIFY_EVENT;
+    }
+
+    @PostMapping(path = "/event/manage/{id}/modify", params = "removeDay")
+    public String removeDayOnModify(@PathVariable UUID id, @ModelAttribute("event") EventForm form,
+                                    @RequestParam("removeDay") int index, Model model) {
+        if (form.getEventDates().size() > 1 && index >= 0 && index < form.getEventDates().size()) {
+            form.getEventDates().remove(index);
+        }
+        model.addAttribute("eventId", id);
+        return MODIFY_EVENT;
     }
 }
