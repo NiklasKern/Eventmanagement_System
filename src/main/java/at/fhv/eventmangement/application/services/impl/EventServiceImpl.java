@@ -23,7 +23,7 @@ import java.util.UUID;
 
 @Validated
 @Service
-@Transactional(readOnly = true)
+@Transactional(readOnly = true) //add @Transactional to your method if you want it to change something
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
@@ -42,37 +42,45 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventDto getEventById(UUID id) {
         return eventMapper.toDto(eventRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("event" + id + " not found"))
+                .orElseThrow(() ->
+                        new NotFoundException("event" + id + " not found"))
         );
     }
 
     @Override
+    @Transactional
     public EventDto updateEvent(UUID id, EventForm form) {
-        Event existingEvent = eventMapper.fromDto(getEventById(id));
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("event" + id + " not found"));
 
-        existingEvent.setName(form.getName());
-        existingEvent.setDescription(Optional.ofNullable(form.getDescription()).orElse(""));
-        existingEvent.setLocation(form.getLocation());
-        existingEvent.setPrice(form.getPrice());
-        existingEvent.setMinParticipants(form.getMinParticipants());
-        existingEvent.setMaxParticipants(form.getMaxParticipants());
+        String name = form.getName().trim();
+        if (!event.getName().equalsIgnoreCase(name) && eventRepository.existsByName(name)) {
+            throw new ValidationException(Map.of("name", "event name already exists"));
+        }
 
+        EventCategory category = eventCategoryRepository.findById(form.getEventCategoryId())
+                .orElseThrow(() -> new ValidationException(Map.of("eventCategoryId", "unknown category")));
 
-        for (EventDateForm eventDateForm : form.getEventDates()) {
-            existingEvent.getEventDates().add(EventDate.builder()
-                    .event(existingEvent)
-                    .startTime(eventDateForm.getStartTime())
-                    .endTime(eventDateForm.getEndTime())
+        event.setName(name);
+        event.setDescription(Optional.ofNullable(form.getDescription()).orElse(""));
+        event.setLocation(form.getLocation());
+        event.setPrice(form.getPrice());
+        event.setMinParticipants(form.getMinParticipants());
+        event.setMaxParticipants(form.getMaxParticipants());
+        event.setEventCategory(category);
+
+        // Currently deletes the old date rows, so once booking points to one of the dates it might not work anymore
+        // and we need to give the EventDateForm an id.
+        event.getEventDates().clear();
+        for (EventDateForm dateForm : form.getEventDates()) {
+            event.getEventDates().add(EventDate.builder()
+                    .event(event)
+                    .startTime(dateForm.getStartTime())
+                    .endTime(dateForm.getEndTime())
                     .build());
         }
-        EventCategory category = eventCategoryRepository
-                .findById(form.getEventCategoryId())
-                .orElseThrow(() -> new ValidationException(
-                        Map.of("eventCategoryId", "unknown category")));
-        existingEvent.setEventCategory(category);
-        return eventMapper.toDto(eventRepository.save(existingEvent));
 
-
+        return eventMapper.toDto(eventRepository.save(event));
     }
 
     @Override
