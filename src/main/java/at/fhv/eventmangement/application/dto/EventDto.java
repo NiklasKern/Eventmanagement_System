@@ -1,7 +1,7 @@
 package at.fhv.eventmangement.application.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public record EventDto(
@@ -9,12 +9,12 @@ public record EventDto(
         String name,
         String description,
         String location,
-        LocalDateTime dateTime,
         BigDecimal price,
         Integer minParticipants,
         Integer maxParticipants,
         String eventStatus,
         EventCategoryDto eventCategory,
-        EventOrganizerDto eventOrganizer
+        EventOrganizerDto eventOrganizer,
+        List<EventDateDto> eventDates
 ) {
 }

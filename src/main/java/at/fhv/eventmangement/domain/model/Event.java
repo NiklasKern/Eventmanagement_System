@@ -1,26 +1,25 @@
 package at.fhv.eventmangement.domain.model;
 
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
-@Builder
+@SuperBuilder
 @AllArgsConstructor
-public class Event {
-    private UUID id;
+public class Event extends BaseModel{
     private String name;
     private String description;
     private String location;
     private BigDecimal price;
     private int minParticipants;
     private int maxParticipants;
-    private LocalDateTime dateTime;
     private EventStatus eventStatus;
     private EventCategory eventCategory;
     private EventOrganizer eventOrganizer;
-    private LocalDateTime created;
-    private LocalDateTime updated;
+    @Builder.Default
+    private List<EventDate> eventDates = new ArrayList<>();
 }

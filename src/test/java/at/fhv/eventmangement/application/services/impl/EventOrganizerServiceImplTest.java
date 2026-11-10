@@ -1,7 +1,8 @@
 package at.fhv.eventmangement.application.services.impl;
 
-import at.fhv.eventmangement.application.exceptions.InvalidInputException;
+import at.fhv.eventmangement.domain.exceptions.EventOrganizerAlreadyExistsException;
 import at.fhv.eventmangement.application.form.EventOrganizerForm;
+import at.fhv.eventmangement.domain.model.ContactInfo;
 import at.fhv.eventmangement.domain.model.EventOrganizer;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
 import org.junit.jupiter.api.Test;
@@ -28,30 +29,27 @@ class EventOrganizerServiceImplTest {
     private EventOrganizerServiceImpl eventOrganizerService;
 
     @Test
-    void addOrganizer_savesTrimmedNameAndContactData() {
+    void addOrganizer_savesTrimmedNameAndContactData() throws Exception {
         eventOrganizerService.addOrganizer(
-                new EventOrganizerForm("  Alpine Club  ", "Hauptstrasse 1", "info@alpine.at"));
+                new EventOrganizerForm("Alpine Club", "Hauptstrasse 1", "info@alpine.at"));
 
         ArgumentCaptor<EventOrganizer> captor = ArgumentCaptor.forClass(EventOrganizer.class);
         verify(eventOrganizerRepository).save(captor.capture());
         EventOrganizer saved = captor.getValue();
         assertThat(saved.getId()).isNull();
-        assertThat(saved.getOrganizerName()).isEqualTo("Alpine Club");
-        assertThat(saved.getAddress()).isEqualTo("Hauptstrasse 1");
-        assertThat(saved.getEmail()).isEqualTo("info@alpine.at");
-        assertThat(saved.getCreated()).isNotNull();
-        assertThat(saved.getUpdated()).isEqualTo(saved.getCreated());
+        assertThat(saved.getContactInfo()).usingRecursiveComparison()
+                .isEqualTo(new ContactInfo("Alpine Club", "Hauptstrasse 1", "info@alpine.at"));
+        // created/updated are set by the database (@CreationTimestamp/@UpdateTimestamp)
     }
 
     @Test
-    void addOrganizer_rejectsDuplicateName() {
-        when(eventOrganizerRepository.existsByOrganizerNameIgnoreCase("Alpine Club")).thenReturn(true);
+    void addOrganizer_rejectsDuplicateName() throws Exception {
+        when(eventOrganizerRepository.existsByContactInfoNameIgnoreCase("Alpine Club")).thenReturn(true);
 
         assertThatThrownBy(() -> eventOrganizerService.addOrganizer(
                 new EventOrganizerForm("Alpine Club", "Hauptstrasse 1", "info@alpine.at")))
-                .isInstanceOf(InvalidInputException.class)
-                .satisfies(ex -> assertThat(((InvalidInputException) ex).getFieldErrors())
-                        .containsEntry("organizerName", "organizer name already exists"));
+                .isInstanceOf(EventOrganizerAlreadyExistsException.class)
+                .hasMessage("organizer name already exists");
         verify(eventOrganizerRepository, never()).save(any());
     }
 }

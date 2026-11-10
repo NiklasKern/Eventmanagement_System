@@ -1,19 +1,11 @@
 package at.fhv.eventmangement.domain.model;
 
 import lombok.*;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
-
+import lombok.experimental.SuperBuilder;
 
 @Getter
-@Builder
+@SuperBuilder
 @AllArgsConstructor
-public class EventOrganizer {
-    private UUID id;
-    private String organizerName;
-    private String address;
-    private String email;
-    private LocalDateTime created;
-    private LocalDateTime updated;
+public class EventOrganizer extends BaseModel{
+    private ContactInfo contactInfo;
 }

@@ -4,15 +4,13 @@ import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.mappers.EventCategoryMapper;
 import at.fhv.eventmangement.application.form.EventCategoryForm;
 import at.fhv.eventmangement.domain.model.EventCategory;
-import at.fhv.eventmangement.application.exceptions.InvalidInputException;
+import at.fhv.eventmangement.domain.exceptions.EventCategoryAlreadyExistsException;
 import at.fhv.eventmangement.domain.repositories.EventCategoryRepository;
 import at.fhv.eventmangement.application.services.EventCategoryService;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Transactional(readOnly = true)
@@ -32,24 +30,19 @@ public class EventCategoryServiceImpl implements EventCategoryService {
     }
 
     @Override
-    @Transactional
-    public void addCategory(EventCategoryForm form) {
+    @Transactional(rollbackFor = Exception.class)
+    public void addCategory(EventCategoryForm form) throws EventCategoryAlreadyExistsException {
 
         String name = form.getCategoryName().trim();
 
         if (eventCategoryRepository.existsByCategoryNameIgnoreCase(name)) {
-            throw new InvalidInputException(
-                    Map.of("categoryName", "category already exists"));
+            throw new EventCategoryAlreadyExistsException();
         }
 
-        LocalDateTime now = LocalDateTime.now();
-
-        eventCategoryRepository.save(new EventCategory(
-                null,
-                form.getCategoryName().trim(),
-                now,
-                now
-        ));
+        eventCategoryRepository.save(EventCategory.builder()
+                .categoryName(name)
+                .build()
+        );
     }
 
 }

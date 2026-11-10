@@ -9,6 +9,6 @@ import java.util.UUID;
 
 @Repository
 public interface EventOrganizerJpaRepository extends JpaRepository<EventOrganizerEntity, UUID> {
-    Optional<EventOrganizerEntity> findByOrganizerName(String organizerName);
-    boolean existsByOrganizerNameIgnoreCase(String organizerName);
+    boolean existsByContactInfoNameIgnoreCase(String name);
+    Optional<EventOrganizerEntity> findByContactInfoName(String name);
 }

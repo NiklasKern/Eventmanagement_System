@@ -21,4 +21,8 @@
 
     --color-success-bg: #E6F4EA;
     --color-success-border: #9EE493;
+
+    --color-error-bg: #FCE8E6;
+    --color-error-border: #F4B4AE;
+    --color-error-text: #B3261E;
 }
