@@ -2,6 +2,8 @@ package at.fhv.eventmangement.application.services.impl;
 
 import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventDto;
+import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
+import at.fhv.eventmangement.application.services.NotificationService;
 import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
 import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
 import at.fhv.eventmangement.application.form.EventDateForm;
@@ -47,6 +49,10 @@ class EventServiceImplTest {
     private EventOrganizerRepository eventOrganizerRepository;
     @Mock
     private EventMapper eventMapper;
+    @Mock
+    private EventUpdateTransaction eventUpdateTransaction;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private EventServiceImpl eventService;
@@ -203,5 +209,42 @@ class EventServiceImplTest {
                 .isInstanceOf(EventCategoryNotFoundException.class)
                 .hasMessage("unknown category");
         verify(eventRepository, never()).save(any());
+    }
+
+    // update event
+
+    private static Customer customer(String name) {
+        return Customer.builder()
+                .id(UUID.randomUUID())
+                .contactInfo(new ContactInfo(name, "Street 1", name + "@test.com"))
+                .build();
+    }
+
+    @Test
+    void updateEvent_onlyListsCustomersWhoseNotificationWasSent() throws Exception {
+        UUID id = UUID.randomUUID();
+        EventForm form = validForm();
+        Event saved = Event.builder().name("Summer Hike").build();
+        Customer reached = customer("Anna");
+        Customer failed = customer("Bernd");
+        when(eventUpdateTransaction.apply(id, form))
+                .thenReturn(new EventUpdateTransaction.Result(saved, List.of(reached, failed)));
+        when(notificationService.notifyEventChanged(reached, saved)).thenReturn(true);
+        when(notificationService.notifyEventChanged(failed, saved)).thenReturn(false);
+
+        EventUpdateResultDto result = eventService.updateEvent(id, form);
+
+        assertThat(result.notifiedCustomers()).containsExactly("Anna");
+    }
+
+    @Test
+    void updateEvent_failingUpdateSendsNoNotification() throws Exception {
+        UUID id = UUID.randomUUID();
+        EventForm form = validForm();
+        when(eventUpdateTransaction.apply(id, form)).thenThrow(new EventAlreadyExistsException());
+
+        assertThatThrownBy(() -> eventService.updateEvent(id, form))
+                .isInstanceOf(EventAlreadyExistsException.class);
+        verify(notificationService, never()).notifyEventChanged(any(), any());
     }
 }

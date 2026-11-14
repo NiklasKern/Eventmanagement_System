@@ -57,17 +57,11 @@ class CreateEventAcceptanceTest {
 
     @BeforeEach
     void ensureReferenceData() throws Exception {
-        try {
-            organizerService.addOrganizer(new EventOrganizerForm(
-                    EventmanagementApplicationRunner.DEFAULT_ORGANIZER, "Street 1", "org@test.com"));
-        } catch (EventOrganizerAlreadyExistsException alreadyThere) {
-            // created by an earlier test
-        }
-        try {
-            categoryService.addCategory(new EventCategoryForm(CATEGORY));
-        } catch (EventCategoryAlreadyExistsException alreadyThere) {
-            // created by an earlier test
-        }
+        organizerService.addOrganizer(new EventOrganizerForm(
+                EventmanagementApplicationRunner.DEFAULT_ORGANIZER, "Street 1", "test@test.com"));
+
+        categoryService.addCategory(new EventCategoryForm(CATEGORY));
+
         categoryId = categoryService.getAllEventCategories().stream()
                 .filter(c -> c.categoryName().equals(CATEGORY))
                 .map(EventCategoryDto::id)
