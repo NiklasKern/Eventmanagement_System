@@ -2,8 +2,6 @@ package at.fhv.eventmangement;
 
 import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.dto.EventDto;
-import at.fhv.eventmangement.domain.exceptions.EventCategoryAlreadyExistsException;
-import at.fhv.eventmangement.domain.exceptions.EventOrganizerAlreadyExistsException;
 import at.fhv.eventmangement.application.form.EventCategoryForm;
 import at.fhv.eventmangement.application.form.EventOrganizerForm;
 import at.fhv.eventmangement.application.services.EventCategoryService;
