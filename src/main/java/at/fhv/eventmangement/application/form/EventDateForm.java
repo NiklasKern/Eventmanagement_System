@@ -7,6 +7,7 @@ import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -14,6 +15,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class EventDateForm {
+
+    private UUID id;
 
     @NotNull(message = "please fill mandatory fields")
     @Future(message = "Date has to be in the future")

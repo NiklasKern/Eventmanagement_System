@@ -1,15 +1,11 @@
 package at.fhv.eventmangement;
 
-import at.fhv.eventmangement.application.form.CustomerForm;
-import at.fhv.eventmangement.application.form.EventCategoryForm;
-import at.fhv.eventmangement.application.form.EventDateForm;
-import at.fhv.eventmangement.application.form.EventOrganizerForm;
-import at.fhv.eventmangement.application.form.EventForm;
-import at.fhv.eventmangement.application.services.CustomerService;
-import at.fhv.eventmangement.application.services.EventCategoryService;
-import at.fhv.eventmangement.application.services.EventOrganizerService;
-import at.fhv.eventmangement.application.services.EventService;
+import at.fhv.eventmangement.application.dto.EventDto;
+import at.fhv.eventmangement.application.form.*;
+import at.fhv.eventmangement.application.services.*;
 import at.fhv.eventmangement.domain.model.CustomerType;
+import at.fhv.eventmangement.domain.model.EventBookingType;
+import at.fhv.eventmangement.domain.model.PaymentMethod;
 import org.jspecify.annotations.NonNull;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -32,12 +28,14 @@ public class EventmanagementApplicationRunner implements ApplicationRunner {
     private final EventCategoryService eventCategoryService;
     private final EventOrganizerService eventOrganizerService;
     private final CustomerService customerService;
+    private final EventBookingService eventBookingService;
 
-    public EventmanagementApplicationRunner(EventService eventService, EventCategoryService eventCategoryService, EventOrganizerService eventOrganizerService, CustomerService customerService) {
+    public EventmanagementApplicationRunner(EventService eventService, EventCategoryService eventCategoryService, EventOrganizerService eventOrganizerService, CustomerService customerService, EventBookingService eventBookingService) {
         this.eventService = eventService;
         this.eventCategoryService = eventCategoryService;
         this.eventOrganizerService = eventOrganizerService;
         this.customerService = customerService;
+        this.eventBookingService = eventBookingService;
     }
 
     @Override
@@ -88,6 +86,15 @@ public class EventmanagementApplicationRunner implements ApplicationRunner {
                 .maxParticipants(50)
                 .eventCategoryId(eventCategoryService
                         .getAllEventCategories().getFirst().id())
+                .build());
+
+        // demo booking to test if customer gets notified about event changes
+        // remove once customers can book events
+        EventDto event = eventService.getAllEvents().getFirst();
+        eventBookingService.book(event.id(), EventBookingForm.builder()
+                .eventDateId(event.eventDates().getFirst().id())
+                .eventBookingType(EventBookingType.INDIVIDUAL)
+                .paymentMethod(PaymentMethod.CARD)
                 .build());
     }
 }

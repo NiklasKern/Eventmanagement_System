@@ -46,6 +46,11 @@
             Event successfully saved
         </div>
 
+        <div class="FlashMessage FlashError" role="alert"
+             th:if="${errorMessage}" th:text="${errorMessage}">
+            Something went wrong
+        </div>
+
         <div class="EmptyState" th:if="${#lists.isEmpty(events)}">
             <p>You have not created any events yet.</p>
         </div>
@@ -61,6 +66,7 @@
                     <th class="Num">Price</th>
                     <th class="Num">Participants</th>
                     <th>Organizer</th>
+                    <th></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -90,6 +96,7 @@
                     <td class="Num" th:text="${#numbers.formatDecimal(e.price, 1, 'POINT', 2, 'COMMA')} + ' €'">150,00 €</td>
                     <td class="Num" th:text="${e.minParticipants} + ' – ' + ${e.maxParticipants}">5 – 50</td>
                     <td th:text="${e.eventOrganizer != null} ? ${e.eventOrganizer.contactInfo.name} : '–'">Organizer</td>
+                    <td><a th:href="@{/event/manage/{id}/modify(id=${e.id})}">Edit</a></td>
                 </tr>
                 </tbody>
             </table>

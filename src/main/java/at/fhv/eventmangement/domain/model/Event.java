@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@Setter
 @SuperBuilder
 @AllArgsConstructor
 public class Event extends BaseModel{

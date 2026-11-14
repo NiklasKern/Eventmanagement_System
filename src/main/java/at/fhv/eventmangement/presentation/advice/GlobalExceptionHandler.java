@@ -1,6 +1,10 @@
 package at.fhv.eventmangement.presentation.advice;
 
+import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
+import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.EventDateHasBookingsException;
 import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.MaxParticipantsBelowBookedPlacesException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -67,5 +71,32 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
     public ProblemDetail handleUnexpected(Exception ex) {
         log.error("Unexpected error", ex);
         return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
+    }
+
+    // 400 - event update rejected by business rules, reported per form field
+    @ExceptionHandler(EventAlreadyExistsException.class)
+    public ProblemDetail handleEventAlreadyExists(EventAlreadyExistsException ex) {
+        return fieldError("name", ex.getMessage());
+    }
+
+    @ExceptionHandler(EventCategoryNotFoundException.class)
+    public ProblemDetail handleEventCategoryNotFound(EventCategoryNotFoundException ex) {
+        return fieldError("eventCategoryId", ex.getMessage());
+    }
+
+    @ExceptionHandler(MaxParticipantsBelowBookedPlacesException.class)
+    public ProblemDetail handleMaxParticipantsBelowBooked(MaxParticipantsBelowBookedPlacesException ex) {
+        return fieldError("maxParticipants", ex.getMessage());
+    }
+
+    @ExceptionHandler(EventDateHasBookingsException.class)
+    public ProblemDetail handleEventDateHasBookings(EventDateHasBookingsException ex) {
+        return fieldError("eventDates", ex.getMessage());
+    }
+
+    private static ProblemDetail fieldError(String field, String message) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
+        pd.setProperty("errors", Map.of(field, message));
+        return pd;
     }
 }

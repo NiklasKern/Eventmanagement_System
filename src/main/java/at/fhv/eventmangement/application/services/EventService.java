@@ -1,10 +1,13 @@
 package at.fhv.eventmangement.application.services;
 
 import at.fhv.eventmangement.application.dto.EventDto;
+import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
 import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
 import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.EventDateHasBookingsException;
 import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.EventOrganizerNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.MaxParticipantsBelowBookedPlacesException;
 import at.fhv.eventmangement.application.form.EventForm;
 import jakarta.validation.Valid;
 
@@ -17,4 +20,7 @@ public interface EventService {
     EventDto addEvent(@Valid EventForm form)
             throws EventAlreadyExistsException, EventCategoryNotFoundException, EventOrganizerNotFoundException;
     EventDto getEventById(UUID id) throws EventNotFoundException;
+    EventUpdateResultDto updateEvent(UUID id, @Valid EventForm form)
+            throws EventNotFoundException, EventAlreadyExistsException, EventCategoryNotFoundException,
+            EventDateHasBookingsException, MaxParticipantsBelowBookedPlacesException;
 }
