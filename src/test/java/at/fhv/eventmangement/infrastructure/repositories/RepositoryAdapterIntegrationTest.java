@@ -10,6 +10,7 @@ import at.fhv.eventmangement.domain.model.EventStatus;
 import at.fhv.eventmangement.domain.repositories.EventCategoryRepository;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
 import at.fhv.eventmangement.domain.repositories.EventRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,6 +39,8 @@ class RepositoryAdapterIntegrationTest {
     private EventCategoryRepository categoryRepository;
     @Autowired
     private EventOrganizerRepository organizerRepository;
+    @Autowired
+    private EntityManager entityManager;
 
     // PostgreSQL stores microseconds, Java has nanoseconds -> truncate so values compare equal
     private final LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
@@ -73,6 +76,9 @@ class RepositoryAdapterIntegrationTest {
     @Test
     void category_saveGeneratesIdAndCanBeFoundAgain() {
         EventCategory saved = saveCategory("Climbing");
+        // write the INSERT and reload from the DB, otherwise the timestamp is not set yet
+        entityManager.flush();
+        entityManager.clear();
 
         assertThat(saved.getId()).isNotNull();
         assertThat(categoryRepository.findById(saved.getId()))
