@@ -62,7 +62,6 @@ class EventServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        LocalDateTime now = LocalDateTime.now();
         category = new EventCategory("Hiking");
         organizer = new EventOrganizer(new ContactInfo(EventmanagementApplicationRunner.DEFAULT_ORGANIZER, "Street 1", "org@test.com"));
     }
@@ -132,8 +131,8 @@ class EventServiceImplTest {
         assertThat(saved.getMinParticipants()).isEqualTo(3);
         assertThat(saved.getMaxParticipants()).isEqualTo(20);
         assertThat(saved.getEventDates()).singleElement().satisfies(date -> {
-            assertThat(date.getStartTime()).isEqualTo(form.getEventDates().get(0).getStartTime());
-            assertThat(date.getEndTime()).isEqualTo(form.getEventDates().get(0).getEndTime());
+            assertThat(date.getStartTime()).isEqualTo(form.getEventDates().getFirst().getStartTime());
+            assertThat(date.getEndTime()).isEqualTo(form.getEventDates().getFirst().getEndTime());
             assertThat(date.getEvent()).isSameAs(saved);
         });
         assertThat(saved.getEventStatus()).isEqualTo(EventStatus.ACTIVE);
