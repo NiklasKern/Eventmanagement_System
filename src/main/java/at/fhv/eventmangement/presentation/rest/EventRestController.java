@@ -3,6 +3,7 @@ package at.fhv.eventmangement.presentation.rest;
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
 import at.fhv.eventmangement.application.form.EventForm;
+import at.fhv.eventmangement.domain.exceptions.*;
 import at.fhv.eventmangement.application.services.EventService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -27,18 +28,16 @@ public class EventRestController {
     }
 
     @GetMapping("/customer/event/{id}/info")
-    public EventDto getEventInfo(@PathVariable UUID id)
+    public EventDto getEventInfo(@PathVariable UUID id) throws EventNotFoundException
     {
         return eventService.getEventById(id);
     }
 
-    @GetMapping(path = "/events/{id}")
-    public ResponseEntity<EventDto> getEventById(@PathVariable UUID id) {
-        EventDto event = eventService.getEventById(id);
-        return ResponseEntity.ok(event);
-    }
+    // Updates an event and returns the saved event plus the customers that were notified
     @PutMapping(path = "/events/{id}")
-    public ResponseEntity<EventUpdateResultDto> updateEvent(@PathVariable UUID id, @Valid @RequestBody EventForm form) {
+    public ResponseEntity<EventUpdateResultDto> updateEvent(@PathVariable UUID id, @Valid @RequestBody EventForm form)
+            throws EventNotFoundException, EventAlreadyExistsException, EventCategoryNotFoundException,
+            EventDateHasBookingsException, MaxParticipantsBelowBookedPlacesException {
         return ResponseEntity.ok(eventService.updateEvent(id, form));
     }
 

@@ -4,14 +4,13 @@ import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.mappers.EventCategoryMapper;
 import at.fhv.eventmangement.application.form.EventCategoryForm;
 import at.fhv.eventmangement.domain.model.EventCategory;
-import at.fhv.eventmangement.domain.exceptions.ValidationException;
+import at.fhv.eventmangement.domain.exceptions.EventCategoryAlreadyExistsException;
 import at.fhv.eventmangement.domain.repositories.EventCategoryRepository;
 import at.fhv.eventmangement.application.services.EventCategoryService;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Transactional(readOnly = true)
@@ -31,14 +30,13 @@ public class EventCategoryServiceImpl implements EventCategoryService {
     }
 
     @Override
-    @Transactional
-    public void addCategory(EventCategoryForm form) {
+    @Transactional(rollbackFor = Exception.class)
+    public void addCategory(EventCategoryForm form) throws EventCategoryAlreadyExistsException {
 
         String name = form.getCategoryName().trim();
 
         if (eventCategoryRepository.existsByCategoryNameIgnoreCase(name)) {
-            throw new ValidationException(
-                    Map.of("categoryName", "category already exists"));
+            throw new EventCategoryAlreadyExistsException();
         }
 
         eventCategoryRepository.save(EventCategory.builder()

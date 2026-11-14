@@ -3,34 +3,39 @@ package at.fhv.eventmangement.application.services.impl;
 import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
+import at.fhv.eventmangement.application.services.NotificationService;
+import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
+import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.EventDateHasBookingsException;
+import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.EventOrganizerNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.MaxParticipantsBelowBookedPlacesException;
 import at.fhv.eventmangement.application.form.EventDateForm;
 import at.fhv.eventmangement.application.mappers.EventMapper;
-import at.fhv.eventmangement.application.services.NotificationService;
-import at.fhv.eventmangement.domain.exceptions.NotFoundException;
 import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.application.form.EventForm;
-import at.fhv.eventmangement.domain.exceptions.ValidationException;
-import at.fhv.eventmangement.domain.repositories.EventBookingRepository;
 import at.fhv.eventmangement.domain.repositories.EventCategoryRepository;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
 import at.fhv.eventmangement.domain.repositories.EventRepository;
 import at.fhv.eventmangement.application.services.EventService;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Validated
 @Service
-@Transactional(readOnly = true) //add @Transactional to your method if you want it to change something
+@Transactional(readOnly = true)
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
     private final EventCategoryRepository eventCategoryRepository;
     private final EventOrganizerRepository eventOrganizerRepository;
-    private final EventBookingRepository eventBookingRepository;
+    private final EventUpdateTransaction eventUpdateTransaction;
     private final NotificationService notificationService;
 
     private final EventMapper eventMapper;
@@ -38,84 +43,39 @@ public class EventServiceImpl implements EventService {
     public EventServiceImpl(EventRepository eventRepository,
                             EventCategoryRepository eventCategoryRepository,
                             EventOrganizerRepository eventOrganizerRepository,
-                            EventBookingRepository eventBookingRepository,
+                            EventUpdateTransaction eventUpdateTransaction,
                             NotificationService notificationService,
                             EventMapper eventMapper) {
         this.eventRepository = eventRepository;
         this.eventCategoryRepository = eventCategoryRepository;
         this.eventOrganizerRepository = eventOrganizerRepository;
-        this.eventBookingRepository = eventBookingRepository;
+        this.eventUpdateTransaction = eventUpdateTransaction;
         this.notificationService = notificationService;
         this.eventMapper = eventMapper;
     }
 
     @Override
-    public EventDto getEventById(UUID id) {
+    public EventDto getEventById(UUID id) throws EventNotFoundException {
         return eventMapper.toDto(eventRepository.findById(id)
-                .orElseThrow(() ->
-                        new NotFoundException("event " + id + " not found"))
-        );
+                .orElseThrow(EventNotFoundException::new));
     }
 
+    // Runs without a surrounding transaction: the changes are committed by EventUpdateTransaction first,
+    // only afterwards the customers are notified. Only successfully notified customers are returned.
     @Override
-    @Transactional
-    public EventUpdateResultDto updateEvent(UUID id, EventForm form) {
-        Event event = eventRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("event " + id + " not found"));
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public EventUpdateResultDto updateEvent(UUID id, EventForm form)
+            throws EventNotFoundException, EventAlreadyExistsException, EventCategoryNotFoundException,
+            EventDateHasBookingsException, MaxParticipantsBelowBookedPlacesException {
 
-        String name = form.getName().trim();
-        if (!event.getName().equalsIgnoreCase(name) && eventRepository.existsByName(name)) {
-            throw new ValidationException(Map.of("name", "event name already exists"));
-        }
+        EventUpdateTransaction.Result result = eventUpdateTransaction.apply(id, form);
+        Event saved = result.event();
 
-        EventCategory category = eventCategoryRepository.findById(form.getEventCategoryId())
-                .orElseThrow(() -> new ValidationException(Map.of("eventCategoryId", "unknown category")));
-
-        event.setName(name);
-        event.setDescription(Optional.ofNullable(form.getDescription()).orElse(""));
-        event.setLocation(form.getLocation());
-        event.setPrice(form.getPrice());
-        event.setMinParticipants(form.getMinParticipants());
-        event.setMaxParticipants(form.getMaxParticipants());
-        event.setEventCategory(category);
-
-        Map<UUID, EventDate> existing = event.getEventDates().stream().collect(Collectors.toMap(EventDate::getId, d -> d));
-
-        List<EventDate> updatedDates = new ArrayList<>();
-        for (EventDateForm dateForm : form.getEventDates()) {
-            EventDate date = dateForm.getId() == null ? null : existing.remove(dateForm.getId());
-            if (date != null) {
-                date.setStartTime(dateForm.getStartTime());
-                date.setEndTime(dateForm.getEndTime());
-                updatedDates.add(date);
-            } else {
-                updatedDates.add(EventDate.builder()
-                        .event(event)
-                        .startTime(dateForm.getStartTime())
-                        .endTime(dateForm.getEndTime())
-                        .build());
-            }
-        }
-
-        for (EventDate removed : existing.values()) {
-            if (eventBookingRepository.hasActiveBookings(removed.getId())) {
-                throw new ValidationException(Map.of("eventDates", "a date with bookings cannot be removed"));
-            }
-        }
-
-        event.getEventDates().clear();
-        event.getEventDates().addAll(updatedDates);
-
-        Event saved = eventRepository.save(event);
-
-        Map<UUID, Customer> customers = new LinkedHashMap<>();
-        eventBookingRepository.findActiveBookingsByEventId(id)
-                .forEach(b -> customers.putIfAbsent(b.getCustomer().getId(), b.getCustomer()));
-        customers.values().forEach(c -> notificationService.notifyEventChanged(c, saved));
-
-        List<String> notified = customers.values().stream()
-                .map(c -> c.getContactInfo().getName())
+        List<String> notified = result.customersToNotify().stream()
+                .filter(customer -> notificationService.notifyEventChanged(customer, saved))
+                .map(customer -> customer.getContactInfo().getName())
                 .toList();
+
         return new EventUpdateResultDto(eventMapper.toDto(saved), notified);
     }
 
@@ -130,20 +90,20 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    @Transactional
-    public EventDto addEvent(EventForm eventForm) {
+    @Transactional(rollbackFor = Exception.class)
+    public EventDto addEvent(EventForm eventForm)
+            throws EventAlreadyExistsException, EventCategoryNotFoundException, EventOrganizerNotFoundException {
 
-        if (eventRepository.existsByName(eventForm.getName())) {
-            throw new ValidationException(
-                    Map.of("name", "event name already exists"));
+        if(eventRepository.existsByName(eventForm.getName())) {
+            throw new EventAlreadyExistsException();
         }
 
         EventCategory category = eventCategoryRepository
                 .findById(eventForm.getEventCategoryId())
-                .orElseThrow(() -> new ValidationException(
-                        Map.of("eventCategoryId", "unknown category")));
+                .orElseThrow(EventCategoryNotFoundException::new);
 
-        EventOrganizer organizer = eventOrganizerRepository.findByContactInfoName(EventmanagementApplicationRunner.DEFAULT_ORGANIZER).orElseThrow();
+        EventOrganizer organizer = eventOrganizerRepository.findByContactInfoName(EventmanagementApplicationRunner.DEFAULT_ORGANIZER)
+                .orElseThrow(EventOrganizerNotFoundException::new);
 
         //Create new event to prevent unexpected input
         Event event = Event.builder()
@@ -158,7 +118,8 @@ public class EventServiceImpl implements EventService {
                 .eventOrganizer(organizer)
                 .build();
 
-        for (EventDateForm eventDateForm : eventForm.getEventDates()) {
+        for(EventDateForm eventDateForm : eventForm.getEventDates())
+        {
             event.getEventDates().add(EventDate.builder()
                     .event(event)
                     .startTime(eventDateForm.getStartTime())
@@ -166,9 +127,8 @@ public class EventServiceImpl implements EventService {
                     .build());
         }
 
-        //Save event to db
-        Event saved = eventRepository.save(event);
-        return eventMapper.toDto(saved);
-    }
 
+        //Save event to db and return saved eventdto
+        return eventMapper.toDto(eventRepository.save(event));
+    }
 }

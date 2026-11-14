@@ -46,6 +46,11 @@
             Event successfully saved
         </div>
 
+        <div class="FlashMessage FlashError" role="alert"
+             th:if="${errorMessage}" th:text="${errorMessage}">
+            Something went wrong
+        </div>
+
         <div class="EmptyState" th:if="${#lists.isEmpty(events)}">
             <p>You have not created any events yet.</p>
         </div>

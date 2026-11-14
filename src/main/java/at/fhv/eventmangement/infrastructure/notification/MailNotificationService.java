@@ -6,14 +6,16 @@ import at.fhv.eventmangement.domain.model.Event;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+// Sends notifications to customers via email (SMTP)
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class LogNotificationService implements NotificationService {
+public class MailNotificationService implements NotificationService {
 
     private final JavaMailSender javaMailSender;
 
@@ -21,16 +23,17 @@ public class LogNotificationService implements NotificationService {
     private String senderEmail;
 
     @Override
-    public void notifyEventChanged(Customer customer, Event event) {
+    public boolean notifyEventChanged(Customer customer, Event event) {
         if (customer == null || customer.getContactInfo() == null) {
-            return;
+            return false;
         }
 
         String customerName = customer.getContactInfo().getName();
         String customerEmail = customer.getContactInfo().getEmail();
-
-        log.info("Notification to {} <{}>: the event '{}' you booked has been changed.",
-                customerName, customerEmail, event.getName());
+        if (customerEmail == null || customerEmail.isBlank()) {
+            log.warn("Customer {} has no email address, event change notification not sent", customerName);
+            return false;
+        }
 
         try {
             SimpleMailMessage message = new SimpleMailMessage();
@@ -43,9 +46,11 @@ public class LogNotificationService implements NotificationService {
             ));
 
             javaMailSender.send(message);
-            log.info("Email sent successfully to {}", customerEmail);
-        } catch (Exception e) {
-            log.warn("Could not send email via SMTP to {}: {}", customerEmail, e.getMessage());
+            log.info("Event change notification sent to {} <{}>", customerName, customerEmail);
+            return true;
+        } catch (MailException e) {
+            log.warn("Could not send event change notification to {}: {}", customerEmail, e.getMessage());
+            return false;
         }
     }
 }
