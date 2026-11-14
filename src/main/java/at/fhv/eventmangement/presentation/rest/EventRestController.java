@@ -35,6 +35,11 @@ public class EventRestController {
         return eventService.getAllEvents();
     }
 
+    @GetMapping("/events/{id}")
+    public EventDto getEventInfo(@PathVariable UUID id) throws EventNotFoundException {
+        return eventService.getEventById(id);
+    }
+
     // Updates an event and returns the saved event plus the customers that were notified
     @PutMapping("/events/{id}")
     public ResponseEntity<EventUpdateResultDto> updateEvent(@PathVariable UUID id, @Valid @RequestBody EventForm form)
