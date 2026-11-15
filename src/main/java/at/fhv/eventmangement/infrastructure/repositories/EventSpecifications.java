@@ -97,7 +97,7 @@ public class EventSpecifications {
                 conditions.add(criteriaBuilder.greaterThanOrEqualTo(date.get("endTime"), from));
             }
             if (to != null) {
-                conditions.add(criteriaBuilder.lessThan(date.get("endTime"), to));
+                conditions.add(criteriaBuilder.lessThan(date.get("startTime"), to));
             }
 
             sub.select(date.get("id")).where(conditions.toArray(Predicate[]::new));
