@@ -14,5 +14,5 @@ public interface EventRepository {
     boolean existsByName(String name);
     Optional<Event> findById(UUID id);
     List<Event> search(EventSearchCriteria searchCriteria);
-    List<Event> findLocations(EventStatus eventStatus);
+    List<String> findLocations(EventStatus eventStatus);
 }
