@@ -27,9 +27,4 @@ public class CustomerEventRestController {
     public EventDto getEventInfo(@PathVariable UUID id) throws EventNotFoundException {
         return eventService.getEventById(id);
     }
-
-    @GetMapping("/api/customer/events/search")
-    public List<EventDto> search(@Valid EventSearchForm search) {
-        return eventService.searchEvents(search);
-    }
 }
