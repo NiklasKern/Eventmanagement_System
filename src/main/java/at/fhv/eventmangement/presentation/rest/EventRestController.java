@@ -7,8 +7,8 @@ import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.domain.exceptions.*;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 import java.util.UUID;
