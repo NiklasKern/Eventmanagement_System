@@ -30,7 +30,7 @@ public class EventRestController {
         this.eventService = eventService;
     }
 
-    @GetMapping("/events")
+    @GetMapping("/getEvents")
     public List<EventDto> getEvents() {
         return eventService.getAllEvents();
     }
