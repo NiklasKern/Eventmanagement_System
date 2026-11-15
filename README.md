@@ -40,3 +40,15 @@ The database can be accessed in IntelliJ via the **Database** tool window (datab
 * **Purpose:** Isolated environment for developing specific features/user stories.
 * **Naming Convention:** `feature/feature-name` (e.g. `feature/add-event`).
 * **Usage:** Branch off `dev`: `git checkout dev && git checkout -b feature/feature-name`. Implement and commit features/tasks. Once all subtasks and quality assurance are done, push the branch to GitHub and open a **Pull Request into `dev`**.
+
+---
+## Code Coverage
+
+### Local Report
+* **Usage:** Run `./gradlew test`. JaCoCo then writes the report to `build/reports/jacoco/test/html/index.html` (open in a browser: green = tested, red = not tested, yellow = partly tested).
+* **Excluded:** Main class, `EventmanagementApplicationRunner`, DTOs, forms, JPA entities, exceptions, generated MapStruct mappers and Lombok code. The list is `coverageExcludes` in `build.gradle.kts`.
+
+---
+### Pull Requests
+* **Rule:** Every Pull Request into `dev` or `main` must reach **at least 80 % coverage on the changed files** (classes in `src/main`). Untouched code does not count.
+* **Usage:** The workflow posts a "Code Coverage" comment on the PR with the coverage per changed file. Below 80 % the `build-deploy` check fails. Add tests and push again; the comment updates automatically.
