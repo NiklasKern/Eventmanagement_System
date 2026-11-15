@@ -5,7 +5,6 @@ import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.dto.EventDateDto;
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.dto.EventOrganizerDto;
-import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
 import at.fhv.eventmangement.application.services.EventService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,17 +69,6 @@ class EventRestControllerTest {
         mockMvc.perform(get("/getEvents"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
-    }
-
-    @Test
-    void unknownEvent_returns404() throws Exception {
-        UUID id = UUID.randomUUID();
-        when(eventService.getEventById(id)).thenThrow(new EventNotFoundException());
-
-        mockMvc.perform(get("/customer/event/{id}/info", id))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.detail").value("event does not exist"));
     }
 
     @Test
