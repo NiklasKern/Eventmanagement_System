@@ -7,6 +7,8 @@ import at.fhv.eventmangement.application.form.EventOrganizerForm;
 import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventOrganizerService;
 import at.fhv.eventmangement.application.services.EventService;
+import at.fhv.eventmangement.domain.exceptions.EventCategoryAlreadyExistsException;
+import at.fhv.eventmangement.domain.exceptions.EventOrganizerAlreadyExistsException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,10 +57,18 @@ class CreateEventAcceptanceTest {
 
     @BeforeEach
     void ensureReferenceData() throws Exception {
-        organizerService.addOrganizer(new EventOrganizerForm(
-                EventmanagementApplicationRunner.DEFAULT_ORGANIZER, "Street 1", "test@test.com"));
-
-        categoryService.addCategory(new EventCategoryForm(CATEGORY));
+        // all tests share one database: only the first test creates the reference data
+        try {
+            organizerService.addOrganizer(new EventOrganizerForm(
+                    EventmanagementApplicationRunner.DEFAULT_ORGANIZER, "Street 1", "test@test.com"));
+        } catch (EventOrganizerAlreadyExistsException alreadyThere) {
+            // created by an earlier test
+        }
+        try {
+            categoryService.addCategory(new EventCategoryForm(CATEGORY));
+        } catch (EventCategoryAlreadyExistsException alreadyThere) {
+            // created by an earlier test
+        }
 
         categoryId = categoryService.getAllEventCategories().stream()
                 .filter(c -> c.categoryName().equals(CATEGORY))
