@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
-import at.fhv.eventmangement.domain.exceptions.EventAlreadyCancelledException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -62,7 +61,7 @@ public class EventServiceImpl implements EventService {
     }
 
     // Runs without a surrounding transaction: the changes are committed by EventUpdateTransaction first,
-    // only afterwards the customers are notified. Only successfully notified customers are returned.
+    // only afterward the customers are notified. Only successfully notified customers are returned.
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public EventUpdateResultDto updateEvent(UUID id, EventForm form, String username)
@@ -134,6 +133,37 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    public List<EventDto> searchEvents(EventSearchForm searchForm) {
+        return eventRepository.search(toCriteria(searchForm)).stream().map(eventMapper::toDto).toList();
+    }
+
+    @Override
+    public List<String> getEventLocation() {
+        return eventRepository.findLocations(EventStatus.ACTIVE);
+    }
+
+    private static EventSearchCriteria toCriteria(EventSearchForm searchForm) {
+        LocalDate firstDay = searchForm.getDateFrom();
+        LocalDate lastDay = searchForm.getDateTo() != null ? searchForm.getDateTo() : searchForm.getDateFrom();
+
+        return EventSearchCriteria.builder()
+                .status(EventStatus.ACTIVE)
+                .text(blankToNull(searchForm.getText()))
+                .location(blankToNull(searchForm.getLocation()))
+                .categoryId(searchForm.getCategoryId())
+                .from(firstDay == null ? null : firstDay.atStartOfDay())
+                .to(lastDay == null ? null : lastDay.plusDays(1).atStartOfDay())
+                .priceFrom(searchForm.getPriceFrom())
+                .priceTo(searchForm.getPriceTo())
+                .build();
+    }
+
+    private static String blankToNull(String text) {
+        return text == null || text.isBlank() ? null : text.trim();
+    }
+}
+
+    @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public EventUpdateResultDto cancelEvent(UUID id, String username)
             throws EventNotFoundException, EventAlreadyCancelledException, NotEventOwnerException {
@@ -154,10 +184,6 @@ public class EventServiceImpl implements EventService {
         return new EventUpdateResultDto(eventMapper.toDto(saved), notified);
     }
 
-    @Override
-    public List<EventDto> searchEvents(EventSearchForm searchForm) {
-        return eventRepository.search(toCriteria(searchForm)).stream().map(eventMapper::toDto).toList();
-    }
 
     // Organizer list: everything with EDIT_ALL_EVENTS, otherwise only the events of the own organizer
     @Override

@@ -2,9 +2,9 @@ package at.fhv.eventmangement.application.services;
 
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
+import at.fhv.eventmangement.application.form.EventForm;
 import at.fhv.eventmangement.application.form.EventSearchForm;
 import at.fhv.eventmangement.domain.exceptions.*;
-import at.fhv.eventmangement.application.form.EventForm;
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -18,6 +18,9 @@ public interface EventService {
     List<EventDto> searchEvents(@Valid EventSearchForm searchForm);
 
     List<String> getEventLocation();
+
+    EventDto addEvent(@Valid EventForm form)
+            throws EventAlreadyExistsException, EventCategoryNotFoundException, EventOrganizerNotFoundException;
 
     EventDto getEventById(UUID id) throws EventNotFoundException;
 
