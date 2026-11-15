@@ -11,17 +11,14 @@ import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.MaxParticipantsBelowBookedPlacesException;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
 // REST endpoints for the organizer side
 @RestController
+@RequestMapping("/api")
 public class EventRestController {
 
     private final EventService eventService;

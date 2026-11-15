@@ -47,36 +47,35 @@
                 <button class="CreateEventButton" type="submit">Search</button>
             </div>
 
-            <div class="FilterRow">
-                <div class="form-group">
-                    <label for="location">Place</label>
-                    <input type="text" th:field="*{location}" list="locationOptions" placeholder="any place">
-                    <datalist id="locationOptions">
-                        <option th:each="l : ${locations}" th:value="${l}"></option>
-                    </datalist>
-                </div>
-
-                <div class="form-group">
-                    <label for="categoryId">Category</label>
-                    <select th:field="*{categoryId}">
-                        <option value="">all categories</option>
-                        <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.categoryName}"></option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="dateFrom">Date</label>
-                    <input type="date" th:field="*{dateFrom}" th:errorclass="input-error">
-                </div>
-
-                <div class="form-group">
-                    <label for="dateTo">to (optional)</label>
-                    <input type="date" th:field="*{dateTo}" th:errorclass="input-error">
-                </div>
-            </div>
-
             <details class="ExtendedSearch" th:open="${search.extended}">
                 <summary>Extended Search Options</summary>
+                <div class="FilterRow">
+                    <div class="form-group">
+                        <label for="location">Place</label>
+                        <input type="text" th:field="*{location}" list="locationOptions" placeholder="any place">
+                        <datalist id="locationOptions">
+                            <option th:each="l : ${locations}" th:value="${l}"></option>
+                        </datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="categoryId">Category</label>
+                        <select th:field="*{categoryId}">
+                            <option value="">all categories</option>
+                            <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.categoryName}"></option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dateFrom">Date</label>
+                        <input type="date" th:field="*{dateFrom}" th:errorclass="input-error">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dateTo">to (optional)</label>
+                        <input type="date" th:field="*{dateTo}" th:errorclass="input-error">
+                    </div>
+                </div>
                 <div class="FilterRow">
                     <div class="form-group">
                         <label for="priceFrom">Price from (€)</label>
