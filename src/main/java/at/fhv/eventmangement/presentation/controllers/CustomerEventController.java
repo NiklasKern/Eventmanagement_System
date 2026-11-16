@@ -1,8 +1,11 @@
 package at.fhv.eventmangement.presentation.controllers;
 
+import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.form.EventBookingForm;
+import at.fhv.eventmangement.application.form.EventSearchForm;
 import at.fhv.eventmangement.application.services.CustomerService;
 import at.fhv.eventmangement.application.services.EventBookingService;
+import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.EventDateNotFoundException;
@@ -36,12 +39,15 @@ public class CustomerEventController {
     private final EventService eventService;
     private final EventBookingService eventBookingService;
     private final CustomerService customerService;
+    private final EventCategoryService eventCategoryService;
 
     //Dependency injection
-    public CustomerEventController(EventService eventService, EventBookingService eventBookingService, CustomerService customerService) {
+    public CustomerEventController(EventService eventService, EventBookingService eventBookingService, CustomerService customerService,
+                                   EventCategoryService eventCategoryService) {
         this.eventService = eventService;
         this.eventBookingService = eventBookingService;
         this.customerService = customerService;
+        this.eventCategoryService = eventCategoryService;
     }
 
     // Dropdown values for the booking dialog in customer_events
@@ -113,6 +119,28 @@ public class CustomerEventController {
             return REDIRECT_CUSTOMER_EVENTS;
         }
         model.addAttribute("events", eventService.getActiveEvents());
+        return CUSTOMER_EVENTS;
+    }
+
+    @ModelAttribute("search")
+    public EventSearchForm searchForm() {
+        return new EventSearchForm();
+    }
+
+    @ModelAttribute("categories")
+    public List<EventCategoryDto> categories() {
+        return eventCategoryService.getAllEventCategories();
+    }
+
+    @ModelAttribute("locations")
+    public List<String> locations() {
+        return eventService.getEventLocation();
+    }
+
+    @GetMapping("/events/search")
+    public String search(@Valid @ModelAttribute("search") EventSearchForm search, BindingResult bindingResult, Model model) {
+        model.addAttribute("searched", true);
+        model.addAttribute("events", bindingResult.hasErrors() ? List.of() : eventService.searchEvents(search));
         return CUSTOMER_EVENTS;
     }
 }

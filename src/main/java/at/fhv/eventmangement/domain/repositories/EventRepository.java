@@ -13,4 +13,6 @@ public interface EventRepository {
     Event save(Event event);
     boolean existsByName(String name);
     Optional<Event> findById(UUID id);
+    List<Event> search(EventSearchCriteria searchCriteria);
+    List<String> findLocations(EventStatus eventStatus);
 }

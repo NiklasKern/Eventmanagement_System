@@ -3,6 +3,7 @@ package at.fhv.eventmangement.presentation.controllers;
 import at.fhv.eventmangement.application.dto.*;
 import at.fhv.eventmangement.application.services.CustomerService;
 import at.fhv.eventmangement.application.services.EventBookingService;
+import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.EventNotBookableException;
@@ -49,6 +50,8 @@ class CustomerEventControllerTest {
     private EventBookingService eventBookingService;
     @MockitoBean
     private CustomerService customerService;
+    @MockitoBean
+    private EventCategoryService eventCategoryService;
 
     private final UUID categoryId = UUID.randomUUID();
 
