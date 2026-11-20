@@ -1,7 +1,7 @@
 package at.fhv.eventmangement.domain.exceptions;
 
 public class RoleNotFoundException extends EventManagementException {
-    public RoleNotFoundException(String message) {
-        super("This role does not exists");
+    public RoleNotFoundException() {
+        super("This role does not exist");
     }
 }
