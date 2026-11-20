@@ -1,5 +1,6 @@
 plugins {
 	java
+	jacoco
 	id("org.springframework.boot") version "4.1.2"
 	id("io.spring.dependency-management") version "1.1.7"
 }
@@ -46,6 +47,32 @@ dependencies {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+// Classes without own logic, not counted for coverage
+val coverageExcludes = listOf(
+	"**/EventmangementApplication*",
+	"**/EventmanagementApplicationRunner*",
+	"**/application/dto/**",
+	"**/application/form/**",
+	"**/infrastructure/entities/**",
+	"**/domain/exceptions/**",
+	"**/*MapperImpl*",
+)
+
+tasks.test {
+	finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+	dependsOn(tasks.test)
+	reports {
+		xml.required = true
+		html.required = true
+	}
+	classDirectories.setFrom(
+		files(classDirectories.files.map { fileTree(it) { exclude(coverageExcludes) } })
+	)
 }
 tasks.bootJar {
 	archiveFileName.set("app.jar")
