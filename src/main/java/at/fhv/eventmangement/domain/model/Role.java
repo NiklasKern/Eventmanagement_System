@@ -4,7 +4,7 @@ import at.fhv.eventmangement.domain.exceptions.ProtectedRoleException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.SuperBuilder;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Collections;
 import java.util.EnumSet;
