@@ -2,7 +2,7 @@ package at.fhv.eventmangement.domain.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
+import lombok.SuperBuilder;
 
 import java.util.Objects;
 
