@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="account" class="AccountArea" th:if="${currentUser}">
+    <div class="AccountButton">
+        <span class="Avatar" th:text="${#strings.toUpperCase(#strings.substring(currentUser, 0, 1))}">A</span>
+        <span class="AccountText">
+            <span class="AccountLabel">Signed in as</span>
+            <span class="AccountName" th:text="${currentUser}">admin</span>
+        </span>
+    </div>
+    <form th:action="@{/logout}" method="post" class="LogoutForm">
+        <button type="submit" class="LogoutButton">Log out</button>
+    </form>
+</div>
+</body>
+</html>

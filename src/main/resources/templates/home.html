@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/cssandjs/my_events.css}" rel="stylesheet"/>
+    <title>Welcome</title>
+</head>
+<body>
+<header class="AppHead">
+    <div class="HeadContainer">
+        <div class="WildPathLogo">
+            <img th:src="@{/images/leaf-icon.svg}" alt="leaf">
+            <span>WILD</span><span class="primary-green">PATH</span>
+        </div>
+        <div th:replace="~{fragments/account :: account}"></div>
+    </div>
+</header>
+<main class="AppContent">
+    <div class="ContentContainer">
+        <h1 th:text="'Welcome, ' + ${currentUser}">Welcome</h1>
+        <p>There are no pages for your role yet.</p>
+    </div>
+</main>
+</body>
+</html>
