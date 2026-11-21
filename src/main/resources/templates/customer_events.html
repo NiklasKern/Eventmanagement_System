@@ -145,8 +145,8 @@
                     <td th:text="${e.eventOrganizer != null} ? ${e.eventOrganizer.contactInfo.name} : '–'">Organizer
                     </td>
                     <td>
-                        <a class="CreateEventButton" th:href="@{/customer/event/{id}/book(id=${e.id})}">Book</a>
-                    </td>
+                        <a class="CreateEventButton" th:href="@{/customer/event/{id}/book(id=${e.id})}"
+                           th:if="${#sets.contains(permissions, 'BOOK_EVENTS')}">Book</a></td>
                 </tr>
                 </tbody>
             </table>

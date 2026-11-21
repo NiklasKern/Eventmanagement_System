@@ -35,7 +35,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
  */
 @WebMvcTest(OrganizerEventController.class)
 @Import(SecurityConfig.class)
-@WithMockUser
+@WithMockUser(authorities = {"EVENT_CREATE", "EDIT_ALL_EVENTS"})
 class OrganizerEventControllerTest {
 
     private static final String MANDATORY = "please fill mandatory fields";
