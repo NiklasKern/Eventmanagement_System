@@ -27,7 +27,7 @@ public class EventRestController {
         this.eventService = eventService;
     }
 
-    @GetMapping("/getEvents")
+    @GetMapping("/events")
     public List<EventDto> getEvents() {
         return eventService.getAllEvents();
     }

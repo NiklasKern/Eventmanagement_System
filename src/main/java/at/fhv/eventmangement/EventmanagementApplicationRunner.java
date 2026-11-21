@@ -10,6 +10,7 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -18,6 +19,7 @@ import java.util.List;
 
 @Component
 @Profile("local")
+@Order(1)
 public class EventmanagementApplicationRunner implements ApplicationRunner {
 
     // Until there is a login, every event belongs to this organizer
