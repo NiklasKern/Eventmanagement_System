@@ -50,11 +50,13 @@ public class SecurityConfig {
                         // everything not listed above is forbidden
                         .anyRequest().denyAll())
 
+                // login pages
                 .formLogin(form -> form
                         .loginPage("/login")
                         .defaultSuccessUrl("/")
                         .permitAll())
 
+                // /logout ends sesstion
                 .logout(logout -> logout
                         .logoutSuccessUrl("/login?logout")
                         .permitAll())
@@ -64,6 +66,7 @@ public class SecurityConfig {
 
                 .httpBasic(Customizer.withDefaults())
 
+                // protects from hidden form attacks
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"));
 
         return http.build();

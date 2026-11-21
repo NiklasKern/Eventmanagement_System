@@ -1,14 +1,9 @@
 package at.fhv.eventmangement.presentation.rest;
 
-import at.fhv.eventmangement.application.dto.ContactInfoDto;
-import at.fhv.eventmangement.application.dto.EventCategoryDto;
-import at.fhv.eventmangement.application.dto.EventDateDto;
-import at.fhv.eventmangement.application.dto.EventDto;
-import at.fhv.eventmangement.application.dto.EventOrganizerDto;
+import at.fhv.eventmangement.application.dto.*;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
 import at.fhv.eventmangement.presentation.security.SecurityConfig;
-import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;

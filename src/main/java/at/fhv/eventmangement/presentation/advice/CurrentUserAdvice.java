@@ -16,6 +16,7 @@ public class CurrentUserAdvice {
     public String currentUser(Authentication authentication) {
         return authentication == null ? null : authentication.getName();
     }
+}
 
     // Permission names of the logged-in user, e.g. {"EVENT_VIEW", "BOOK_EVENTS"}
     @ModelAttribute("permissions")

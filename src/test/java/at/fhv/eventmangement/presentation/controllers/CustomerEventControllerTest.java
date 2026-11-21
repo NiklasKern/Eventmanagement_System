@@ -15,6 +15,7 @@ import at.fhv.eventmangement.domain.model.EventBookingStatus;
 import at.fhv.eventmangement.domain.model.EventBookingType;
 import at.fhv.eventmangement.domain.model.PaymentMethod;
 import at.fhv.eventmangement.presentation.security.SecurityConfig;
+import at.fhv.eventmangement.presentation.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
