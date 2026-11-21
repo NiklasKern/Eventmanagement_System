@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 @Transactional(readOnly = true)
@@ -34,5 +35,10 @@ public class CustomerRepositoryAdapter implements CustomerRepository {
     @Override
     public boolean existsByContactInfoNameIgnoreCase(String name) {
         return jpa.existsByContactInfoNameIgnoreCase(name);
+    }
+
+    @Override
+    public Optional<Customer> findById(UUID id) {
+        return jpa.findById(id).map(mapper::toDomain);
     }
 }
