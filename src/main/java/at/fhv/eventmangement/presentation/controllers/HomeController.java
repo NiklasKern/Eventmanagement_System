@@ -20,6 +20,11 @@ public class HomeController {
         return "home"; //rest
     }
 
+    @GetMapping("/access-denied")
+    public String accessDenied() {
+        return "access_denied";
+    }
+
     private static boolean has(Authentication authentication, Permissions permissions) {
         return authentication.getAuthorities().stream().anyMatch(authority -> authority.getAuthority().equals(permissions.name()));
     }

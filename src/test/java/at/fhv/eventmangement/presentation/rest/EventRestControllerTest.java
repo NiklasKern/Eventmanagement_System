@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(EventRestController.class)
 @Import(SecurityConfig.class)
-@WithMockUser
+@WithMockUser(authorities = {"EVENT_VIEW", "EDIT_ALL_EVENTS"})
 class EventRestControllerTest {
 
     @Autowired

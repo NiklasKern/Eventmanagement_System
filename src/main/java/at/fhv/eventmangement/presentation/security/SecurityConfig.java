@@ -2,34 +2,71 @@ package at.fhv.eventmangement.presentation.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
+import static at.fhv.eventmangement.domain.model.Permissions.BOOK_EVENTS;
+import static at.fhv.eventmangement.domain.model.Permissions.EDIT_ALL_EVENTS;
+import static at.fhv.eventmangement.domain.model.Permissions.EDIT_OWN_EVENTS;
+import static at.fhv.eventmangement.domain.model.Permissions.EVENT_CREATE;
+import static at.fhv.eventmangement.domain.model.Permissions.EVENT_VIEW;
+import static at.fhv.eventmangement.domain.model.Permissions.MANAGE_ROLES;
+import static at.fhv.eventmangement.domain.model.Permissions.MANAGE_USERS;
+
 @Configuration
 public class SecurityConfig {
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // Order matters: the FIRST matching rule wins, so specific URLs come before general ones
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/styles/**", "/images/**", "/error").permitAll() //can reach without login
-                        .anyRequest().authenticated()) // rest
+                        // public
+                        .requestMatchers("/login", "/styles/**", "/images/**", "/error").permitAll()
 
-                // login pages
+                        // every logged-in user
+                        .requestMatchers("/", "/access-denied").authenticated()
+
+                        // organizer pages
+                        .requestMatchers("/event/manage/create").hasAuthority(EVENT_CREATE.name())
+                        .requestMatchers("/event/manage/*/modify")
+                        .hasAnyAuthority(EDIT_OWN_EVENTS.name(), EDIT_ALL_EVENTS.name())
+                        .requestMatchers("/events")
+                        .hasAnyAuthority(EVENT_CREATE.name(), EDIT_OWN_EVENTS.name(), EDIT_ALL_EVENTS.name())
+
+                        // customer pages: booking before the general /customer rule
+                        .requestMatchers("/customer/event/*/book").hasAuthority(BOOK_EVENTS.name())
+                        .requestMatchers("/customer/**").hasAuthority(EVENT_VIEW.name())
+
+                        // REST API
+                        .requestMatchers(HttpMethod.PUT, "/api/events/*")
+                        .hasAnyAuthority(EDIT_OWN_EVENTS.name(), EDIT_ALL_EVENTS.name())
+                        .requestMatchers(HttpMethod.GET, "/api/events/**", "/api/customer/**")
+                        .hasAuthority(EVENT_VIEW.name())
+
+                        // role and user management (pages come in step 7)
+                        .requestMatchers("/admin/roles/**", "/api/admin/roles/**").hasAuthority(MANAGE_ROLES.name())
+                        .requestMatchers("/admin/users/**", "/api/admin/users/**").hasAuthority(MANAGE_USERS.name())
+
+                        // everything not listed above is forbidden
+                        .anyRequest().denyAll())
+
                 .formLogin(form -> form
                         .loginPage("/login")
                         .defaultSuccessUrl("/")
                         .permitAll())
 
-                // /logout ends sesstion
                 .logout(logout -> logout
                         .logoutSuccessUrl("/login?logout")
                         .permitAll())
 
-                // Needed in case we call it outside the browser
+                // logged in, but missing the permission → our own page instead of a bare 403
+                .exceptionHandling(ex -> ex.accessDeniedPage("/access-denied"))
+
                 .httpBasic(Customizer.withDefaults())
 
-                // protects from hidden form attacks
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"));
 
         return http.build();
