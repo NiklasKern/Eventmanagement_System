@@ -50,13 +50,18 @@ public class SecurityConfig {
                         // everything not listed above is forbidden
                         .anyRequest().denyAll())
 
-                // login pages
+                        // role and user management (pages come in step 7)
+                        .requestMatchers("/admin/roles/**", "/api/admin/roles/**").hasAuthority(MANAGE_ROLES.name())
+                        .requestMatchers("/admin/users/**", "/api/admin/users/**").hasAuthority(MANAGE_USERS.name())
+
+                        // everything not listed above is forbidden
+                        .anyRequest().denyAll())
+
                 .formLogin(form -> form
                         .loginPage("/login")
                         .defaultSuccessUrl("/")
                         .permitAll())
 
-                // /logout ends sesstion
                 .logout(logout -> logout
                         .logoutSuccessUrl("/login?logout")
                         .permitAll())
@@ -66,7 +71,6 @@ public class SecurityConfig {
 
                 .httpBasic(Customizer.withDefaults())
 
-                // protects from hidden form attacks
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"));
 
         return http.build();
