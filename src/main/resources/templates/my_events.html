@@ -4,8 +4,8 @@
       xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet" />
-    <link th:href="@{/styles/cssandjs/my_events.css}" rel="stylesheet" />
+    <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/cssandjs/my_events.css}" rel="stylesheet"/>
     <title>My events</title>
 </head>
 
@@ -28,7 +28,8 @@
                 <h1>My events</h1>
                 <p>Create and edit outdoor events, and view booking details.</p>
             </div>
-            <a class="CreateEventButton" th:href="@{/event/manage/create}">
+            <a class="CreateEventButton" th:href="@{/event/manage/create}"
+               th:if="${#sets.contains(permissions, 'EVENT_CREATE')}">
                 <span class="Plus">+</span>
                 <span>Create event</span>
             </a>
@@ -98,13 +99,15 @@
                             ACTIVE
                         </span>
                     </td>
-                    <td class="Num" th:text="${#numbers.formatDecimal(e.price, 1, 'POINT', 2, 'COMMA')} + ' €'">150,00 €</td>
+                    <td class="Num" th:text="${#numbers.formatDecimal(e.price, 1, 'POINT', 2, 'COMMA')} + ' €'">150,00
+                        €
+                    </td>
                     <td class="Num" th:text="${e.minParticipants} + ' – ' + ${e.maxParticipants}">5 – 50</td>
-                    <td th:text="${e.eventOrganizer != null} ? ${e.eventOrganizer.contactInfo.name} : '–'">Organizer</td>
-                    <td>
-                        <a th:if="${e.eventStatus != 'CANCELLED'}"
-                           th:href="@{/event/manage/{id}/modify(id=${e.id})}">Edit</a>
-                        <span th:if="${e.eventStatus == 'CANCELLED'}">–</span>
+                    <td th:text="${e.eventOrganizer != null} ? ${e.eventOrganizer.contactInfo.name} : '–'">Organizer
+                    </td>
+                    <td><a th:if="${e.eventStatus != 'CANCELLED'}"th:href="@{/event/manage/{id}/modify(id=${e.id})}"
+                           th:if="${#sets.contains(permissions, 'EDIT_OWN_EVENTS') or #sets.contains(permissions, 'EDIT_ALL_EVENTS')}">Edit</a>
+                    <span th:if="${e.eventStatus == 'CANCELLED'}">–</span>
                     </td>
                 </tr>
                 </tbody>

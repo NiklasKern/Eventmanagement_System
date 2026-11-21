@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 @ActiveProfiles("test")
-@WithMockUser
+@WithMockUser(authorities = {"EVENT_CREATE"})
 class CreateEventAcceptanceTest {
 
     private static final String CATEGORY = "Hiking";
