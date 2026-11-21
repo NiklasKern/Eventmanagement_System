@@ -7,9 +7,12 @@ import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.dto.EventOrganizerDto;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
+import at.fhv.eventmangement.presentation.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,6 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * REST API tests (GlobalExceptionHandler).
  */
 @WebMvcTest(EventRestController.class)
+@Import(SecurityConfig.class)
+@WithMockUser
 class EventRestControllerTest {
 
     @Autowired

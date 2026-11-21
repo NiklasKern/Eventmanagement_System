@@ -5,10 +5,13 @@ import at.fhv.eventmangement.application.form.EventForm;
 import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
+import at.fhv.eventmangement.presentation.security.SecurityConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -25,11 +28,14 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 /**
  * Web layer tests for the organizer Thymeleaf controller.
  */
 @WebMvcTest(OrganizerEventController.class)
+@Import(SecurityConfig.class)
+@WithMockUser
 class OrganizerEventControllerTest {
 
     private static final String MANDATORY = "please fill mandatory fields";
@@ -85,7 +91,7 @@ class OrganizerEventControllerTest {
 
     @Test
     void submitEmptyForm_showsFormAgainWithMandatoryMessage() throws Exception {
-        mockMvc.perform(post("/event/manage/create"))
+        mockMvc.perform(post("/event/manage/create").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("add_event"))
                 .andExpect(model().attributeHasFieldErrors("event",
@@ -99,7 +105,7 @@ class OrganizerEventControllerTest {
 
     @Test
     void submitWithoutName_rejectsOnlyName() throws Exception {
-        mockMvc.perform(post("/event/manage/create")
+        mockMvc.perform(post("/event/manage/create").with(csrf())
                         .param("location", "Dornbirn")
                         .param("eventDates[0].startTime", futureStart())
                         .param("eventDates[0].endTime", futureEnd())
@@ -117,7 +123,7 @@ class OrganizerEventControllerTest {
 
     @Test
     void submitWithZeroPriceAndCapacity_isRejected() throws Exception {
-        mockMvc.perform(post("/event/manage/create")
+        mockMvc.perform(post("/event/manage/create").with(csrf())
                         .param("name", "Summer Hike")
                         .param("location", "Dornbirn")
                         .param("eventDates[0].startTime", futureStart())
@@ -136,7 +142,7 @@ class OrganizerEventControllerTest {
 
     @Test
     void submitWithNonNumericPrice_isRejected() throws Exception {
-        mockMvc.perform(post("/event/manage/create")
+        mockMvc.perform(post("/event/manage/create").with(csrf())
                         .param("name", "Summer Hike")
                         .param("location", "Dornbirn")
                         .param("eventDates[0].startTime", futureStart())
@@ -156,7 +162,7 @@ class OrganizerEventControllerTest {
         when(eventService.addEvent(any(EventForm.class)))
                 .thenThrow(new EventAlreadyExistsException());
 
-        mockMvc.perform(post("/event/manage/create")
+        mockMvc.perform(post("/event/manage/create").with(csrf())
                         .param("name", "Summer Hike")
                         .param("location", "Dornbirn")
                         .param("eventDates[0].startTime", futureStart())
@@ -174,7 +180,7 @@ class OrganizerEventControllerTest {
 
     @Test
     void submitValidForm_savesAndRedirectsToListWithSuccessMessage() throws Exception {
-        mockMvc.perform(post("/event/manage/create")
+        mockMvc.perform(post("/event/manage/create").with(csrf())
                         .param("name", "Summer Hike")
                         .param("description", "A nice walk")
                         .param("location", "Dornbirn")
