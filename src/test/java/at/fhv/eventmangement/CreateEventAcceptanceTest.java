@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -23,15 +24,12 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Test of the "Create Event" user story
@@ -40,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 @ActiveProfiles("test")
+@WithMockUser
 class CreateEventAcceptanceTest {
 
     private static final String CATEGORY = "Hiking";
@@ -86,7 +85,7 @@ class CreateEventAcceptanceTest {
     }
 
     private MockHttpServletRequestBuilder postWithParticipants(String name, int min, int max) {
-        return post("/event/manage/create")
+        return post("/event/manage/create").with(csrf())
                 .param("name", name)
                 .param("description", "A nice walk")
                 .param("location", "Dornbirn")
@@ -144,7 +143,7 @@ class CreateEventAcceptanceTest {
     void createEvent_withMissingMandatoryFields_savesNothing() throws Exception {
         int before = eventService.getAllEvents().size();
 
-        mockMvc.perform(post("/event/manage/create").param("description", "only a description"))
+        mockMvc.perform(post("/event/manage/create").with(csrf()).param("description", "only a description"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("add_event"))
                 .andExpect(content().string(containsString("please fill mandatory fields")));
@@ -179,3 +178,4 @@ class CreateEventAcceptanceTest {
         assertThat(eventService.getAllEvents()).extracting(EventDto::name).doesNotContain(name);
     }
 }
+ 

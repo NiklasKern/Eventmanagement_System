@@ -11,9 +11,12 @@ import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.EventNotBookableException;
 import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.NotEnoughPlacesException;
+import at.fhv.eventmangement.presentation.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -25,22 +28,18 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Web layer tests for the customer Thymeleaf controller (browse + book events).
  */
 @WebMvcTest(CustomerEventController.class)
+@Import(SecurityConfig.class)
+@WithMockUser
 class CustomerEventControllerTest {
 
     @Autowired
@@ -75,7 +74,7 @@ class CustomerEventControllerTest {
     }
 
     private ResultActions postGroupBooking(int places) throws Exception {
-        return mockMvc.perform(post("/customer/event/{id}/book", eventId)
+        return mockMvc.perform(post("/customer/event/{id}/book", eventId).with(csrf())
                 .param("eventDateId", eventDateId.toString())
                 .param("eventBookingType", "GROUP")
                 .param("places", String.valueOf(places))
@@ -179,7 +178,7 @@ class CustomerEventControllerTest {
     void book_invalidForm_doesNotCallService() throws Exception {
         when(eventService.getEventById(eventId)).thenReturn(bookableEvent());
 
-        mockMvc.perform(post("/customer/event/{id}/book", eventId))
+        mockMvc.perform(post("/customer/event/{id}/book", eventId).with(csrf()))
                 .andExpect(view().name("customer_events"))
                 .andExpect(model().attributeHasFieldErrors("booking", "eventDateId", "eventBookingType", "paymentMethod"));
 
