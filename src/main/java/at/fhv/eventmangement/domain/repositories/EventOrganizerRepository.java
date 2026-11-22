@@ -2,6 +2,7 @@ package at.fhv.eventmangement.domain.repositories;
 
 import at.fhv.eventmangement.domain.model.EventOrganizer;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -10,4 +11,5 @@ public interface EventOrganizerRepository {
     Optional<EventOrganizer> findByContactInfoName(String name);
     Optional<EventOrganizer> findById(UUID id);
     boolean existsByContactInfoNameIgnoreCase(String name);
+    List<EventOrganizer> findAll();
 }

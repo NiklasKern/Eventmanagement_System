@@ -80,6 +80,15 @@
             <span class="error" th:if="${#fields.hasErrors('eventCategoryId')}" th:errors="*{eventCategoryId}"></span>
         </div>
 
+        <!-- Only for Event Management / Admin: providers always create for their own organizer -->
+        <div class="form-group" th:if="${#sets.contains(permissions, 'EDIT_ALL_EVENTS')}">
+            <label for="eventOrganizerId">Organizer</label>
+            <select th:field="*{eventOrganizerId}">
+                <option value="">-- choose an organizer --</option>
+                <option th:each="o : ${organizers}" th:value="${o.id}" th:text="${o.contactInfo.name}"></option>
+            </select>
+        </div>
+
         <div class="form-group">
             <label for="description">Description</label>
             <textarea th:field="*{description}"

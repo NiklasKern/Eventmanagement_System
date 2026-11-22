@@ -7,6 +7,7 @@ import at.fhv.eventmangement.application.services.CustomerService;
 import at.fhv.eventmangement.application.services.EventBookingService;
 import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventService;
+import at.fhv.eventmangement.domain.exceptions.*;
 import at.fhv.eventmangement.application.services.InvoiceService;
 import at.fhv.eventmangement.application.dto.EventBookingDto;
 import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
@@ -17,14 +18,11 @@ import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.NotEnoughPlacesException;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
@@ -76,15 +74,16 @@ public class CustomerEventController {
 
     // Shows the event list with the booking dialog for the event opened
     @GetMapping("/event/{id}/book")
-    public String bookingForm(@PathVariable UUID id, Model model, RedirectAttributes redirectAttributes) {
+    public String bookingForm(@PathVariable UUID id, Model model, RedirectAttributes redirectAttributes,
+                              Authentication authentication) {
         try {
-            model.addAttribute("customer", customerService.getCurrentCustomer());
+            model.addAttribute("customer", customerService.getCurrentCustomer(authentication.getName()));
             model.addAttribute("event", eventService.getEventById(id));
         } catch (EventNotFoundException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return REDIRECT_CUSTOMER_EVENTS;
         } catch (CustomerNotFoundException ex) {
-            log.error("Default customer missing", ex);
+            // account is not linked to a customer
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return REDIRECT_CUSTOMER_EVENTS;
         }
@@ -99,10 +98,11 @@ public class CustomerEventController {
                        @Valid @ModelAttribute("booking") EventBookingForm form,
                        BindingResult bindingResult,
                        Model model,
-                       RedirectAttributes redirectAttributes) {
+                       RedirectAttributes redirectAttributes,
+                       Authentication authentication) {
         if (!bindingResult.hasErrors()) {
             try {
-                EventBookingDto booking = eventBookingService.book(id, form);
+                String bookingNumber = eventBookingService.book(id, form, authentication.getName()).bookingNumber();
                 redirectAttributes.addFlashAttribute("successMessage",
                         "Event successfully booked (" + bookingNumber + ")");
                 return "redirect:/customer/booking/" + bookingNumber;
@@ -113,7 +113,6 @@ public class CustomerEventController {
             } catch (NotEnoughPlacesException ex) {
                 bindingResult.rejectValue("places", "notEnoughPlaces", ex.getMessage());
             } catch (CustomerNotFoundException ex) {
-                log.error("Default customer missing", ex);
                 bindingResult.reject("customer", ex.getMessage());
             }
         }
