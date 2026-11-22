@@ -3,7 +3,6 @@ package at.fhv.eventmangement.presentation.controllers;
 import at.fhv.eventmangement.application.dto.*;
 import at.fhv.eventmangement.application.services.CustomerService;
 import at.fhv.eventmangement.application.services.EventBookingService;
-import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.application.services.InvoiceService;
 import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
@@ -67,7 +66,7 @@ class CustomerEventControllerTest {
                 new EventCategoryDto(categoryId, "Hiking"),
                 new EventOrganizerDto(UUID.randomUUID(), new ContactInfoDto("Alpine Club", "Street 1", "a@b.at")),
                 List.of(new EventDateDto(eventDateId, LocalDateTime.of(2027, 1, 10, 17, 0),
-                                                      LocalDateTime.of(2027, 1, 10, 20, 0))));
+                        LocalDateTime.of(2027, 1, 10, 20, 0))));
     }
 
     private CustomerDto defaultCustomer() {
@@ -86,7 +85,7 @@ class CustomerEventControllerTest {
     @Test
     void bookingForm_showsEventAndCustomer() throws Exception {
         when(eventService.getEventById(eventId)).thenReturn(bookableEvent());
-        when(customerService.getCurrentCustomer()).thenReturn(defaultCustomer());
+        when(customerService.getCurrentCustomer("user")).thenReturn(defaultCustomer());
 
         mockMvc.perform(get("/customer/event/{id}/book", eventId))
                 .andExpect(status().isOk())
@@ -97,7 +96,7 @@ class CustomerEventControllerTest {
 
     @Test
     void bookingForm_unknownEvent_redirectsToEventListWithError() throws Exception {
-        when(customerService.getCurrentCustomer()).thenReturn(defaultCustomer());
+        when(customerService.getCurrentCustomer("user")).thenReturn(defaultCustomer());
         when(eventService.getEventById(eventId)).thenThrow(new EventNotFoundException());
 
         mockMvc.perform(get("/customer/event/{id}/book", eventId))
@@ -107,8 +106,8 @@ class CustomerEventControllerTest {
     }
 
     @Test
-    void bookingForm_missingDefaultCustomer_redirectsToEventListWithError() throws Exception {
-        when(customerService.getCurrentCustomer()).thenThrow(new CustomerNotFoundException());
+    void bookingForm_accountWithoutCustomer_redirectsToEventListWithError() throws Exception {
+        when(customerService.getCurrentCustomer("user")).thenThrow(new CustomerNotFoundException());
 
         mockMvc.perform(get("/customer/event/{id}/book", eventId))
                 .andExpect(redirectedUrl("/customer/events"))
@@ -119,7 +118,7 @@ class CustomerEventControllerTest {
     void book_success_redirectsToInterimInvoice() throws Exception {
         UUID bookingId = UUID.randomUUID();
         UUID invoiceId = UUID.randomUUID();
-        when(eventBookingService.book(any(), any())).thenReturn(new EventBookingDto(
+        when(eventBookingService.book(any(), any(), eq("user"))).thenReturn(new EventBookingDto(
                 bookingId, "BK-ABCDEFGH", null, null, null, 2, null, null, null, null, null, List.of(), null));
         when(invoiceService.getInvoiceForBooking(bookingId)).thenReturn(new InvoiceDto(invoiceId, bookingId,
                 null, null, null, null, List.of(), null, null, null, null, null, true));
@@ -144,7 +143,7 @@ class CustomerEventControllerTest {
 
     @Test
     void book_notEnoughPlaces_showsErrorOnPlacesField() throws Exception {
-        when(eventBookingService.book(any(), any())).thenThrow(new NotEnoughPlacesException(3));
+        when(eventBookingService.book(any(), any(), eq("user"))).thenThrow(new NotEnoughPlacesException(3));
         when(eventService.getEventById(eventId)).thenReturn(bookableEvent());
 
         postGroupBooking(4)
@@ -156,7 +155,7 @@ class CustomerEventControllerTest {
 
     @Test
     void book_eventNotBookable_showsErrorOnDateField() throws Exception {
-        when(eventBookingService.book(any(), any())).thenThrow(new EventNotBookableException());
+        when(eventBookingService.book(any(), any(), eq("user"))).thenThrow(new EventNotBookableException());
         when(eventService.getEventById(eventId)).thenReturn(bookableEvent());
 
         postGroupBooking(2)
@@ -166,8 +165,8 @@ class CustomerEventControllerTest {
     }
 
     @Test
-    void book_missingDefaultCustomer_showsGlobalError() throws Exception {
-        when(eventBookingService.book(any(), any())).thenThrow(new CustomerNotFoundException());
+    void book_accountWithoutCustomer_showsGlobalError() throws Exception {
+        when(eventBookingService.book(any(), any(), eq("user"))).thenThrow(new CustomerNotFoundException());
         when(eventService.getEventById(eventId)).thenReturn(bookableEvent());
 
         postGroupBooking(2)
@@ -184,12 +183,12 @@ class CustomerEventControllerTest {
                 .andExpect(view().name("customer_events"))
                 .andExpect(model().attributeHasFieldErrors("booking", "eventDateId", "eventBookingType", "paymentMethod"));
 
-        verify(eventBookingService, never()).book(any(), any());
+        verify(eventBookingService, never()).book(any(), any(), any());
     }
 
     @Test
     void book_eventDisappearedWhileShowingErrors_redirectsWithError() throws Exception {
-        when(eventBookingService.book(any(), any())).thenThrow(new NotEnoughPlacesException(0));
+        when(eventBookingService.book(any(), any(), eq("user"))).thenThrow(new NotEnoughPlacesException(0));
         when(eventService.getEventById(eventId)).thenThrow(new EventNotFoundException());
 
         postGroupBooking(2)

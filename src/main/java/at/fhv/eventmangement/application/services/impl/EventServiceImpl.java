@@ -1,28 +1,19 @@
 package at.fhv.eventmangement.application.services.impl;
 
-import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
-import at.fhv.eventmangement.application.form.EventSearchForm;
-import at.fhv.eventmangement.application.services.NotificationService;
-import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
-import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventDateHasBookingsException;
-import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventOrganizerNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.MaxParticipantsBelowBookedPlacesException;
 import at.fhv.eventmangement.application.form.EventDateForm;
-import at.fhv.eventmangement.application.mappers.EventMapper;
-import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.application.form.EventForm;
-import at.fhv.eventmangement.domain.repositories.EventCategoryRepository;
-import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
-import at.fhv.eventmangement.domain.repositories.EventRepository;
+import at.fhv.eventmangement.application.form.EventSearchForm;
+import at.fhv.eventmangement.application.mappers.EventMapper;
 import at.fhv.eventmangement.application.services.EventService;
-import at.fhv.eventmangement.domain.repositories.EventSearchCriteria;
+import at.fhv.eventmangement.application.services.NotificationService;
+import at.fhv.eventmangement.domain.exceptions.*;
+import at.fhv.eventmangement.domain.model.*;
+import at.fhv.eventmangement.domain.repositories.*;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import at.fhv.eventmangement.domain.exceptions.EventAlreadyCancelledException;
 
@@ -42,6 +33,7 @@ public class EventServiceImpl implements EventService {
     private final EventUpdateTransaction eventUpdateTransaction;
     private final EventCancelTransaction eventCancelTransaction;
     private final NotificationService notificationService;
+    private final UserAccountRepository userAccountRepository;
 
     private final EventMapper eventMapper;
 
@@ -51,6 +43,7 @@ public class EventServiceImpl implements EventService {
                             EventUpdateTransaction eventUpdateTransaction,
                             EventCancelTransaction eventCancelTransaction,
                             NotificationService notificationService,
+                            UserAccountRepository userAccountRepository,
                             EventMapper eventMapper) {
         this.eventRepository = eventRepository;
         this.eventCategoryRepository = eventCategoryRepository;
@@ -58,6 +51,7 @@ public class EventServiceImpl implements EventService {
         this.eventUpdateTransaction = eventUpdateTransaction;
         this.eventCancelTransaction = eventCancelTransaction;
         this.notificationService = notificationService;
+        this.userAccountRepository = userAccountRepository;
         this.eventMapper = eventMapper;
     }
 
@@ -71,9 +65,12 @@ public class EventServiceImpl implements EventService {
     // only afterwards the customers are notified. Only successfully notified customers are returned.
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public EventUpdateResultDto updateEvent(UUID id, EventForm form)
+    public EventUpdateResultDto updateEvent(UUID id, EventForm form, String username)
             throws EventNotFoundException, EventAlreadyExistsException, EventCategoryNotFoundException,
-            EventDateHasBookingsException, MaxParticipantsBelowBookedPlacesException {
+            EventDateHasBookingsException, MaxParticipantsBelowBookedPlacesException, NotEventOwnerException {
+
+        // Check first, before anything is changed
+        editableEvent(id, username);
 
         EventUpdateTransaction.Result result = eventUpdateTransaction.apply(id, form);
         Event saved = result.event();
@@ -98,10 +95,10 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public EventDto addEvent(EventForm eventForm)
+    public EventDto addEvent(EventForm eventForm, String username)
             throws EventAlreadyExistsException, EventCategoryNotFoundException, EventOrganizerNotFoundException {
 
-        if(eventRepository.existsByName(eventForm.getName())) {
+        if (eventRepository.existsByName(eventForm.getName())) {
             throw new EventAlreadyExistsException();
         }
 
@@ -109,8 +106,7 @@ public class EventServiceImpl implements EventService {
                 .findById(eventForm.getEventCategoryId())
                 .orElseThrow(EventCategoryNotFoundException::new);
 
-        EventOrganizer organizer = eventOrganizerRepository.findByContactInfoName(EventmanagementApplicationRunner.DEFAULT_ORGANIZER)
-                .orElseThrow(EventOrganizerNotFoundException::new);
+        EventOrganizer organizer = organizerFor(account(username), eventForm.getEventOrganizerId());
 
         //Create new event to prevent unexpected input
         Event event = Event.builder()
@@ -125,8 +121,7 @@ public class EventServiceImpl implements EventService {
                 .eventOrganizer(organizer)
                 .build();
 
-        for(EventDateForm eventDateForm : eventForm.getEventDates())
-        {
+        for (EventDateForm eventDateForm : eventForm.getEventDates()) {
             event.getEventDates().add(EventDate.builder()
                     .event(event)
                     .startTime(eventDateForm.getStartTime())
@@ -134,8 +129,7 @@ public class EventServiceImpl implements EventService {
                     .build());
         }
 
-
-        //Save event to db and return saved eventdto
+        // Save event to db and return saved eventdto
         return eventMapper.toDto(eventRepository.save(event));
     }
     @Override
@@ -162,6 +156,27 @@ public class EventServiceImpl implements EventService {
         return eventRepository.search(toCriteria(searchForm)).stream().map(eventMapper::toDto).toList();
     }
 
+    // Organizer list: everything with EDIT_ALL_EVENTS, otherwise only the events of the own organizer
+    @Override
+    public List<EventDto> getManagedEvents(String username) {
+        UserAccount account = account(username);
+        if (account.hasPermission(Permissions.EDIT_ALL_EVENTS)) {
+            return getAllEvents();
+        }
+        if (account.getOrganizer() == null) {
+            return List.of();
+        }
+        return eventRepository.findByEventOrganizerId(account.getOrganizer().getId()).stream()
+                .map(eventMapper::toDto)
+                .toList();
+    }
+
+    // Edit form: only open it if the user may save it afterwards
+    @Override
+    public EventDto getEventForEdit(UUID id, String username) throws EventNotFoundException, NotEventOwnerException {
+        return eventMapper.toDto(editableEvent(id, username));
+    }
+
     @Override
     public List<String> getEventLocation() {
         return eventRepository.findLocations(EventStatus.ACTIVE);
@@ -181,6 +196,34 @@ public class EventServiceImpl implements EventService {
                 .priceFrom(searchForm.getPriceFrom())
                 .priceTo(searchForm.getPriceTo())
                 .build();
+    }
+
+    // The logged-in user always has an account. If not, that is a bug, not a user error → unchecked
+    private UserAccount account(String username) {
+        return userAccountRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalStateException("No account for logged-in user " + username));
+    }
+
+    // Loads the event and checks that the user may change it
+    private Event editableEvent(UUID id, String username) throws EventNotFoundException, NotEventOwnerException {
+        Event event = eventRepository.findById(id).orElseThrow(EventNotFoundException::new);
+        if (!account(username).canEdit(event)) {
+            throw new NotEventOwnerException();
+        }
+        return event;
+    }
+
+    // Providers always create for their own organizer.
+    // Users with EDIT_ALL_EVENTS (Event Management, Admin) may choose one in the form.
+    private EventOrganizer organizerFor(UserAccount account, UUID chosenOrganizerId) throws EventOrganizerNotFoundException {
+        if (chosenOrganizerId != null && account.hasPermission(Permissions.EDIT_ALL_EVENTS)) {
+            return eventOrganizerRepository.findById(chosenOrganizerId)
+                    .orElseThrow(EventOrganizerNotFoundException::new);
+        }
+        if (account.getOrganizer() == null) {
+            throw new EventOrganizerNotFoundException("Your account is not linked to an event organizer, please choose one");
+        }
+        return account.getOrganizer();
     }
 
     private static String blankToNull(String text) {

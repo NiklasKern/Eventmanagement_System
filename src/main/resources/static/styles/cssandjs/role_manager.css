@@ -1,0 +1,61 @@
+/* Permission checkboxes on the role form */
+.PermissionGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px 20px;
+}
+
+.PermissionItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-weight: normal;
+}
+
+.PermissionItem strong {
+    display: block;
+    font-size: 13px;
+}
+
+.PermissionItem small {
+    display: block;
+    color: #667085;
+}
+
+/* "built-in", "active", "disabled" */
+.Badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.BadgeOff {
+    background: #fde2e1;
+    color: #b42318;
+}
+
+/* small forms inside table cells (Delete, Disable, role dropdown) */
+.InlineForm {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+}
+
+.LinkButton {
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.Actions {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}

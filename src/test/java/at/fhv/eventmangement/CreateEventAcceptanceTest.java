@@ -4,11 +4,12 @@ import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.form.EventCategoryForm;
 import at.fhv.eventmangement.application.form.EventOrganizerForm;
-import at.fhv.eventmangement.application.services.EventCategoryService;
-import at.fhv.eventmangement.application.services.EventOrganizerService;
-import at.fhv.eventmangement.application.services.EventService;
+import at.fhv.eventmangement.application.form.UserAccountForm;
+import at.fhv.eventmangement.application.services.*;
 import at.fhv.eventmangement.domain.exceptions.EventCategoryAlreadyExistsException;
 import at.fhv.eventmangement.domain.exceptions.EventOrganizerAlreadyExistsException;
+import at.fhv.eventmangement.domain.exceptions.UserAccountAlreadyExistsException;
+import at.fhv.eventmangement.domain.model.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +25,9 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -38,9 +39,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 @ActiveProfiles("test")
-@WithMockUser(authorities = {"EVENT_CREATE"})
+// Logged in as the real account "provider" (created below), linked to the default organizer
+@WithMockUser(username = CreateEventAcceptanceTest.PROVIDER, authorities = {"EVENT_CREATE"})
 class CreateEventAcceptanceTest {
 
+    static final String PROVIDER = "provider";
+    private static final String PROVIDER_PASSWORD = "Provider#2026";
     private static final String CATEGORY = "Hiking";
 
     @Autowired
@@ -51,6 +55,10 @@ class CreateEventAcceptanceTest {
     private EventCategoryService categoryService;
     @Autowired
     private EventOrganizerService organizerService;
+    @Autowired
+    private UserAccountService userAccountService;
+    @Autowired
+    private RoleService roleService;
 
     private UUID categoryId;
 
@@ -69,11 +77,35 @@ class CreateEventAcceptanceTest {
             // created by an earlier test
         }
 
+        try {
+            userAccountService.createAccount(UserAccountForm.builder()
+                    .username(PROVIDER)
+                    .password(PROVIDER_PASSWORD)
+                    .confirmPassword(PROVIDER_PASSWORD)
+                    .roleId(providerRoleId())
+                    .organizerId(defaultOrganizerId())
+                    .build());
+        } catch (UserAccountAlreadyExistsException alreadyThere) {
+            // created by an earlier test
+        }
+
         categoryId = categoryService.getAllEventCategories().stream()
                 .filter(c -> c.categoryName().equals(CATEGORY))
                 .map(EventCategoryDto::id)
                 .findFirst()
                 .orElseThrow();
+    }
+
+    private UUID providerRoleId() {
+        return roleService.getAllRoles().stream()
+                .filter(role -> role.name().equals(Role.EVENT_PROVIDER))
+                .findFirst().orElseThrow().id();
+    }
+
+    private UUID defaultOrganizerId() {
+        return organizerService.getAllOrganizers().stream()
+                .filter(organizer -> organizer.contactInfo().name().equals(EventmanagementApplicationRunner.DEFAULT_ORGANIZER))
+                .findFirst().orElseThrow().id();
     }
 
     private static String uniqueName() {
@@ -125,7 +157,7 @@ class CreateEventAcceptanceTest {
                 .andExpect(content().string(containsString(name)))
                 .andExpect(content().string(containsString(CATEGORY)));
 
-        // 5. And it really is in the database, with status ACTIVE and the default organizer
+        // 5. And it really is in the database, with status ACTIVE and the organizer of the logged-in account
         assertThat(eventService.getAllEvents())
                 .filteredOn(e -> e.name().equals(name))
                 .singleElement()
@@ -178,4 +210,3 @@ class CreateEventAcceptanceTest {
         assertThat(eventService.getAllEvents()).extracting(EventDto::name).doesNotContain(name);
     }
 }
- 

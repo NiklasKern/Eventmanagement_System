@@ -15,4 +15,5 @@ public interface EventRepository {
     Optional<Event> findById(UUID id);
     List<Event> search(EventSearchCriteria searchCriteria);
     List<String> findLocations(EventStatus eventStatus);
+    List<Event> findByEventOrganizerId(UUID organizerId);
 }

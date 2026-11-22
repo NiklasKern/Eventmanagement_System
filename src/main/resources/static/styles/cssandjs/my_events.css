@@ -294,3 +294,18 @@ a, a:hover {
 .LogoutButton:hover {
     background: rgba(0, 0, 0, 0.05);
 }
+
+.AdminNav {
+    display: flex;
+    gap: 16px;
+}
+
+.AdminNav a {
+    color: inherit;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.AdminNav a:hover {
+    text-decoration: underline;
+}

@@ -15,7 +15,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class EventForm {
-
     @NotBlank(message = "please fill mandatory fields")
     private String name;
 
@@ -44,6 +43,8 @@ public class EventForm {
 
     @NotNull(message = "please fill mandatory fields")
     private UUID eventCategoryId;
+
+    private UUID eventOrganizerId; // Optional
 
     @NotEmpty(message = "please add at least one date")
     @Builder.Default

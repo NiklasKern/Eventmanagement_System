@@ -5,12 +5,10 @@ import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import at.fhv.eventmangement.domain.model.Permissions;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.security.core.Authentication;
-
-import java.net.Authenticator;
 
 @Slf4j
 @Controller

@@ -12,7 +12,7 @@ import java.util.UUID;
 import java.util.Optional;
 
 public interface EventBookingService {
-    EventBookingDto book(UUID id, EventBookingForm form)
+    EventBookingDto book(UUID id, EventBookingForm form, String username)
             throws EventDateNotFoundException, EventNotBookableException, NotEnoughPlacesException, CustomerNotFoundException;
     List<String> getBookingTypes();
     List<String> getPaymentMethods();

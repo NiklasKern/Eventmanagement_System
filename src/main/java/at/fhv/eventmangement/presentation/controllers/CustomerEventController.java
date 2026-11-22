@@ -62,15 +62,16 @@ public class CustomerEventController {
 
     // Shows the event list with the booking dialog for the event opened
     @GetMapping("/event/{id}/book")
-    public String bookingForm(@PathVariable UUID id, Model model, RedirectAttributes redirectAttributes) {
+    public String bookingForm(@PathVariable UUID id, Model model, RedirectAttributes redirectAttributes,
+                              Authentication authentication) {
         try {
-            model.addAttribute("customer", customerService.getCurrentCustomer());
+            model.addAttribute("customer", customerService.getCurrentCustomer(authentication.getName()));
             model.addAttribute("event", eventService.getEventById(id));
         } catch (EventNotFoundException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return REDIRECT_CUSTOMER_EVENTS;
         } catch (CustomerNotFoundException ex) {
-            log.error("Default customer missing", ex);
+            // account is not linked to a customer
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return REDIRECT_CUSTOMER_EVENTS;
         }
@@ -85,10 +86,11 @@ public class CustomerEventController {
                        @Valid @ModelAttribute("booking") EventBookingForm form,
                        BindingResult bindingResult,
                        Model model,
-                       RedirectAttributes redirectAttributes) {
+                       RedirectAttributes redirectAttributes,
+                       Authentication authentication) {
         if (!bindingResult.hasErrors()) {
             try {
-                EventBookingDto booking = eventBookingService.book(id, form);
+                String bookingNumber = eventBookingService.book(id, form, authentication.getName()).bookingNumber();
                 redirectAttributes.addFlashAttribute("successMessage",
                         "Event successfully booked (" + booking.bookingNumber() + ")");
                 return redirectToInvoice(booking);

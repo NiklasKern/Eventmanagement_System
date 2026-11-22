@@ -30,6 +30,16 @@ public class UserAccount extends BaseModel {
         this.passwordHash = Objects.requireNonNull(newPasswordHash, "Password can not be null");
     }
 
+    public boolean canEdit(Event event) {
+        if (hasPermission(Permissions.EDIT_ALL_EVENTS)) {
+            return true;
+        }
+        return hasPermission(Permissions.EDIT_OWN_EVENTS)
+                && organizer != null
+                && event.getEventOrganizer() != null
+                && organizer.getId().equals(event.getEventOrganizer().getId());
+    }
+
     public void enable() {
         this.enabled = true;
     }

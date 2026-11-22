@@ -1,12 +1,7 @@
 package at.fhv.eventmangement.infrastructure.repositories;
 
 import at.fhv.eventmangement.TestcontainersConfiguration;
-import at.fhv.eventmangement.domain.model.ContactInfo;
-import at.fhv.eventmangement.domain.model.Event;
-import at.fhv.eventmangement.domain.model.EventCategory;
-import at.fhv.eventmangement.domain.model.EventDate;
-import at.fhv.eventmangement.domain.model.EventOrganizer;
-import at.fhv.eventmangement.domain.model.EventStatus;
+import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.domain.repositories.EventCategoryRepository;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
 import at.fhv.eventmangement.domain.repositories.EventRepository;
@@ -166,6 +161,31 @@ class RepositoryAdapterIntegrationTest {
                     assertThat(found.getEventCategory().getCategoryName()).isEqualTo("Climbing");
                     assertThat(found.getEventOrganizer().getContactInfo().getName()).isEqualTo("Alpine Club");
                 });
+    }
+
+    // step 8: own events and dropdown lists
+
+    @Test
+    void event_findByEventOrganizerId_returnsOnlyEventsOfThatOrganizer() {
+        EventCategory category = saveCategory("Climbing");
+        EventOrganizer mine = saveOrganizer("Alpine Club");
+        EventOrganizer other = saveOrganizer("Other Club");
+        Event own = eventRepository.save(newEvent("Own Hike", category, mine));
+        eventRepository.save(newEvent("Foreign Hike", category, other));
+
+        assertThat(eventRepository.findByEventOrganizerId(mine.getId()))
+                .extracting(Event::getId)
+                .containsExactly(own.getId());
+    }
+
+    @Test
+    void organizer_findAllContainsSavedOrganizers() {
+        saveOrganizer("Alpine Club");
+        saveOrganizer("Other Club");
+
+        assertThat(organizerRepository.findAll())
+                .extracting(organizer -> organizer.getContactInfo().getName())
+                .contains("Alpine Club", "Other Club");
     }
 
     @Test

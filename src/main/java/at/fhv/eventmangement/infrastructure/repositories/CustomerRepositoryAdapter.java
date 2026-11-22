@@ -6,6 +6,7 @@ import at.fhv.eventmangement.infrastructure.mappers.CustomerEntityMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,6 +36,11 @@ public class CustomerRepositoryAdapter implements CustomerRepository {
     @Override
     public boolean existsByContactInfoNameIgnoreCase(String name) {
         return jpa.existsByContactInfoNameIgnoreCase(name);
+    }
+
+    @Override
+    public List<Customer> findAll() {
+        return jpa.findAll().stream().map(mapper::toDomain).toList();
     }
 
     @Override
