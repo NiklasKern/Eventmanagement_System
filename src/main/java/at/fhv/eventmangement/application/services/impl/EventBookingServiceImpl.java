@@ -1,19 +1,18 @@
 package at.fhv.eventmangement.application.services.impl;
 
-import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventBookingDto;
-import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventDateNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventNotBookableException;
-import at.fhv.eventmangement.domain.exceptions.NotEnoughPlacesException;
 import at.fhv.eventmangement.application.form.EventBookingForm;
 import at.fhv.eventmangement.application.mappers.EventBookingMapper;
 import at.fhv.eventmangement.application.services.BookingNumberGenerator;
 import at.fhv.eventmangement.application.services.EventBookingService;
+import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.EventDateNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.EventNotBookableException;
+import at.fhv.eventmangement.domain.exceptions.NotEnoughPlacesException;
 import at.fhv.eventmangement.domain.model.*;
-import at.fhv.eventmangement.domain.repositories.CustomerRepository;
 import at.fhv.eventmangement.domain.repositories.EventBookingRepository;
 import at.fhv.eventmangement.domain.repositories.EventDateRepository;
+import at.fhv.eventmangement.domain.repositories.UserAccountRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,21 +26,21 @@ public class EventBookingServiceImpl implements EventBookingService {
 
     private final EventDateRepository eventDateRepository;
     private final EventBookingRepository eventBookingRepository;
-    private final CustomerRepository customerRepository;
+    private final UserAccountRepository userAccountRepository;
     private final BookingNumberGenerator bookingNumberGenerator;
     private final EventBookingMapper eventBookingMapper;
 
-    public EventBookingServiceImpl(EventDateRepository eventDateRepository, EventBookingRepository eventBookingRepository, CustomerRepository customerRepository, BookingNumberGenerator bookingNumberGenerator, EventBookingMapper eventBookingMapper) {
+    public EventBookingServiceImpl(EventDateRepository eventDateRepository, EventBookingRepository eventBookingRepository, UserAccountRepository userAccountRepository, BookingNumberGenerator bookingNumberGenerator, EventBookingMapper eventBookingMapper) {
         this.eventDateRepository = eventDateRepository;
         this.eventBookingRepository = eventBookingRepository;
-        this.customerRepository = customerRepository;
+        this.userAccountRepository = userAccountRepository;
         this.bookingNumberGenerator = bookingNumberGenerator;
         this.eventBookingMapper = eventBookingMapper;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public EventBookingDto book(UUID eventId, EventBookingForm form)
+    public EventBookingDto book(UUID eventId, EventBookingForm form, String username)
             throws EventDateNotFoundException, EventNotBookableException, NotEnoughPlacesException, CustomerNotFoundException {
 
         EventDate eventDate = eventDateRepository.findById(form.getEventDateId())
@@ -65,7 +64,7 @@ public class EventBookingServiceImpl implements EventBookingService {
         EventBooking booking = EventBooking.builder()
                 .bookingNumber(bookingNumberGenerator.next())
                 .eventDate(eventDate)
-                .customer(currentCustomer())
+                .customer(currentCustomer(username))
                 .eventBookingType(form.getEventBookingType())
                 .places(places)
                 .price(event.getPrice().multiply(BigDecimal.valueOf(places)))
@@ -86,10 +85,13 @@ public class EventBookingServiceImpl implements EventBookingService {
         return Arrays.stream(PaymentMethod.values()).map(Enum::name).toList();
     }
 
-    // Only until there is a login
-    //every booking belongs to the default customer!!
-    private Customer currentCustomer() throws CustomerNotFoundException {
-        return customerRepository.findByContactInfoName(EventmanagementApplicationRunner.DEFAULT_CUSTOMER)
-                .orElseThrow(CustomerNotFoundException::new);
+    // The booking belongs to the customer linked to the logged-in account
+    private Customer currentCustomer(String username) throws CustomerNotFoundException {
+        UserAccount account = userAccountRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalStateException("No account for logged-in user " + username));
+        if (account.getCustomer() == null) {
+            throw new CustomerNotFoundException("Your account is not linked to a customer");
+        }
+        return account.getCustomer();
     }
 }

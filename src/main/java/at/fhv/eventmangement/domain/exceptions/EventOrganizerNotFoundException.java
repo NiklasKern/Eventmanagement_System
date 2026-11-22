@@ -5,4 +5,8 @@ public class EventOrganizerNotFoundException extends EventManagementException {
     public EventOrganizerNotFoundException() {
         super("organizer does not exist");
     }
+
+    public EventOrganizerNotFoundException(String message) {
+        super(message);
+    }
 }

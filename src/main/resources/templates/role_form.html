@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/cssandjs/add_event.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/cssandjs/role_manager.css}" rel="stylesheet"/>
+    <title th:text="${roleId == null} ? 'Create role' : 'Edit role'">Role</title>
+</head>
+<body>
+<main class="event-form">
+    <h1 th:text="${roleId == null} ? 'Create role' : 'Edit role'">Create role</h1>
+    <p class="subtitle">Tick the permissions this role should have.</p>
+
+    <!-- no roleId → create, otherwise → edit this role -->
+    <form th:action="${roleId == null} ? @{/admin/roles/new} : @{/admin/roles/{id}/edit(id=${roleId})}"
+          th:object="${role}" method="post">
+
+        <div class="form-group">
+            <label for="name">Role name *</label>
+            <input type="text" th:field="*{name}" th:readonly="${builtIn}" required>
+            <small th:if="${builtIn}">Built-in roles keep their name.</small>
+            <span class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <input type="text" th:field="*{description}">
+            <span class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Permissions</label>
+            <div class="PermissionGrid">
+                <!-- th:field on a Set: Thymeleaf ticks every permission the role already has -->
+                <label class="PermissionItem" th:each="p : ${allPermissions}">
+                    <input type="checkbox" th:field="*{permissions}" th:value="${p}">
+                    <span>
+                        <strong th:text="${p.name()}">EVENT_VIEW</strong>
+                        <small th:text="${p.description}">See the event catalog</small>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <!-- errors without a field, e.g. "the Admin role must keep ..." -->
+        <p class="field-error" th:each="err : ${#fields.globalErrors()}" th:text="${err}"></p>
+
+        <button type="submit">Save role</button>
+        <a th:href="@{/admin/roles}">Cancel</a>
+    </form>
+</main>
+</body>
+</html>

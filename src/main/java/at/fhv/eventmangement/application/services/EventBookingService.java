@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface EventBookingService {
-    EventBookingDto book(UUID id, EventBookingForm form)
+    EventBookingDto book(UUID id, EventBookingForm form, String username)
             throws EventDateNotFoundException, EventNotBookableException, NotEnoughPlacesException, CustomerNotFoundException;
     List<String> getBookingTypes();
     List<String> getPaymentMethods();

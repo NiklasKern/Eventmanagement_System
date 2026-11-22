@@ -1,10 +1,6 @@
 package at.fhv.eventmangement.presentation.advice;
 
-import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
-import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventDateHasBookingsException;
-import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.MaxParticipantsBelowBookedPlacesException;
+import at.fhv.eventmangement.domain.exceptions.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -92,6 +88,30 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
     @ExceptionHandler(EventDateHasBookingsException.class)
     public ProblemDetail handleEventDateHasBookings(EventDateHasBookingsException ex) {
         return fieldError("eventDates", ex.getMessage());
+    }
+
+    // 403 - logged in, but not the owner of this event
+    @ExceptionHandler(NotEventOwnerException.class)
+    public ProblemDetail handleNotEventOwner(NotEventOwnerException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
+    // 404 - role does not exist
+    @ExceptionHandler(RoleNotFoundException.class)
+    public ProblemDetail handleRoleNotFound(RoleNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    // 400 - name already taken
+    @ExceptionHandler(RoleAlreadyExistsException.class)
+    public ProblemDetail handleRoleAlreadyExists(RoleAlreadyExistsException ex) {
+        return fieldError("name", ex.getMessage());
+    }
+
+    // 409 - built-in role, Admin must keep its permissions, role still assigned
+    @ExceptionHandler({ProtectedRoleException.class, RoleInUseException.class})
+    public ProblemDetail handleRoleConflict(EventManagementException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     private static ProblemDetail fieldError(String field, String message) {

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/cssandjs/my_events.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/cssandjs/role_manager.css}" rel="stylesheet"/>
+    <title>Users</title>
+</head>
+<body>
+<header class="AppHead">
+    <div class="HeadContainer">
+        <div class="WildPathLogo">
+            <img th:src="@{/images/leaf-icon.svg}" alt="leaf">
+            <span>WILD</span><span class="primary-green">PATH</span>
+        </div>
+        <div th:replace="~{fragments/account :: account}"></div>
+    </div>
+</header>
+
+<main class="AppContent">
+    <div class="ContentContainer">
+        <div class="PageTitle">
+            <div class="PageTitleText">
+                <span class="Eyebrow">Administration</span>
+                <h1>Users</h1>
+                <p>Create accounts and decide which role each person has.</p>
+            </div>
+            <a class="CreateEventButton" th:href="@{/admin/users/new}">
+                <span class="Plus">+</span>
+                <span>Create account</span>
+            </a>
+        </div>
+
+        <div class="FlashMessage FlashSuccess" role="status"
+             th:if="${successMessage}" th:text="${successMessage}">Saved</div>
+        <div class="FlashMessage FlashError" role="alert"
+             th:if="${errorMessage}" th:text="${errorMessage}">Error</div>
+
+        <div class="TableWrapper">
+            <table class="EventTable">
+                <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="a : ${accounts}">
+                    <td><span class="EventName" th:text="${a.username}">anna</span></td>
+                    <td>
+                        <form th:action="@{/admin/users/{id}/role(id=${a.id})}" method="post" class="InlineForm">
+                            <select name="roleId">
+                                <option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.name}"
+                                        th:selected="${r.id == a.roleId}">Customer</option>
+                            </select>
+                            <button type="submit" class="LinkButton">Change</button>
+                        </form>
+                    </td>
+                    <td>
+                        <span class="Badge" th:classappend="${a.enabled} ? '' : 'BadgeOff'"
+                              th:text="${a.enabled} ? 'active' : 'disabled'">active</span>
+                    </td>
+                    <td class="Actions">
+                        <form th:if="${a.enabled}" th:action="@{/admin/users/{id}/disable(id=${a.id})}"
+                              method="post" class="InlineForm">
+                            <button type="submit" class="LinkButton">Disable</button>
+                        </form>
+                        <form th:unless="${a.enabled}" th:action="@{/admin/users/{id}/enable(id=${a.id})}"
+                              method="post" class="InlineForm">
+                            <button type="submit" class="LinkButton">Enable</button>
+                        </form>
+                        <a th:href="@{/admin/users/{id}/password(id=${a.id})}">Reset password</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

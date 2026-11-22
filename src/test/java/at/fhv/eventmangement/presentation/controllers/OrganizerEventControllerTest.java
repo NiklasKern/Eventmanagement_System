@@ -3,8 +3,10 @@ package at.fhv.eventmangement.presentation.controllers;
 import at.fhv.eventmangement.application.dto.*;
 import at.fhv.eventmangement.application.form.EventForm;
 import at.fhv.eventmangement.application.services.EventCategoryService;
+import at.fhv.eventmangement.application.services.EventOrganizerService;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
+import at.fhv.eventmangement.domain.exceptions.NotEventOwnerException;
 import at.fhv.eventmangement.presentation.security.SecurityConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,20 +24,12 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Web layer tests for the organizer Thymeleaf controller.
@@ -54,6 +48,8 @@ class OrganizerEventControllerTest {
     private EventService eventService;
     @MockitoBean
     private EventCategoryService eventCategoryService;
+    @MockitoBean
+    private EventOrganizerService eventOrganizerService;
 
     private final UUID categoryId = UUID.randomUUID();
 
@@ -75,7 +71,7 @@ class OrganizerEventControllerTest {
 
     @Test
     void eventList_hasCreateEventButtonLinkingToTheForm() throws Exception {
-        when(eventService.getAllEvents()).thenReturn(List.of());
+        when(eventService.getManagedEvents("user")).thenReturn(List.of());
 
         mockMvc.perform(get("/events"))
                 .andExpect(status().isOk())
@@ -166,7 +162,7 @@ class OrganizerEventControllerTest {
 
     @Test
     void submitWhenServiceRejectsInput_showsServiceMessageOnTheField() throws Exception {
-        when(eventService.addEvent(any(EventForm.class)))
+        when(eventService.addEvent(any(EventForm.class), eq("user")))
                 .thenThrow(new EventAlreadyExistsException());
 
         mockMvc.perform(post("/event/manage/create").with(csrf())
@@ -206,12 +202,22 @@ class OrganizerEventControllerTest {
                         && form.getLocation().equals("Dornbirn")
                         && form.getPrice().compareTo(new BigDecimal("25.50")) == 0
                         && form.getMaxParticipants() == 20
-                        && form.getEventCategoryId().equals(categoryId)));
+                        && form.getEventCategoryId().equals(categoryId)), eq("user"));
+    }
+
+    @Test
+    void modifyForm_foreignEvent_redirectsToListWithError() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(eventService.getEventForEdit(id, "user")).thenThrow(new NotEventOwnerException());
+
+        mockMvc.perform(get("/event/manage/{id}/modify", id))
+                .andExpect(redirectedUrl("/events"))
+                .andExpect(flash().attribute("errorMessage", "You can only edit your own events"));
     }
 
     @Test
     void eventList_showsSuccessMessageAfterRedirect() throws Exception {
-        when(eventService.getAllEvents()).thenReturn(List.of());
+        when(eventService.getManagedEvents("user")).thenReturn(List.of());
 
         mockMvc.perform(get("/events").flashAttr("successMessage", "Event successfully saved"))
                 .andExpect(status().isOk())
@@ -220,7 +226,7 @@ class OrganizerEventControllerTest {
 
     @Test
     void eventList_withoutFlash_showsNoSuccessMessage() throws Exception {
-        when(eventService.getAllEvents()).thenReturn(List.of());
+        when(eventService.getManagedEvents("user")).thenReturn(List.of());
 
         mockMvc.perform(get("/events"))
                 .andExpect(content().string(not(containsString("Event successfully saved"))));
@@ -229,14 +235,14 @@ class OrganizerEventControllerTest {
     @Test
     void eventList_showsEventsFromService() throws Exception {
         EventDto event = new EventDto(UUID.randomUUID(), "Summer Hike", "A nice walk", "Dornbirn",
-                new BigDecimal("150"), 5, 50,"OPEN",
+                new BigDecimal("150"), 5, 50, "OPEN",
                 new EventCategoryDto(categoryId, "Hiking"),
                 new EventOrganizerDto(UUID.randomUUID(), new ContactInfoDto("Alpine Club", "Street 1", "a@b.at")),
                 List.of(new EventDateDto(UUID.randomUUID(), LocalDateTime.of(2027, 1, 10, 17, 0),
-                                                            LocalDateTime.of(2027, 1, 10, 20, 0)))
+                        LocalDateTime.of(2027, 1, 10, 20, 0)))
         );
 
-        when(eventService.getAllEvents()).thenReturn(List.of(event));
+        when(eventService.getManagedEvents("user")).thenReturn(List.of(event));
 
         mockMvc.perform(get("/events"))
                 .andExpect(status().isOk())
@@ -251,7 +257,7 @@ class OrganizerEventControllerTest {
 
     @Test
     void eventList_withoutEvents_showsEmptyState() throws Exception {
-        when(eventService.getAllEvents()).thenReturn(List.of());
+        when(eventService.getManagedEvents("user")).thenReturn(List.of());
 
         mockMvc.perform(get("/events"))
                 .andExpect(content().string(containsString("You have not created any events yet.")));
