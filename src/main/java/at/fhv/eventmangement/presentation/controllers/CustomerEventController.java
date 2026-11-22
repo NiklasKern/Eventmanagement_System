@@ -8,6 +8,7 @@ import at.fhv.eventmangement.application.services.*;
 import at.fhv.eventmangement.domain.exceptions.*;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -94,6 +95,7 @@ public class CustomerEventController {
         if (!bindingResult.hasErrors()) {
             try {
                 EventBookingDto booking = eventBookingService.book(id, form, authentication.getName());
+                String bookingNumber = eventBookingService.book(id, form, authentication.getName()).bookingNumber();
                 redirectAttributes.addFlashAttribute("successMessage",
                         "Event successfully booked (" + booking.bookingNumber() + ")");
                 return redirectToInvoice(booking);
@@ -104,7 +106,7 @@ public class CustomerEventController {
             } catch (NotEnoughPlacesException ex) {
                 bindingResult.rejectValue("places", "notEnoughPlaces", ex.getMessage());
             } catch (CustomerNotFoundException ex) {
-                log.error("Default customer missing", ex);
+                // account is not linked to a customer
                 bindingResult.reject("customer", ex.getMessage());
             }
         }

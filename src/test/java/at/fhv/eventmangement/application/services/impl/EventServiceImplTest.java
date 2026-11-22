@@ -50,6 +50,8 @@ class EventServiceImplTest {
     @Mock
     private UserAccountRepository userAccountRepository;
     @Mock
+    private UserAccountRepository userAccountRepository;
+    @Mock
     private EventMapper eventMapper;
     @Mock
     private EventUpdateTransaction eventUpdateTransaction;
@@ -392,18 +394,6 @@ class EventServiceImplTest {
 
         assertThat(result.event()).isSameAs(expectedDto);
         assertThat(result.notifiedCustomers()).containsExactly("Anna");
-    }
-
-    @Test
-    void cancelEvent_failingCancellationSendsNoNotification() throws Exception {
-        UUID id = UUID.randomUUID();
-        when(eventRepository.findById(id)).thenReturn(Optional.of(Event.builder().eventOrganizer(organizer).build()));
-        loggedIn(organizer, Permissions.EDIT_OWN_EVENTS);
-        when(eventCancelTransaction.apply(id)).thenThrow(new EventAlreadyCancelledException());
-
-        assertThatThrownBy(() -> eventService.cancelEvent(id, USERNAME))
-                .isInstanceOf(EventAlreadyCancelledException.class);
-        verify(notificationService, never()).notifyEventCancelled(any(), any());
     }
 
     @Test

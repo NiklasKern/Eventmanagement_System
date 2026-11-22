@@ -128,12 +128,9 @@ class CustomerEventControllerTest {
     }
 
     @Test
-    void book_success_redirectsToInterimInvoice() throws Exception {
-        UUID bookingId = UUID.randomUUID();
-        UUID invoiceId = UUID.randomUUID();
-        when(eventBookingService.book(any(), any(), eq("user"))).thenReturn(booking(bookingId));
-        when(invoiceService.getInvoiceForBooking(bookingId)).thenReturn(new InvoiceDto(invoiceId, bookingId,
-                null, null, null, null, List.of(), null, null, null, null, null, true));
+    void book_success_redirectsWithBookingNumber() throws Exception {
+        when(eventBookingService.book(any(), any(), eq("user"))).thenReturn(new EventBookingDto(
+                UUID.randomUUID(), "BK-ABCDEFGH", null, null, null, 2, null, null, null, null, null, List.of()));
 
         postGroupBooking(2)
                 .andExpect(status().is3xxRedirection())

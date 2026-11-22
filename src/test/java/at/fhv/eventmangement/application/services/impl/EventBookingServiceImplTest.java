@@ -97,6 +97,14 @@ class EventBookingServiceImplTest {
                 .build();
     }
 
+    private EventBookingForm individualBooking() {
+        return EventBookingForm.builder()
+                .eventDateId(eventDate.getId())
+                .eventBookingType(EventBookingType.INDIVIDUAL)
+                .paymentMethod(PaymentMethod.CARD)
+                .build();
+    }
+
     // The account of the logged-in user "anna", linked to the given customer (or none)
     private void loggedIn(Customer linkedCustomer) {
         when(userAccountRepository.findByUsername(USERNAME)).thenReturn(Optional.of(UserAccount.builder()
@@ -124,10 +132,13 @@ class EventBookingServiceImplTest {
 
     @Test
     void book_belongsToCustomerOfLoggedInAccount() throws Exception {
-        bookingCanBeSaved();
+        when(eventDateRepository.findById(eventDate.getId())).thenReturn(Optional.of(eventDate));
+        when(eventBookingRepository.sumBookedPlaces(eventDate.getId())).thenReturn(0);
+        when(bookingNumberGenerator.next()).thenReturn("BK-TEST1234");
         loggedIn(anna);
+        when(eventBookingRepository.save(any(EventBooking.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        eventBookingService.book(eventId, groupBooking(2), USERNAME);
+        eventBookingService.book(eventId, individualBooking(), USERNAME);
 
         ArgumentCaptor<EventBooking> captor = ArgumentCaptor.forClass(EventBooking.class);
         verify(eventBookingRepository).save(captor.capture());
