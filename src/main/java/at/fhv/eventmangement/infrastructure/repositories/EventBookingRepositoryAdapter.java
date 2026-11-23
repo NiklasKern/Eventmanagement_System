@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -27,6 +28,11 @@ public class EventBookingRepositoryAdapter implements EventBookingRepository {
     @Transactional
     public EventBooking save(EventBooking eventBooking) {
         return mapper.toDomain(jpa.save(mapper.toEntity(eventBooking)));
+    }
+
+    @Override
+    public Optional<EventBooking> findById(UUID id) {
+        return jpa.findById(id).map(mapper::toDomain);
     }
 
     @Override

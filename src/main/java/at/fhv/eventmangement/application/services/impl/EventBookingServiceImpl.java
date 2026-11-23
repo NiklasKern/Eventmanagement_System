@@ -14,6 +14,7 @@ import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.domain.repositories.CustomerRepository;
 import at.fhv.eventmangement.domain.repositories.EventBookingRepository;
 import at.fhv.eventmangement.domain.repositories.EventDateRepository;
+import at.fhv.eventmangement.domain.repositories.InvoiceRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,13 +31,15 @@ public class EventBookingServiceImpl implements EventBookingService {
     private final CustomerRepository customerRepository;
     private final BookingNumberGenerator bookingNumberGenerator;
     private final EventBookingMapper eventBookingMapper;
+    private final InvoiceRepository invoiceRepository;
 
-    public EventBookingServiceImpl(EventDateRepository eventDateRepository, EventBookingRepository eventBookingRepository, CustomerRepository customerRepository, BookingNumberGenerator bookingNumberGenerator, EventBookingMapper eventBookingMapper) {
+    public EventBookingServiceImpl(EventDateRepository eventDateRepository, EventBookingRepository eventBookingRepository, CustomerRepository customerRepository, BookingNumberGenerator bookingNumberGenerator, EventBookingMapper eventBookingMapper, InvoiceRepository invoiceRepository) {
         this.eventDateRepository = eventDateRepository;
         this.eventBookingRepository = eventBookingRepository;
         this.customerRepository = customerRepository;
         this.bookingNumberGenerator = bookingNumberGenerator;
         this.eventBookingMapper = eventBookingMapper;
+        this.invoiceRepository = invoiceRepository;
     }
 
     @Override
@@ -73,7 +76,11 @@ public class EventBookingServiceImpl implements EventBookingService {
                 .eventBookingStatus(EventBookingStatus.CONFIRMED)
                 .build();
 
-        return eventBookingMapper.toDto(eventBookingRepository.save(booking));
+        EventBooking saved = eventBookingRepository.save(booking);
+
+        invoiceRepository.save(Invoice.createInterimFor(booking).setBookingId(saved.getId()));
+
+        return eventBookingMapper.toDto(saved);
     }
 
     @Override
