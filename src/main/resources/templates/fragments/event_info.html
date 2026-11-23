@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="eventInfo(event)">
+    <p class="subtitle" th:if="${!#strings.isEmpty(event.description)}" th:text="${event.description}">Description</p>
+
+    <dl class="InfoList">
+        <th:block th:if="${event.eventCategory != null}">
+            <dt>Category</dt>
+            <dd th:text="${event.eventCategory.categoryName}">Category</dd>
+        </th:block>
+        <th:block th:if="${event.eventOrganizer != null}">
+            <dt>Organizer</dt>
+            <dd th:text="${event.eventOrganizer.contactInfo.name}">Organizer</dd>
+        </th:block>
+        <dt>Participants</dt>
+        <dd th:text="${event.minParticipants} + ' – ' + ${event.maxParticipants}">5 – 50</dd>
+    </dl>
+</th:block>
+</body>
+</html>

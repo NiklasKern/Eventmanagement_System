@@ -4,6 +4,9 @@ import at.fhv.eventmangement.application.form.EventBookingForm;
 import at.fhv.eventmangement.application.services.CustomerService;
 import at.fhv.eventmangement.application.services.EventBookingService;
 import at.fhv.eventmangement.application.services.EventService;
+import at.fhv.eventmangement.application.services.InvoiceService;
+import at.fhv.eventmangement.application.dto.EventBookingDto;
+import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.EventDateNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.EventNotBookableException;
@@ -36,12 +39,14 @@ public class CustomerEventController {
     private final EventService eventService;
     private final EventBookingService eventBookingService;
     private final CustomerService customerService;
+    private final InvoiceService invoiceService;
 
     //Dependency injection
-    public CustomerEventController(EventService eventService, EventBookingService eventBookingService, CustomerService customerService) {
+    public CustomerEventController(EventService eventService, EventBookingService eventBookingService, CustomerService customerService, InvoiceService invoiceService) {
         this.eventService = eventService;
         this.eventBookingService = eventBookingService;
         this.customerService = customerService;
+        this.invoiceService = invoiceService;
     }
 
     // Dropdown values for the booking dialog in customer_events
@@ -90,10 +95,10 @@ public class CustomerEventController {
                        RedirectAttributes redirectAttributes) {
         if (!bindingResult.hasErrors()) {
             try {
-                String bookingNumber = eventBookingService.book(id, form).bookingNumber();
+                EventBookingDto booking = eventBookingService.book(id, form);
                 redirectAttributes.addFlashAttribute("successMessage",
-                        "Event successfully booked (" + bookingNumber + ")");
-                return REDIRECT_CUSTOMER_EVENTS;
+                        "Event successfully booked (" + booking.bookingNumber() + ")");
+                return redirectToInvoice(booking);
             } catch (EventDateNotFoundException ex) {
                 bindingResult.rejectValue("eventDateId", "unknown", ex.getMessage());
             } catch (EventNotBookableException ex) {
@@ -114,5 +119,14 @@ public class CustomerEventController {
         }
         model.addAttribute("events", eventService.getActiveEvents());
         return CUSTOMER_EVENTS;
+    }
+
+    private String redirectToInvoice(EventBookingDto booking) {
+        try {
+            return "redirect:/customer/invoice/" + invoiceService.getInvoiceForBooking(booking.id()).id();
+        } catch (InvoiceNotFoundException ex) {
+            log.error("Interim invoice missing for booking {}", booking.bookingNumber(), ex);
+            return REDIRECT_CUSTOMER_EVENTS;
+        }
     }
 }
