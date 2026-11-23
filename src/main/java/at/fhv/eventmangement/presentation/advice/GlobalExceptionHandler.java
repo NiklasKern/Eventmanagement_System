@@ -4,6 +4,8 @@ import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
 import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.EventDateHasBookingsException;
 import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.InvoiceNotEditableException;
+import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.MaxParticipantsBelowBookedPlacesException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +49,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler{
     @ExceptionHandler(EventNotFoundException.class)
     public ProblemDetail handleEventNotFound(EventNotFoundException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvoiceNotFoundException.class)
+    public ProblemDetail handleInvoiceNotFound(InvoiceNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvoiceNotEditableException.class)
+    public ProblemDetail handleInvoiceNotEditable(InvoiceNotEditableException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     // 400 - Valid on a RequestBody failed (@NotBlank, @Positive, ...)
