@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Bookings</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; background-color: #f9f9f9; }
+    .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background-color: #f2f2f2; color: #333; }
+    .empty { color: #666; padding: 20px 0; }
+    .btn { text-decoration: none; padding: 8px 14px; border-radius: 5px; background: #1976d2; color: white; font-size: 14px; }
+    .btn-secondary { background: #6c757d; display: inline-block; margin-top: 20px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>My Bookings</h1>
+
+  <div th:if="${#lists.isEmpty(bookings)}" class="empty">
+    You have no bookings yet.
+  </div>
+
+  <table th:if="${!#lists.isEmpty(bookings)}">
+    <thead>
+    <tr>
+      <th>Booking Number</th>
+      <th>Booking Date</th>
+      <th>Status</th>
+      <th>Start Time</th>
+      <th>Places</th>
+      <th>Total Price</th>
+      <th>Confirmation</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="booking : ${bookings}">
+      <td th:text="${booking.bookingNumber}"></td>
+      <td th:text="${booking.created != null ? #temporals.format(booking.created, 'dd.MM.yyyy HH:mm') : '-'}"></td>
+      <td th:text="${booking.eventBookingStatus}"></td>
+      <td th:text="${#temporals.format(booking.eventDate.startTime, 'dd.MM.yyyy HH:mm')}"></td>
+      <td th:text="${booking.places}"></td>
+      <td th:text="${booking.price + ' EUR'}"></td>
+      <td>
+        <a th:href="@{/customer/booking/{num}(num=${booking.bookingNumber})}" class="btn">
+          View Details
+        </a>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <a th:href="@{/customer/events}" class="btn btn-secondary">Back to Events</a>
+</div>
+</body>
+</html>

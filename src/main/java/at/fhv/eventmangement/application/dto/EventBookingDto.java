@@ -6,6 +6,7 @@ import at.fhv.eventmangement.domain.model.PaymentMethod;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +22,7 @@ public record EventBookingDto(
         LocalDate optionDate,
         LocalDate cancellationDate,
         EventBookingStatus eventBookingStatus,
-        List<EventParticipantDto> eventParticipants
+        List<EventParticipantDto> eventParticipants,
+        LocalDateTime created
 ) {
 }
