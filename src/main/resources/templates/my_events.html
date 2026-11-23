@@ -63,6 +63,7 @@
                     <th>Category</th>
                     <th>Date</th>
                     <th>Location</th>
+                    <th>Status</th>
                     <th class="Num">Price</th>
                     <th class="Num">Participants</th>
                     <th>Organizer</th>
@@ -93,10 +94,25 @@
                         <span th:if="${#lists.isEmpty(e.eventDates)}">–</span>
                     </td>
                     <td th:text="${e.location}">Location</td>
+                    <td>
+                        <span th:if="${e.eventStatus == 'CANCELLED'}"
+                              style="color: #b91c1c; background-color: #fee2e2; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 0.85em;">
+                            Cancelled
+                        </span>
+                        <span th:unless="${e.eventStatus == 'CANCELLED'}"
+                              th:text="${e.eventStatus}"
+                              style="color: #15803d; background-color: #dcfce7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 0.85em;">
+                            ACTIVE
+                        </span>
+                    </td>
                     <td class="Num" th:text="${#numbers.formatDecimal(e.price, 1, 'POINT', 2, 'COMMA')} + ' €'">150,00 €</td>
                     <td class="Num" th:text="${e.minParticipants} + ' – ' + ${e.maxParticipants}">5 – 50</td>
                     <td th:text="${e.eventOrganizer != null} ? ${e.eventOrganizer.contactInfo.name} : '–'">Organizer</td>
-                    <td><a th:href="@{/event/manage/{id}/modify(id=${e.id})}">Edit</a></td>
+                    <td>
+                        <a th:if="${e.eventStatus != 'CANCELLED'}"
+                           th:href="@{/event/manage/{id}/modify(id=${e.id})}">Edit</a>
+                        <span th:if="${e.eventStatus == 'CANCELLED'}">–</span>
+                    </td>
                 </tr>
                 </tbody>
             </table>

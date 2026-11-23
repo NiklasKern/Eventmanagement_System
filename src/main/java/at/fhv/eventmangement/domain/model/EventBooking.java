@@ -24,4 +24,8 @@ public class EventBooking extends BaseModel {
     private EventBookingStatus eventBookingStatus;
     @Builder.Default
     private List<EventParticipant> eventParticipants = new ArrayList<>();
+    public void cancel() {
+        this.eventBookingStatus = EventBookingStatus.CANCELLED;
+        this.cancellationDate = LocalDate.now();
+    }
 }

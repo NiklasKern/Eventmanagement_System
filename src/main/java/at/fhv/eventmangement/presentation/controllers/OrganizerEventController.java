@@ -7,12 +7,7 @@ import at.fhv.eventmangement.application.form.EventDateForm;
 import at.fhv.eventmangement.application.form.EventForm;
 import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventService;
-import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
-import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventDateHasBookingsException;
-import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventOrganizerNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.MaxParticipantsBelowBookedPlacesException;
+import at.fhv.eventmangement.domain.exceptions.*;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -36,7 +31,7 @@ public class OrganizerEventController {
     private static final String MANAGE = "/event/manage";
     private static final String CREATE = MANAGE + "/create";
     private static final String MODIFY = MANAGE + "/{id}/modify";
-
+    private static final String CANCEL = MANAGE + "/{id}/cancel";
     private static final String ADD_EVENT = "add_event";
     private static final String MY_EVENTS = "my_events";
     private static final String MODIFY_EVENT = "modify_event";
@@ -133,6 +128,10 @@ public class OrganizerEventController {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return REDIRECT_EVENTS;
         }
+        if ("CANCELLED".equals(dto.eventStatus())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Cancelled events cannot be modified.");
+            return REDIRECT_EVENTS;
+        }
         EventForm form = EventForm.builder()
                 .name(dto.name())
                 .description(dto.description())
@@ -147,6 +146,7 @@ public class OrganizerEventController {
                 .build();
         model.addAttribute("event", form);
         model.addAttribute("eventId", id);
+        model.addAttribute("eventStatus", dto.eventStatus());
         return MODIFY_EVENT;
     }
 
@@ -208,5 +208,25 @@ public class OrganizerEventController {
         }
         model.addAttribute("eventId", id);
         return MODIFY_EVENT;
+    }
+    @PostMapping(CANCEL)
+    public String cancelEvent(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
+        EventUpdateResultDto result;
+        try {
+            result = eventService.cancelEvent(id);
+        } catch (EventNotFoundException | EventAlreadyCancelledException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return REDIRECT_EVENTS;
+        }
+
+        String message = "Event successfully cancelled";
+        if (!result.notifiedCustomers().isEmpty()) {
+            message += ". " + result.notifiedCustomers().size()
+                    + " customers who booked this event have been notified: "
+                    + String.join(", ", result.notifiedCustomers());
+        }
+
+        redirectAttributes.addFlashAttribute("successMessage", message);
+        return REDIRECT_EVENTS;
     }
 }
