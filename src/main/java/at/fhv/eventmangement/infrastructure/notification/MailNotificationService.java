@@ -10,6 +10,7 @@ import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import at.fhv.eventmangement.domain.model.EventBooking;
 
 // Sends notifications to customers via email (SMTP)
 @Slf4j
@@ -50,6 +51,53 @@ public class MailNotificationService implements NotificationService {
             return true;
         } catch (MailException e) {
             log.warn("Could not send event change notification to {}: {}", customerEmail, e.getMessage());
+            return false;
+        }
+    }
+    @Override
+    public boolean notifyBookingConfirmed(Customer customer, EventBooking booking) {
+        if (customer == null || customer.getContactInfo() == null || booking == null) {
+            return false;
+        }
+
+        String customerName = customer.getContactInfo().getName();
+        String customerEmail = customer.getContactInfo().getEmail();
+        if (customerEmail == null || customerEmail.isBlank()) {
+            log.warn("Customer {} has no email address, booking confirmation not sent", customerName);
+            return false;
+        }
+
+        Event event = booking.getEventDate().getEvent();
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(senderEmail);
+            message.setTo(customerEmail);
+            message.setSubject("Booking Confirmation: " + event.getName() + " (" + booking.getBookingNumber() + ")");
+            message.setText(String.format(
+                    "Hello %s,\n\nYour booking has been confirmed!\n\n" +
+                            "Booking Number: %s\n" +
+                            "Event: %s\n" +
+                            "Location: %s\n" +
+                            "Start Time: %s\n" +
+                            "Places: %d\n" +
+                            "Total Price: %s EUR\n\n" +
+                            "You can view your booking details anytime in your account.",
+                    customerName,
+                    booking.getBookingNumber(),
+                    event.getName(),
+                    event.getLocation(),
+                    booking.getEventDate().getStartTime(),
+                    booking.getPlaces(),
+                    booking.getPrice()
+            ));
+
+            javaMailSender.send(message);
+            log.info("Booking confirmation sent to {} <{}> for booking {}",
+                    customerName, customerEmail, booking.getBookingNumber());
+            return true;
+        } catch (MailException e) {
+            log.warn("Could not send booking confirmation to {}: {}", customerEmail, e.getMessage());
             return false;
         }
     }

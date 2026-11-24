@@ -112,11 +112,12 @@ class CustomerEventControllerTest {
     @Test
     void book_success_redirectsWithBookingNumber() throws Exception {
         when(eventBookingService.book(any(), any())).thenReturn(new EventBookingDto(
-                UUID.randomUUID(), "BK-ABCDEFGH", null, null, null, 2, null, null, null, null, null, List.of()));
+                UUID.randomUUID(), "BK-ABCDEFGH", null, null, null, 1, null, null, null, null, null, List.of(), null
+        ));
 
         postGroupBooking(2)
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/customer/events"))
+                .andExpect(redirectedUrl("/customer/booking/BK-ABCDEFGH"))
                 .andExpect(flash().attribute("successMessage", "Event successfully booked (BK-ABCDEFGH)"));
     }
 
