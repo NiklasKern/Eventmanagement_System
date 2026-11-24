@@ -1,0 +1,129 @@
+body {
+    margin: 40px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: Arial, sans-serif;
+}
+
+.container,
+.card {
+    margin: auto;
+    background: var(--color-surface);
+    padding: 25px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    box-shadow: 0 1px 3px var(--color-shadow);
+}
+
+.container {
+    max-width: 900px;
+}
+
+.card {
+    max-width: 600px;
+}
+
+h1 {
+    margin: 0 0 20px;
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+}
+
+.success {
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--color-success-border);
+    background: var(--color-success-bg);
+    color: var(--color-primary);
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--color-hover);
+}
+
+.label {
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--color-text);
+}
+
+th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border);
+}
+
+td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-hover);
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+tbody tr:hover {
+    background: var(--color-hover);
+}
+
+.empty {
+    color: var(--color-text-muted);
+    padding: 20px 0;
+}
+
+.actions {
+    margin-top: 25px;
+    display: flex;
+    gap: 12px;
+}
+
+.btn {
+    display: inline-block;
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 2px 6px var(--color-primary-shadow);
+}
+
+.btn:hover {
+    background: var(--color-primary-hover);
+    color: var(--color-on-primary-hover);
+}
+
+.btn-secondary {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 1px 3px var(--color-shadow);
+}
+
+.btn-secondary:hover {
+    background: var(--color-hover);
+    color: var(--color-text);
+}
+
+.container > .btn-secondary {
+    margin-top: 20px;
+}

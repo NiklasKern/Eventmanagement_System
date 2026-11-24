@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
+import at.fhv.eventmangement.domain.exceptions.EventAlreadyCancelledException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -39,6 +40,7 @@ public class EventServiceImpl implements EventService {
     private final EventCategoryRepository eventCategoryRepository;
     private final EventOrganizerRepository eventOrganizerRepository;
     private final EventUpdateTransaction eventUpdateTransaction;
+    private final EventCancelTransaction eventCancelTransaction;
     private final NotificationService notificationService;
 
     private final EventMapper eventMapper;
@@ -47,12 +49,14 @@ public class EventServiceImpl implements EventService {
                             EventCategoryRepository eventCategoryRepository,
                             EventOrganizerRepository eventOrganizerRepository,
                             EventUpdateTransaction eventUpdateTransaction,
+                            EventCancelTransaction eventCancelTransaction,
                             NotificationService notificationService,
                             EventMapper eventMapper) {
         this.eventRepository = eventRepository;
         this.eventCategoryRepository = eventCategoryRepository;
         this.eventOrganizerRepository = eventOrganizerRepository;
         this.eventUpdateTransaction = eventUpdateTransaction;
+        this.eventCancelTransaction = eventCancelTransaction;
         this.notificationService = notificationService;
         this.eventMapper = eventMapper;
     }
@@ -64,7 +68,7 @@ public class EventServiceImpl implements EventService {
     }
 
     // Runs without a surrounding transaction: the changes are committed by EventUpdateTransaction first,
-    // only afterward the customers are notified. Only successfully notified customers are returned.
+    // only afterwards the customers are notified. Only successfully notified customers are returned.
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public EventUpdateResultDto updateEvent(UUID id, EventForm form)
@@ -133,6 +137,24 @@ public class EventServiceImpl implements EventService {
 
         //Save event to db and return saved eventdto
         return eventMapper.toDto(eventRepository.save(event));
+    }
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public EventUpdateResultDto cancelEvent(UUID id)
+            throws EventNotFoundException, EventAlreadyCancelledException {
+
+        // excute cancellation and save to db
+        EventCancelTransaction.Result result = eventCancelTransaction.apply(id);
+        Event saved = result.event();
+
+        // send event cancellation notification to customers and gather the names of those who were successfully notified
+        List<String> notified = result.customersToNotify().stream()
+                .filter(customer -> notificationService.notifyEventCancelled(customer, saved))
+                .map(customer -> customer.getContactInfo().getName())
+                .toList();
+
+        // 3.return rsult to controller
+        return new EventUpdateResultDto(eventMapper.toDto(saved), notified);
     }
 
     @Override

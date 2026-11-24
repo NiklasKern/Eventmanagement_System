@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Booking Confirmation</title>
+    <link rel="stylesheet" th:href="@{/styles.cssandjs/colors.css}">
+    <link rel="stylesheet" th:href="@{/styles.cssandjs/customer_bookings.css}">
+</head>
+<body>
+<div class="card">
+    <h1>Booking Confirmation</h1>
+
+    <div th:if="${successMessage}" class="success" th:text="${successMessage}"></div>
+
+    <div class="row">
+        <span class="label">Booking Number:</span>
+        <span th:text="${booking.bookingNumber}"></span>
+    </div>
+    <div class="row" th:if="${booking.created != null}">
+        <span class="label">Booking Date:</span>
+        <span th:text="${#temporals.format(booking.created, 'dd.MM.yyyy HH:mm')}"></span>
+    </div>
+    <div class="row">
+        <span class="label">Status:</span>
+        <span th:text="${booking.eventBookingStatus}"></span>
+    </div>
+    <div class="row">
+        <span class="label">Booking Type:</span>
+        <span th:text="${booking.eventBookingType}"></span>
+    </div>
+    <div class="row">
+        <span class="label">Start Time:</span>
+        <span th:text="${#temporals.format(booking.eventDate.startTime, 'dd.MM.yyyy HH:mm')}"></span>
+    </div>
+    <div class="row">
+        <span class="label">End Time:</span>
+        <span th:text="${#temporals.format(booking.eventDate.endTime, 'dd.MM.yyyy HH:mm')}"></span>
+    </div>
+    <div class="row">
+        <span class="label">Places:</span>
+        <span th:text="${booking.places}"></span>
+    </div>
+    <div class="row">
+        <span class="label">Total Price:</span>
+        <span th:text="${booking.price + ' EUR'}"></span>
+    </div>
+    <div class="row">
+        <span class="label">Payment Method:</span>
+        <span th:text="${booking.paymentMethod}"></span>
+    </div>
+
+    <div class="actions">
+        <a th:href="@{/customer/bookings}" class="btn">My Bookings</a>
+        <a th:href="@{/customer/events}" class="btn btn-secondary">Back to Events</a>
+    </div>
+</div>
+</body>
+</html>

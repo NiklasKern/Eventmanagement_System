@@ -35,6 +35,8 @@ public class CustomerEventController {
 
     private static final String CUSTOMER_EVENTS = "customer_events";
     private static final String REDIRECT_CUSTOMER_EVENTS = "redirect:/customer/events";
+    private static final String BOOKING_CONFIRMATION = "booking_confirmation";
+    private static final String CUSTOMER_BOOKINGS = "customer_bookings";
 
     private final EventService eventService;
     private final EventBookingService eventBookingService;
@@ -42,8 +44,7 @@ public class CustomerEventController {
     private final EventCategoryService eventCategoryService;
 
     //Dependency injection
-    public CustomerEventController(EventService eventService, EventBookingService eventBookingService, CustomerService customerService,
-                                   EventCategoryService eventCategoryService) {
+    public CustomerEventController(EventService eventService, EventBookingService eventBookingService, CustomerService customerService) {
         this.eventService = eventService;
         this.eventBookingService = eventBookingService;
         this.customerService = customerService;
@@ -99,7 +100,7 @@ public class CustomerEventController {
                 String bookingNumber = eventBookingService.book(id, form).bookingNumber();
                 redirectAttributes.addFlashAttribute("successMessage",
                         "Event successfully booked (" + bookingNumber + ")");
-                return REDIRECT_CUSTOMER_EVENTS;
+                return "redirect:/customer/booking/" + bookingNumber;
             } catch (EventDateNotFoundException ex) {
                 bindingResult.rejectValue("eventDateId", "unknown", ex.getMessage());
             } catch (EventNotBookableException ex) {
@@ -120,6 +121,36 @@ public class CustomerEventController {
         }
         model.addAttribute("events", eventService.getActiveEvents());
         return CUSTOMER_EVENTS;
+    }
+    // Shows confirmation details for a specific booking
+    @GetMapping("/booking/{bookingNumber}")
+    public String showBookingConfirmation(@PathVariable String bookingNumber,
+                                          Model model,
+                                          RedirectAttributes redirectAttributes) {
+        return eventBookingService.getBookingByNumber(bookingNumber)
+                .map(booking -> {
+                    model.addAttribute("booking", booking);
+                    return BOOKING_CONFIRMATION;
+                })
+                .orElseGet(() -> {
+                    redirectAttributes.addFlashAttribute("errorMessage",
+                            "Booking not found: " + bookingNumber);
+                    return REDIRECT_CUSTOMER_EVENTS;
+                });
+    }
+
+    // Shows all bookings for the current customer (User Account)
+    @GetMapping("/bookings")
+    public String showCustomerBookings(Model model, RedirectAttributes redirectAttributes) {
+        try {
+            model.addAttribute("customer", customerService.getCurrentCustomer());
+            model.addAttribute("bookings", eventBookingService.getBookingsForCurrentCustomer());
+            return CUSTOMER_BOOKINGS;
+        } catch (CustomerNotFoundException ex) {
+            log.error("Default customer missing", ex);
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return REDIRECT_CUSTOMER_EVENTS;
+        }
     }
 
     @ModelAttribute("search")

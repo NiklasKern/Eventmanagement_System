@@ -26,4 +26,6 @@ public interface EventService {
     EventUpdateResultDto updateEvent(UUID id, @Valid EventForm form)
             throws EventNotFoundException, EventAlreadyExistsException, EventCategoryNotFoundException,
             EventDateHasBookingsException, MaxParticipantsBelowBookedPlacesException;
+    EventUpdateResultDto cancelEvent(UUID id)
+            throws EventNotFoundException, at.fhv.eventmangement.domain.exceptions.EventAlreadyCancelledException;
 }

@@ -37,6 +37,7 @@
                 <p th:if="${searched}" th:text="${#lists.size(events)} + ' event(s) found'">3 event(s) found</p>
                 <p th:unless="${searched}">Choose an event and book your places.</p>
             </div>
+            <a class="CreateEventButton" th:href="@{/customer/bookings}">My Bookings</a>
         </div>
 
         <form class="SearchBar" th:action="@{/customer/events/search}" th:object="${search}" method="get">

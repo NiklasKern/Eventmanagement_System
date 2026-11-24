@@ -1,5 +1,6 @@
 package at.fhv.eventmangement.domain.model;
 
+import at.fhv.eventmangement.domain.exceptions.EventAlreadyCancelledException;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -23,4 +24,14 @@ public class Event extends BaseModel{
     private EventOrganizer eventOrganizer;
     @Builder.Default
     private List<EventDate> eventDates = new ArrayList<>();
+    public void cancel() throws EventAlreadyCancelledException {
+        if (this.eventStatus == EventStatus.CANCELLED) {
+            throw new EventAlreadyCancelledException();
+        }
+        this.eventStatus = EventStatus.CANCELLED;
+    }
+
+    public boolean isCancelled() {
+        return this.eventStatus == EventStatus.CANCELLED;
+    }
 }
