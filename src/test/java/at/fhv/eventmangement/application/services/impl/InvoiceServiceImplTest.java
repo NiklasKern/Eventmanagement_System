@@ -287,6 +287,32 @@ class InvoiceServiceImplTest {
     }
 
     @Test
+    void confirmWithChanges_savesChangesAndFinalInvoiceInOneSave() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(invoiceRepository.findById(id)).thenReturn(Optional.of(interimInvoice(id)));
+        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InvoiceDto dto = invoiceService.confirm(id, changeForm(null));
+
+        verify(invoiceRepository).save(any(Invoice.class));
+        assertThat(dto.invoiceStatus()).isEqualTo(InvoiceStatus.FINAL);
+        assertThat(dto.contactInfo().name()).isEqualTo("Firma GmbH");
+        assertThat(dto.grossTotal()).isEqualByComparingTo("240.00");
+    }
+
+    @Test
+    void confirmWithChanges_finalInvoice_throwsAndDoesNotSave() throws Exception {
+        UUID id = UUID.randomUUID();
+        Invoice invoice = interimInvoice(id);
+        invoice.confirm();
+        when(invoiceRepository.findById(id)).thenReturn(Optional.of(invoice));
+
+        assertThatThrownBy(() -> invoiceService.confirm(id, changeForm(null)))
+                .isInstanceOf(InvoiceNotEditableException.class);
+        verify(invoiceRepository, never()).save(any());
+    }
+
+    @Test
     void confirm_unknownInvoice_throws() {
         UUID id = UUID.randomUUID();
         when(invoiceRepository.findById(id)).thenReturn(Optional.empty());

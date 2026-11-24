@@ -105,14 +105,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     public InvoiceDto requestChanges(UUID id, InvoiceForm form)
             throws InvoiceNotFoundException, InvoiceNotEditableException {
         Invoice invoice = findInvoice(id);
-        invoice.requestChanges(
-                ContactInfo.builder()
-                        .name(form.getName().trim())
-                        .address(form.getAddress().trim())
-                        .email(form.getEmail().trim())
-                        .build(),
-                form.getPaymentMethod(),
-                invoiceMapper.toItems(form.getItems()));
+        applyChanges(invoice, form);
         return invoiceMapper.toDto(invoiceRepository.save(invoice));
     }
 
@@ -122,6 +115,26 @@ public class InvoiceServiceImpl implements InvoiceService {
         Invoice invoice = findInvoice(id);
         invoice.confirm();
         return invoiceMapper.toDto(invoiceRepository.save(invoice));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public InvoiceDto confirm(UUID id, InvoiceForm form) throws InvoiceNotFoundException, InvoiceNotEditableException {
+        Invoice invoice = findInvoice(id);
+        applyChanges(invoice, form);
+        invoice.confirm();
+        return invoiceMapper.toDto(invoiceRepository.save(invoice));
+    }
+
+    private void applyChanges(Invoice invoice, InvoiceForm form) throws InvoiceNotEditableException {
+        invoice.requestChanges(
+                ContactInfo.builder()
+                        .name(form.getName().trim())
+                        .address(form.getAddress().trim())
+                        .email(form.getEmail().trim())
+                        .build(),
+                form.getPaymentMethod(),
+                invoiceMapper.toItems(form.getItems()));
     }
 
     private Invoice findInvoice(UUID id) throws InvoiceNotFoundException {

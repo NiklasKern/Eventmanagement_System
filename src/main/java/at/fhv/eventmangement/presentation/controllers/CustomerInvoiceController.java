@@ -63,17 +63,17 @@ public class CustomerInvoiceController {
         return CUSTOMER_EVENTS;
     }
 
-    @PostMapping("/invoice/{id}")
-    public String updateInvoice(@PathVariable UUID id,
-                                @Valid @ModelAttribute("invoiceForm") InvoiceForm form,
-                                BindingResult bindingResult,
-                                Model model,
-                                RedirectAttributes redirectAttributes) {
+    @PostMapping("/invoice/{id}/confirm")
+    public String confirmInvoice(@PathVariable UUID id,
+                                 @Valid @ModelAttribute("invoiceForm") InvoiceForm form,
+                                 BindingResult bindingResult,
+                                 Model model,
+                                 RedirectAttributes redirectAttributes) {
         try {
             if (!bindingResult.hasErrors()) {
-                invoiceService.requestChanges(id, form);
-                redirectAttributes.addFlashAttribute("successMessage", "Invoice updated");
-                return "redirect:/customer/invoice/" + id;
+                invoiceService.confirm(id, form);
+                redirectAttributes.addFlashAttribute("successMessage", "Invoice confirmed, the final invoice has been issued");
+                return REDIRECT_CUSTOMER_EVENTS;
             }
             model.addAttribute("review", invoiceService.getInvoiceReview(id));
         } catch (InvoiceNotFoundException | InvoiceNotEditableException ex) {
@@ -82,16 +82,5 @@ public class CustomerInvoiceController {
         }
         model.addAttribute("events", eventService.getActiveEvents());
         return CUSTOMER_EVENTS;
-    }
-
-    @PostMapping("/invoice/{id}/confirm")
-    public String confirmInvoice(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
-        try {
-            invoiceService.confirm(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Invoice confirmed, the final invoice has been issued");
-        } catch (InvoiceNotFoundException | InvoiceNotEditableException ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-        }
-        return REDIRECT_CUSTOMER_EVENTS;
     }
 }

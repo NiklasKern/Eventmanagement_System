@@ -356,7 +356,7 @@
                 <span class="InvoiceDate" th:text="${#temporals.format(inv.invoiceDate, 'dd.MM.yyyy')}">01.01.2027</span>
             </div>
 
-            <form id="invoiceForm" th:if="${inv.editable}" th:action="@{/customer/invoice/{id}(id=${inv.id})}"
+            <form id="invoiceForm" th:if="${inv.editable}" th:action="@{/customer/invoice/{id}/confirm(id=${inv.id})}"
                   th:object="${invoiceForm}" method="post">
                 <div class="form-group">
                     <label for="name">Billed to *</label>
@@ -427,12 +427,10 @@
         </aside>
     </div>
 
-    <form id="confirmForm" th:if="${inv.editable}" th:action="@{/customer/invoice/{id}/confirm(id=${inv.id})}" method="post"></form>
-
     <div class="DialogActions DialogFooter">
         <th:block th:if="${inv.editable}">
-            <button class="SecondaryButton" type="submit" form="invoiceForm">Save changes</button>
-            <button class="CreateEventButton" type="submit" form="confirmForm">Confirm invoice</button>
+            <button id="invoiceCancel" class="SecondaryButton" type="submit" form="invoiceForm" formmethod="dialog" formnovalidate>Cancel</button>
+            <button class="CreateEventButton" type="submit" form="invoiceForm">Confirm invoice</button>
         </th:block>
         <form method="dialog" th:unless="${inv.editable}">
             <button class="SecondaryButton" type="submit">Close</button>
@@ -445,10 +443,11 @@
         const dialog = document.getElementById('invoiceDialog');
 
         if (document.getElementById('invoiceForm')) {
-            const leaveMessage = 'Do you really want to cancel? Unsaved changes will be lost and the invoice stays unconfirmed.';
+            const leaveMessage = 'Do you really want to cancel? Your changes will not be saved and the invoice stays unconfirmed.';
             function confirmLeave(e) {
                 if (!confirm(leaveMessage)) e.preventDefault();
             }
+            document.getElementById('invoiceCancel').addEventListener('click', confirmLeave);
             document.getElementById('invoiceClose').addEventListener('click', confirmLeave);
             dialog.addEventListener('cancel', confirmLeave);
         }

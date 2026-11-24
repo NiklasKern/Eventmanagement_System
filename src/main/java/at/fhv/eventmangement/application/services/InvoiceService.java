@@ -22,4 +22,6 @@ public interface InvoiceService {
     InvoiceDto requestChanges(UUID id, InvoiceForm form) throws InvoiceNotFoundException, InvoiceNotEditableException;
 
     InvoiceDto confirm(UUID id) throws InvoiceNotFoundException, InvoiceNotEditableException;
+
+    InvoiceDto confirm(UUID id, InvoiceForm form) throws InvoiceNotFoundException, InvoiceNotEditableException;
 }

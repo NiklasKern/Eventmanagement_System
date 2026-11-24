@@ -92,6 +92,7 @@ class CustomerInvoiceControllerTest {
                 .andExpect(content().string(containsString("BK-ABCDEFGH")))
                 .andExpect(content().string(containsString("360,00 €")))
                 .andExpect(content().string(containsString("Confirm invoice")))
+                .andExpect(content().string(not(containsString("Save changes"))))
                 .andExpect(content().string(containsString("value=\"anna@example.com\"")));
     }
 
@@ -117,25 +118,25 @@ class CustomerInvoiceControllerTest {
     }
 
     @Test
-    void updateInvoice_valid_savesWithoutItemsAndReopensDialog() throws Exception {
-        mockMvc.perform(post("/customer/invoice/{id}", invoiceId)
+    void confirmInvoice_valid_savesChangesAndConfirms() throws Exception {
+        mockMvc.perform(post("/customer/invoice/{id}/confirm", invoiceId)
                         .param("name", "Firma GmbH")
                         .param("address", "Hauptplatz 1")
                         .param("email", "office@firma.at")
                         .param("paymentMethod", "CARD")
                         .param("items[0].description", "should be ignored"))
-                .andExpect(redirectedUrl("/customer/invoice/" + invoiceId))
-                .andExpect(flash().attribute("successMessage", "Invoice updated"));
+                .andExpect(redirectedUrl("/customer/events"))
+                .andExpect(flash().attribute("successMessage", "Invoice confirmed, the final invoice has been issued"));
 
-        verify(invoiceService).requestChanges(eq(invoiceId), argThat((InvoiceForm f) ->
+        verify(invoiceService).confirm(eq(invoiceId), argThat((InvoiceForm f) ->
                 f.getName().equals("Firma GmbH") && f.getItems() == null));
     }
 
     @Test
-    void updateInvoice_invalid_showsErrorsAndDoesNotSave() throws Exception {
+    void confirmInvoice_invalid_showsErrorsAndDoesNotConfirm() throws Exception {
         when(invoiceService.getInvoiceReview(invoiceId)).thenReturn(review(true));
 
-        mockMvc.perform(post("/customer/invoice/{id}", invoiceId)
+        mockMvc.perform(post("/customer/invoice/{id}/confirm", invoiceId)
                         .param("name", "")
                         .param("address", "Hauptplatz 1")
                         .param("email", "no-mail")
@@ -145,14 +146,14 @@ class CustomerInvoiceControllerTest {
                 .andExpect(model().attributeHasFieldErrors("invoiceForm", "name", "email"))
                 .andExpect(content().string(containsString("please enter a valid email address")));
 
-        verify(invoiceService, never()).requestChanges(any(), any());
+        verify(invoiceService, never()).confirm(any(), any());
     }
 
     @Test
-    void updateInvoice_finalInvoice_redirectsWithError() throws Exception {
-        when(invoiceService.requestChanges(eq(invoiceId), any())).thenThrow(new InvoiceNotEditableException());
+    void confirmInvoice_alreadyFinal_redirectsWithError() throws Exception {
+        when(invoiceService.confirm(eq(invoiceId), any())).thenThrow(new InvoiceNotEditableException());
 
-        mockMvc.perform(post("/customer/invoice/{id}", invoiceId)
+        mockMvc.perform(post("/customer/invoice/{id}/confirm", invoiceId)
                         .param("name", "Anna")
                         .param("address", "Street 1")
                         .param("email", "anna@example.com")
@@ -162,20 +163,12 @@ class CustomerInvoiceControllerTest {
     }
 
     @Test
-    void confirmInvoice_redirectsWithSuccess() throws Exception {
-        mockMvc.perform(post("/customer/invoice/{id}/confirm", invoiceId))
+    void confirmInvoice_unknown_redirectsWithError() throws Exception {
+        when(invoiceService.getInvoiceReview(invoiceId)).thenThrow(new InvoiceNotFoundException());
+
+        mockMvc.perform(post("/customer/invoice/{id}/confirm", invoiceId)
+                        .param("name", ""))
                 .andExpect(redirectedUrl("/customer/events"))
-                .andExpect(flash().attribute("successMessage", "Invoice confirmed, the final invoice has been issued"));
-
-        verify(invoiceService).confirm(invoiceId);
-    }
-
-    @Test
-    void confirmInvoice_alreadyFinal_redirectsWithError() throws Exception {
-        when(invoiceService.confirm(invoiceId)).thenThrow(new InvoiceNotEditableException());
-
-        mockMvc.perform(post("/customer/invoice/{id}/confirm", invoiceId))
-                .andExpect(redirectedUrl("/customer/events"))
-                .andExpect(flash().attribute("errorMessage", "invoice is already final and cannot be changed"));
+                .andExpect(flash().attribute("errorMessage", "invoice does not exist"));
     }
 }
