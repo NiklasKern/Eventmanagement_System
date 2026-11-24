@@ -112,7 +112,7 @@
             </p>
         </div>
         <form method="dialog">
-            <button class="DialogClose" type="submit" aria-label="Close">&times;</button>
+            <button id="bookingClose" class="DialogClose" type="submit" aria-label="Close">&times;</button>
         </form>
     </div>
 
@@ -209,7 +209,7 @@
     </div>
 
     <div class="DialogActions DialogFooter">
-        <button class="SecondaryButton" type="submit" form="bookingForm" formmethod="dialog" formnovalidate>Cancel</button>
+        <button id="bookingCancel" class="SecondaryButton" type="submit" form="bookingForm" formmethod="dialog" formnovalidate>Cancel</button>
         <button class="CreateEventButton" type="submit" form="bookingForm">Book Event</button>
     </div>
 </dialog>
@@ -297,6 +297,14 @@
         form.addEventListener('change', loadPreview);
         places.addEventListener('input', loadPreview);
         loadPreview();
+
+        const leaveMessage = 'Do you really want to cancel? Your booking will not be saved.';
+        function confirmLeave(e) {
+            if (!confirm(leaveMessage)) e.preventDefault();
+        }
+        document.getElementById('bookingCancel').addEventListener('click', confirmLeave);
+        document.getElementById('bookingClose').addEventListener('click', confirmLeave);
+        dialog.addEventListener('cancel', confirmLeave);
 
         dialog.addEventListener('close', function () {
             history.replaceState(null, '', eventsUrl);
