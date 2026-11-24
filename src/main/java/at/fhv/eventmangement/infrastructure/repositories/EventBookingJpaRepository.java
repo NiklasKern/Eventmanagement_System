@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 
 @Repository
 public interface EventBookingJpaRepository extends JpaRepository<EventBookingEntity, UUID> {
@@ -24,4 +25,6 @@ public interface EventBookingJpaRepository extends JpaRepository<EventBookingEnt
         """)
     List<EventBookingEntity> findActiveByEventId(@Param("eventId") UUID eventId,
                                                  @Param("inactive") Collection<EventBookingStatus> inactive);
+    List<EventBookingEntity> findByCustomerId(UUID customerId);
+    Optional<EventBookingEntity> findByBookingNumber(String bookingNumber);
 }

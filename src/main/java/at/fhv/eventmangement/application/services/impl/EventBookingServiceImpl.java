@@ -14,6 +14,7 @@ import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.domain.repositories.CustomerRepository;
 import at.fhv.eventmangement.domain.repositories.EventBookingRepository;
 import at.fhv.eventmangement.domain.repositories.EventDateRepository;
+import at.fhv.eventmangement.application.services.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 
 @Service
 public class EventBookingServiceImpl implements EventBookingService {
@@ -30,13 +32,15 @@ public class EventBookingServiceImpl implements EventBookingService {
     private final CustomerRepository customerRepository;
     private final BookingNumberGenerator bookingNumberGenerator;
     private final EventBookingMapper eventBookingMapper;
+    private final NotificationService notificationService;
 
-    public EventBookingServiceImpl(EventDateRepository eventDateRepository, EventBookingRepository eventBookingRepository, CustomerRepository customerRepository, BookingNumberGenerator bookingNumberGenerator, EventBookingMapper eventBookingMapper) {
+    public EventBookingServiceImpl(EventDateRepository eventDateRepository, EventBookingRepository eventBookingRepository, CustomerRepository customerRepository, BookingNumberGenerator bookingNumberGenerator, EventBookingMapper eventBookingMapper, NotificationService notificationService) {
         this.eventDateRepository = eventDateRepository;
         this.eventBookingRepository = eventBookingRepository;
         this.customerRepository = customerRepository;
         this.bookingNumberGenerator = bookingNumberGenerator;
         this.eventBookingMapper = eventBookingMapper;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -73,7 +77,10 @@ public class EventBookingServiceImpl implements EventBookingService {
                 .eventBookingStatus(EventBookingStatus.CONFIRMED)
                 .build();
 
-        return eventBookingMapper.toDto(eventBookingRepository.save(booking));
+        EventBooking savedBooking = eventBookingRepository.save(booking);
+        notificationService.notifyBookingConfirmed(savedBooking.getCustomer(), savedBooking);
+
+        return eventBookingMapper.toDto(savedBooking);
     }
 
     @Override
@@ -91,5 +98,19 @@ public class EventBookingServiceImpl implements EventBookingService {
     private Customer currentCustomer() throws CustomerNotFoundException {
         return customerRepository.findByContactInfoName(EventmanagementApplicationRunner.DEFAULT_CUSTOMER)
                 .orElseThrow(CustomerNotFoundException::new);
+    }
+
+    @Override
+    public List<EventBookingDto> getBookingsForCurrentCustomer() throws CustomerNotFoundException {
+        Customer customer = currentCustomer();
+        return eventBookingRepository.findByCustomerId(customer.getId()).stream()
+                .map(eventBookingMapper::toDto)
+                .toList();
+    }
+
+    @Override
+    public Optional<EventBookingDto> getBookingByNumber(String bookingNumber) {
+        return eventBookingRepository.findByBookingNumber(bookingNumber)
+                .map(eventBookingMapper::toDto);
     }
 }
