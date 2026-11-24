@@ -325,7 +325,7 @@
             </p>
         </div>
         <form method="dialog">
-            <button class="DialogClose" type="submit" aria-label="Close">&times;</button>
+            <button id="invoiceClose" class="DialogClose" type="submit" aria-label="Close">&times;</button>
         </form>
     </div>
 
@@ -443,6 +443,16 @@
 <script th:if="${review != null}">
     (function () {
         const dialog = document.getElementById('invoiceDialog');
+
+        if (document.getElementById('invoiceForm')) {
+            const leaveMessage = 'Do you really want to cancel? Unsaved changes will be lost and the invoice stays unconfirmed.';
+            function confirmLeave(e) {
+                if (!confirm(leaveMessage)) e.preventDefault();
+            }
+            document.getElementById('invoiceClose').addEventListener('click', confirmLeave);
+            dialog.addEventListener('cancel', confirmLeave);
+        }
+
         dialog.addEventListener('close', function () {
             history.replaceState(null, '', '/customer/events');
         });
