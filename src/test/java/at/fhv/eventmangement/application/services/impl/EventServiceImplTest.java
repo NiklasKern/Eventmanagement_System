@@ -6,6 +6,7 @@ import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
 import at.fhv.eventmangement.application.services.NotificationService;
 import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
 import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.EventAlreadyCancelledException;
 import at.fhv.eventmangement.application.form.EventDateForm;
 import at.fhv.eventmangement.application.form.EventForm;
 import at.fhv.eventmangement.application.mappers.EventMapper;
@@ -51,6 +52,8 @@ class EventServiceImplTest {
     private EventMapper eventMapper;
     @Mock
     private EventUpdateTransaction eventUpdateTransaction;
+    @Mock
+    private EventCancelTransaction eventCancelTransaction;
     @Mock
     private NotificationService notificationService;
 
@@ -245,5 +248,37 @@ class EventServiceImplTest {
         assertThatThrownBy(() -> eventService.updateEvent(id, form))
                 .isInstanceOf(EventAlreadyExistsException.class);
         verify(notificationService, never()).notifyEventChanged(any(), any());
+    }
+
+    // cancel event
+
+    @Test
+    void cancelEvent_onlyListsCustomersWhoseNotificationWasSent() throws Exception {
+        UUID id = UUID.randomUUID();
+        Event saved = Event.builder().name("Summer Hike").eventStatus(EventStatus.CANCELLED).build();
+        EventDto expectedDto = mock(EventDto.class);
+        Customer reached = customer("Anna");
+        Customer failed = customer("Bernd");
+
+        when(eventCancelTransaction.apply(id))
+                .thenReturn(new EventCancelTransaction.Result(saved, List.of(reached, failed)));
+        when(notificationService.notifyEventCancelled(reached, saved)).thenReturn(true);
+        when(notificationService.notifyEventCancelled(failed, saved)).thenReturn(false);
+        when(eventMapper.toDto(saved)).thenReturn(expectedDto);
+
+        EventUpdateResultDto result = eventService.cancelEvent(id);
+
+        assertThat(result.event()).isSameAs(expectedDto);
+        assertThat(result.notifiedCustomers()).containsExactly("Anna");
+    }
+
+    @Test
+    void cancelEvent_failingCancellationSendsNoNotification() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(eventCancelTransaction.apply(id)).thenThrow(new EventAlreadyCancelledException());
+
+        assertThatThrownBy(() -> eventService.cancelEvent(id))
+                .isInstanceOf(EventAlreadyCancelledException.class);
+        verify(notificationService, never()).notifyEventCancelled(any(), any());
     }
 }
