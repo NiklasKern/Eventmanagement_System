@@ -101,6 +101,35 @@ public class MailNotificationService implements NotificationService {
             return false;
         }
     }
+    @Override
+    public boolean notifyEventCancelled(Customer customer, Event event) {
+        if (customer == null || customer.getContactInfo() == null || event == null) {
+            return false;
+        }
+
+        String customerName = customer.getContactInfo().getName();
+        String customerEmail = customer.getContactInfo().getEmail();
+        if (customerEmail == null || customerEmail.isBlank()) {
+            log.warn("Customer {} has no email address, event cancellation notification not sent", customerName);
+            return false;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(senderEmail);
+            message.setTo(customerEmail);
+            message.setSubject("Cancellation: Event '" + event.getName() + "' has been cancelled");
+            message.setText(String.format(
+                    "Hello %s,\n\nWe regret to inform you that the event '%s' (Location: %s) you booked has been cancelled.\n\nYour booking has been cancelled accordingly.",
+                    customerName, event.getName(), event.getLocation()
+            ));
+
+            javaMailSender.send(message);
+            log.info("Event cancellation notification sent to {} <{}>", customerName, customerEmail);
+            return true;
+        } catch (MailException e) {
+            log.warn("Could not send event cancellation notification to {}: {}", customerEmail, e.getMessage());
+            return false;
+        }
+    }
 }
-
-

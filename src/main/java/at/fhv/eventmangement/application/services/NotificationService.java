@@ -9,4 +9,5 @@ public interface NotificationService {
     // Returns true only if the notification was actually sent.
     boolean notifyEventChanged(Customer customer, Event event);
     boolean notifyBookingConfirmed(Customer customer, EventBooking booking);
+    boolean notifyEventCancelled(Customer customer, Event event);
 }

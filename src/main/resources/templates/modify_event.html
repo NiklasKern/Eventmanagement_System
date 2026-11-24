@@ -131,6 +131,21 @@
 
         <p id="message" role="status" aria-live="polite"></p>
     </form>
+
+    <div th:if="${eventStatus != 'CANCELLED'}"
+         style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+        <form th:action="@{/event/manage/{id}/cancel(id=${eventId})}"
+              method="post"
+              onsubmit="return confirm('Are you sure you want to cancel this event? All active bookings will be cancelled and affected customers will be notified.');">
+            <button type="submit"
+                    style="background-color: #dc2626; color: white; border: none; padding: 0.65rem 1.25rem; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                Cancel Event
+            </button>
+        </form>
+    </div>
+</main>
+</body>
+</html>
 </main>
 </body>
 </html>
