@@ -108,3 +108,141 @@
 .SecondaryButton:hover {
     background: var(--color-hover);
 }
+
+.BookingDialog:has(.DialogColumns) {
+    width: min(960px, calc(100% - 32px));
+}
+
+.DialogColumns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+}
+
+.InfoList {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 16px;
+    margin: 0 0 18px;
+}
+
+.InfoList dt {
+    color: var(--color-text-muted);
+}
+
+.InfoList dd {
+    margin: 0;
+}
+
+.DialogFooter {
+    margin: 0;
+    padding: 0 28px 24px;
+}
+
+.InvoicePreview {
+    position: sticky;
+    top: 0;
+    padding: 20px 22px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-hover);
+}
+
+.InvoiceHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.InvoiceHead .Eyebrow {
+    margin-bottom: 0;
+}
+
+.InvoiceHead h3 {
+    margin: 4px 0 0;
+    font-size: 17px;
+    font-weight: 500;
+}
+
+.InvoiceDate {
+    color: var(--color-text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.InvoiceRecipient .subtitle {
+    margin-bottom: 12px;
+}
+
+.InvoiceTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.InvoiceTable th,
+.InvoiceTable td {
+    padding: 8px 0;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.InvoiceTable th {
+    color: var(--color-text-muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.InvoiceTable th + th,
+.InvoiceTable td + td {
+    padding-left: 10px;
+}
+
+.InvoiceTable .Num {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.InvoiceTotals {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 16px;
+    margin: 14px 0 0;
+}
+
+.InvoiceTotals dt {
+    color: var(--color-text-muted);
+}
+
+.InvoiceTotals dd {
+    margin: 0;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.InvoiceTotals .Strong {
+    padding: 6px 0;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.InvoiceFooter {
+    margin: 14px 0 0;
+}
+
+@media (max-width: 760px) {
+    .DialogColumns {
+        grid-template-columns: 1fr;
+    }
+
+    .InvoicePreview {
+        position: static;
+    }
+}

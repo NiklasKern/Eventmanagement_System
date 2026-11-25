@@ -177,66 +177,105 @@
             </p>
         </div>
         <form method="dialog">
-            <button class="DialogClose" type="submit" aria-label="Close">&times;</button>
+            <button id="bookingClose" class="DialogClose" type="submit" aria-label="Close">&times;</button>
         </form>
     </div>
 
-    <div class="DialogBody">
-        <p class="subtitle" th:if="${!#strings.isEmpty(event.description)}" th:text="${event.description}">
-            Description</p>
+    <div class="DialogBody DialogColumns">
+        <section class="DialogInfo">
+            <th:block th:replace="~{fragments/event_info :: eventInfo(${event})}"></th:block>
 
-        <div class="form-group" th:if="${customer != null}">
-            <label>Your details</label>
-            <p class="subtitle">
-                <span th:text="${customer.contactInfo.name}">Name</span><br>
-                <span th:text="${customer.contactInfo.address}">Address</span><br>
-                <span th:text="${customer.contactInfo.email}">Email</span>
-                <th:block th:if="${!#strings.isEmpty(customer.phone)}">
-                    <br><span th:text="${customer.phone}">Phone</span>
-                </th:block>
-            </p>
-        </div>
-
-        <form th:action="@{/customer/event/{id}/book(id=${event.id})}" th:object="${booking}" method="post">
-
-            <div class="form-group">
-                <label for="eventDateId">Date *</label>
-                <select th:field="*{eventDateId}" required>
-                    <option value="">-- choose a date --</option>
-                    <option th:each="d : ${event.eventDates}" th:value="${d.id}"
-                            th:text="${#temporals.format(d.startTime, 'dd.MM.yyyy, HH:mm')} + ' – ' + ${#temporals.format(d.endTime, 'dd.MM.yyyy, HH:mm')}"></option>
-                </select>
+            <div class="form-group" th:if="${customer != null}">
+                <label>Your details</label>
+                <p class="subtitle">
+                    <span th:text="${customer.contactInfo.name}">Name</span><br>
+                    <span th:text="${customer.contactInfo.address}">Address</span><br>
+                    <span th:text="${customer.contactInfo.email}">Email</span>
+                    <th:block th:if="${!#strings.isEmpty(customer.phone)}">
+                        <br><span th:text="${customer.phone}">Phone</span>
+                    </th:block>
+                </p>
             </div>
 
-            <div class="form-group">
-                <label for="eventBookingType">Booking type *</label>
-                <select th:field="*{eventBookingType}" required>
-                    <option value="">-- choose a booking type --</option>
-                    <option th:each="t : ${bookingTypes}" th:value="${t}" th:text="${t}"></option>
-                </select>
+            <form id="bookingForm" th:action="@{/customer/event/{id}/book(id=${event.id})}" th:object="${booking}" method="post">
+
+                <div class="form-group">
+                    <label for="eventDateId">Date *</label>
+                    <select th:field="*{eventDateId}" required>
+                        <option value="">-- choose a date --</option>
+                        <option th:each="d : ${event.eventDates}" th:value="${d.id}"
+                                th:text="${#temporals.format(d.startTime, 'dd.MM.yyyy, HH:mm')} + ' – ' + ${#temporals.format(d.endTime, 'dd.MM.yyyy, HH:mm')}"></option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventBookingType">Booking type *</label>
+                    <select th:field="*{eventBookingType}" required>
+                        <option value="">-- choose a booking type --</option>
+                        <option th:each="t : ${bookingTypes}" th:value="${t}" th:text="${t}"></option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="placesGroup">
+                    <label for="places">Places *</label>
+                    <input type="number" th:field="*{places}" min="1" placeholder="e.g. 5">
+                </div>
+
+                <div class="form-group">
+                    <label for="paymentMethod">Payment method *</label>
+                    <select th:field="*{paymentMethod}" required>
+                        <option th:each="p : ${paymentMethods}" th:value="${p}" th:text="${p}"></option>
+                    </select>
+                </div>
+
+                <p class="field-error"
+                   th:each="err : ${#sets.toSet(#fields.errors('*'))}"
+                   th:text="${err}"></p>
+            </form>
+        </section>
+
+        <aside class="InvoicePreview" aria-live="polite">
+            <div class="InvoiceHead">
+                <div>
+                    <span class="Eyebrow">Invoice preview</span>
+                    <h3 id="invoiceStatus">Interim invoice</h3>
+                </div>
+                <span class="InvoiceDate" id="invoiceDate"></span>
             </div>
 
-            <div class="form-group" id="placesGroup">
-                <label for="places">Places *</label>
-                <input type="number" th:field="*{places}" min="1" placeholder="e.g. 5">
+            <div class="InvoiceRecipient">
+                <label>Billed to</label>
+                <p class="subtitle" id="invoiceRecipient">–</p>
             </div>
 
-            <div class="form-group">
-                <label for="paymentMethod">Payment method *</label>
-                <select th:field="*{paymentMethod}" required>
-                    <option th:each="p : ${paymentMethods}" th:value="${p}" th:text="${p}"></option>
-                </select>
-            </div>
+            <table class="InvoiceTable">
+                <thead>
+                <tr>
+                    <th>Description</th>
+                    <th class="Num">Qty</th>
+                    <th class="Num">Unit</th>
+                    <th class="Num">Net</th>
+                </tr>
+                </thead>
+                <tbody id="invoiceItems"></tbody>
+            </table>
 
-            <p class="field-error"
-               th:each="err : ${#sets.toSet(#fields.errors('*'))}"
-               th:text="${err}"></p>
+            <dl class="InvoiceTotals">
+                <dt>Net total</dt><dd id="invoiceNet">–</dd>
+                <dt id="invoiceVatLabel">VAT</dt><dd id="invoiceVat">–</dd>
+                <dt class="Strong">Total</dt><dd class="Strong" id="invoiceGross">–</dd>
+                <dt>Advance payment</dt><dd id="invoiceAdvance">–</dd>
+                <dt>Remaining</dt><dd id="invoiceRemaining">–</dd>
+            </dl>
 
-            <div class="DialogActions">
-                <button class="SecondaryButton" type="submit" formmethod="dialog" formnovalidate>Cancel</button>
-                <button class="CreateEventButton" type="submit">Book Event</button>
-            </div>
-        </form>
+            <p class="InvoiceFooter subtitle" id="invoicePayment"></p>
+            <p class="field-error" id="invoiceError" hidden>Invoice preview could not be loaded.</p>
+        </aside>
+    </div>
+
+    <div class="DialogActions DialogFooter">
+        <button id="bookingCancel" class="SecondaryButton" type="submit" form="bookingForm" formmethod="dialog" formnovalidate>Cancel</button>
+        <button class="CreateEventButton" type="submit" form="bookingForm">Book Event</button>
     </div>
 </dialog>
 
@@ -259,10 +298,229 @@
         type.addEventListener('change', togglePlaces);
         togglePlaces();
 
+        const form = document.getElementById('bookingForm');
+        const previewUrl = /*[[@{/customer/event/{id}/invoice-preview(id=${event.id})}]]*/ '';
+        const money = new Intl.NumberFormat('de-AT', { style: 'currency', currency: 'EUR' });
+        const dateFormat = new Intl.DateTimeFormat('de-AT', { dateStyle: 'medium' });
+        const statusLabels = { INTERM: 'Interim invoice', FINAL: 'Final invoice' };
+        const $ = id => document.getElementById(id);
+        let requestNo = 0;
+
+        function cell(text, className) {
+            const td = document.createElement('td');
+            td.textContent = text;
+            if (className) td.className = className;
+            return td;
+        }
+
+        function render(invoice) {
+            $('invoiceStatus').textContent = statusLabels[invoice.invoiceStatus] || invoice.invoiceStatus;
+            $('invoiceDate').textContent = dateFormat.format(new Date(invoice.invoiceDate));
+
+            const recipient = $('invoiceRecipient');
+            recipient.replaceChildren();
+            [invoice.contactInfo.name, invoice.contactInfo.address, invoice.contactInfo.email]
+                .filter(Boolean)
+                .forEach((line, i) => {
+                    if (i > 0) recipient.appendChild(document.createElement('br'));
+                    recipient.appendChild(document.createTextNode(line));
+                });
+
+            $('invoiceItems').replaceChildren(...invoice.items.map(item => {
+                const tr = document.createElement('tr');
+                tr.append(
+                    cell(item.description),
+                    cell(item.quantity, 'Num'),
+                    cell(money.format(item.unitPrice), 'Num'),
+                    cell(money.format(item.netAmount), 'Num'));
+                return tr;
+            }));
+
+            const vatRates = [...new Set(invoice.items.map(i => i.vatRate))];
+            $('invoiceVatLabel').textContent = 'VAT ' + vatRates.map(r => r + ' %').join(', ');
+            $('invoiceNet').textContent = money.format(invoice.netTotal);
+            $('invoiceVat').textContent = money.format(invoice.vatTotal);
+            $('invoiceGross').textContent = money.format(invoice.grossTotal);
+            $('invoiceAdvance').textContent = money.format(invoice.advancePayment);
+            $('invoiceRemaining').textContent = money.format(invoice.remainingAmount);
+            $('invoicePayment').textContent = invoice.paymentMethod ? 'Payment method: ' + invoice.paymentMethod : '';
+        }
+
+        function loadPreview() {
+            const params = new URLSearchParams();
+            new FormData(form).forEach((value, key) => { if (value !== '') params.append(key, value); });
+            const current = ++requestNo;
+            fetch(previewUrl + '?' + params, { headers: { 'Accept': 'application/json' } })
+                .then(res => { if (!res.ok) throw new Error(res.status); return res.json(); })
+                .then(invoice => {
+                    if (current !== requestNo) return;
+                    $('invoiceError').hidden = true;
+                    render(invoice);
+                })
+                .catch(() => { if (current === requestNo) $('invoiceError').hidden = false; });
+        }
+
+        form.addEventListener('change', loadPreview);
+        places.addEventListener('input', loadPreview);
+        loadPreview();
+
+        const leaveMessage = 'Do you really want to cancel? Your booking will not be saved.';
+        function confirmLeave(e) {
+            if (!confirm(leaveMessage)) e.preventDefault();
+        }
+        document.getElementById('bookingCancel').addEventListener('click', confirmLeave);
+        document.getElementById('bookingClose').addEventListener('click', confirmLeave);
+        dialog.addEventListener('cancel', confirmLeave);
+
         dialog.addEventListener('close', function () {
             history.replaceState(null, '', eventsUrl);
         });
 
+        dialog.showModal();
+    })();
+</script>
+
+<dialog id="invoiceDialog" class="BookingDialog" th:if="${review != null}"
+        th:with="inv=${review.invoice}, ev=${review.event}, bk=${review.booking}">
+    <div class="DialogHeader">
+        <div>
+            <h2 th:text="${inv.editable} ? 'Review your invoice' : 'Your invoice'">Review your invoice</h2>
+            <p class="subtitle">
+                <span th:text="${ev.name}">Event</span> ·
+                <span th:text="'Booking ' + ${bk.bookingNumber}">Booking BK-12345678</span>
+            </p>
+        </div>
+        <form method="dialog">
+            <button id="invoiceClose" class="DialogClose" type="submit" aria-label="Close">&times;</button>
+        </form>
+    </div>
+
+    <div class="DialogBody DialogColumns">
+        <section class="DialogInfo">
+            <th:block th:replace="~{fragments/event_info :: eventInfo(${ev})}"></th:block>
+
+            <dl class="InfoList">
+                <dt>Location</dt>
+                <dd th:text="${ev.location}">Location</dd>
+                <th:block th:if="${bk.eventDate != null}">
+                    <dt>Date</dt>
+                    <dd th:text="${#temporals.format(bk.eventDate.startTime, 'dd.MM.yyyy, HH:mm')} + ' – ' + ${#temporals.format(bk.eventDate.endTime, 'dd.MM.yyyy, HH:mm')}">01.01.2027</dd>
+                </th:block>
+                <dt>Booking type</dt>
+                <dd th:text="${bk.eventBookingType}">GROUP</dd>
+                <dt>Places</dt>
+                <dd th:text="${bk.places}">2</dd>
+            </dl>
+        </section>
+
+        <aside class="InvoicePreview">
+            <div class="InvoiceHead">
+                <div>
+                    <span class="Eyebrow">Invoice</span>
+                    <h3 th:text="${inv.editable} ? 'Interim invoice' : 'Final invoice'">Interim invoice</h3>
+                </div>
+                <span class="InvoiceDate" th:text="${#temporals.format(inv.invoiceDate, 'dd.MM.yyyy')}">01.01.2027</span>
+            </div>
+
+            <form id="invoiceForm" th:if="${inv.editable}" th:action="@{/customer/invoice/{id}/confirm(id=${inv.id})}"
+                  th:object="${invoiceForm}" method="post">
+                <div class="form-group">
+                    <label for="name">Billed to *</label>
+                    <input type="text" th:field="*{name}" required>
+                </div>
+                <div class="form-group">
+                    <label for="address">Billing address *</label>
+                    <input type="text" th:field="*{address}" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" th:field="*{email}" required>
+                </div>
+                <div class="form-group">
+                    <label for="paymentMethod">Payment method *</label>
+                    <select th:field="*{paymentMethod}" required>
+                        <option th:each="p : ${paymentMethods}" th:value="${p}" th:text="${p}"></option>
+                    </select>
+                </div>
+                <p class="field-error"
+                   th:each="err : ${#sets.toSet(#fields.errors('*'))}"
+                   th:text="${err}"></p>
+            </form>
+
+            <div class="InvoiceRecipient" th:unless="${inv.editable}">
+                <label>Billed to</label>
+                <p class="subtitle" th:if="${inv.contactInfo != null}">
+                    <span th:text="${inv.contactInfo.name}">Name</span><br>
+                    <span th:text="${inv.contactInfo.address}">Address</span><br>
+                    <span th:text="${inv.contactInfo.email}">Email</span>
+                </p>
+            </div>
+
+            <table class="InvoiceTable">
+                <thead>
+                <tr>
+                    <th>Description</th>
+                    <th class="Num">Qty</th>
+                    <th class="Num">Unit</th>
+                    <th class="Num">Net</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${inv.items}">
+                    <td th:text="${item.description}">Event</td>
+                    <td class="Num" th:text="${item.quantity}">1</td>
+                    <td class="Num" th:text="${#numbers.formatDecimal(item.unitPrice, 1, 'POINT', 2, 'COMMA')} + ' €'">150,00 €</td>
+                    <td class="Num" th:text="${#numbers.formatDecimal(item.netAmount, 1, 'POINT', 2, 'COMMA')} + ' €'">150,00 €</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <dl class="InvoiceTotals">
+                <dt>Net total</dt>
+                <dd th:text="${#numbers.formatDecimal(inv.netTotal, 1, 'POINT', 2, 'COMMA')} + ' €'">150,00 €</dd>
+                <dt>VAT</dt>
+                <dd th:text="${#numbers.formatDecimal(inv.vatTotal, 1, 'POINT', 2, 'COMMA')} + ' €'">30,00 €</dd>
+                <dt class="Strong">Total</dt>
+                <dd class="Strong" th:text="${#numbers.formatDecimal(inv.grossTotal, 1, 'POINT', 2, 'COMMA')} + ' €'">180,00 €</dd>
+                <dt>Advance payment</dt>
+                <dd th:text="${#numbers.formatDecimal(inv.advancePayment, 1, 'POINT', 2, 'COMMA')} + ' €'">54,00 €</dd>
+                <dt>Remaining</dt>
+                <dd th:text="${#numbers.formatDecimal(inv.remainingAmount, 1, 'POINT', 2, 'COMMA')} + ' €'">126,00 €</dd>
+            </dl>
+
+            <p class="InvoiceFooter subtitle" th:unless="${inv.editable}"
+               th:text="'Payment method: ' + ${inv.paymentMethod}">Payment method: CARD</p>
+        </aside>
+    </div>
+
+    <div class="DialogActions DialogFooter">
+        <th:block th:if="${inv.editable}">
+            <button id="invoiceCancel" class="SecondaryButton" type="submit" form="invoiceForm" formmethod="dialog" formnovalidate>Cancel</button>
+            <button class="CreateEventButton" type="submit" form="invoiceForm">Confirm invoice</button>
+        </th:block>
+        <form method="dialog" th:unless="${inv.editable}">
+            <button class="SecondaryButton" type="submit">Close</button>
+        </form>
+    </div>
+</dialog>
+
+<script th:if="${review != null}">
+    (function () {
+        const dialog = document.getElementById('invoiceDialog');
+
+        if (document.getElementById('invoiceForm')) {
+            const leaveMessage = 'Do you really want to cancel? Your changes will not be saved and the invoice stays unconfirmed.';
+            function confirmLeave(e) {
+                if (!confirm(leaveMessage)) e.preventDefault();
+            }
+            document.getElementById('invoiceCancel').addEventListener('click', confirmLeave);
+            document.getElementById('invoiceClose').addEventListener('click', confirmLeave);
+            dialog.addEventListener('cancel', confirmLeave);
+        }
+
+        dialog.addEventListener('close', function () {
+            history.replaceState(null, '', '/customer/events');
+        });
         dialog.showModal();
     })();
 </script>

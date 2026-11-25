@@ -5,6 +5,8 @@ import at.fhv.eventmangement.application.services.CustomerService;
 import at.fhv.eventmangement.application.services.EventBookingService;
 import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventService;
+import at.fhv.eventmangement.application.services.InvoiceService;
+import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.EventNotBookableException;
 import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
@@ -51,7 +53,7 @@ class CustomerEventControllerTest {
     @MockitoBean
     private CustomerService customerService;
     @MockitoBean
-    private EventCategoryService eventCategoryService;
+    private InvoiceService invoiceService;
 
     private final UUID categoryId = UUID.randomUUID();
 
@@ -113,14 +115,29 @@ class CustomerEventControllerTest {
     }
 
     @Test
-    void book_success_redirectsWithBookingNumber() throws Exception {
+    void book_success_redirectsToInterimInvoice() throws Exception {
+        UUID bookingId = UUID.randomUUID();
+        UUID invoiceId = UUID.randomUUID();
         when(eventBookingService.book(any(), any())).thenReturn(new EventBookingDto(
-                UUID.randomUUID(), "BK-ABCDEFGH", null, null, null, 1, null, null, null, null, null, List.of(), null
-        ));
+                bookingId, "BK-ABCDEFGH", null, null, null, 2, null, null, null, null, null, List.of()));
+        when(invoiceService.getInvoiceForBooking(bookingId)).thenReturn(new InvoiceDto(invoiceId, bookingId,
+                null, null, null, null, List.of(), null, null, null, null, null, true));
 
         postGroupBooking(2)
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/customer/booking/BK-ABCDEFGH"))
+                .andExpect(redirectedUrl("/customer/invoice/" + invoiceId))
+                .andExpect(flash().attribute("successMessage", "Event successfully booked (BK-ABCDEFGH)"));
+    }
+
+    @Test
+    void book_success_invoiceMissing_redirectsToEventList() throws Exception {
+        UUID bookingId = UUID.randomUUID();
+        when(eventBookingService.book(any(), any())).thenReturn(new EventBookingDto(
+                bookingId, "BK-ABCDEFGH", null, null, null, 2, null, null, null, null, null, List.of()));
+        when(invoiceService.getInvoiceForBooking(bookingId)).thenThrow(new InvoiceNotFoundException());
+
+        postGroupBooking(2)
+                .andExpect(redirectedUrl("/customer/events"))
                 .andExpect(flash().attribute("successMessage", "Event successfully booked (BK-ABCDEFGH)"));
     }
 
