@@ -259,6 +259,10 @@ a, a:hover {
     min-width: 160px;
 }
 
+.FilterSearchButton {
+    align-self: flex-end;
+}
+
 .ExtendedSearch summary {
     cursor: pointer;
     font-weight: 600;
