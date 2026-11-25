@@ -12,10 +12,10 @@ import at.fhv.eventmangement.application.services.InvoiceService;
 import at.fhv.eventmangement.domain.exceptions.InvoiceNotEditableException;
 import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -46,11 +46,6 @@ public class CustomerInvoiceController {
         this.invoiceMapper = invoiceMapper;
     }
 
-    @InitBinder("invoiceForm")
-    public void restrictInvoiceFields(WebDataBinder binder) {
-        binder.setDisallowedFields("items*");
-    }
-
     @ModelAttribute("paymentMethods")
     public List<String> paymentMethods() {
         return eventBookingService.getPaymentMethods();
@@ -72,9 +67,10 @@ public class CustomerInvoiceController {
     }
 
     @GetMapping("/invoice/{id}")
-    public String showInvoice(@PathVariable UUID id, Model model, RedirectAttributes redirectAttributes) {
+    public String showInvoice(@PathVariable UUID id, Model model, RedirectAttributes redirectAttributes,
+                              Authentication authentication) {
         try {
-            InvoiceReviewDto review = invoiceService.getInvoiceReview(id);
+            InvoiceReviewDto review = invoiceService.getInvoiceReview(id, authentication.getName());
             model.addAttribute("review", review);
             model.addAttribute("invoiceForm", invoiceMapper.toForm(review.invoice()));
         } catch (InvoiceNotFoundException ex) {
@@ -90,14 +86,15 @@ public class CustomerInvoiceController {
                                  @Valid @ModelAttribute("invoiceForm") InvoiceForm form,
                                  BindingResult bindingResult,
                                  Model model,
-                                 RedirectAttributes redirectAttributes) {
+                                 RedirectAttributes redirectAttributes,
+                                 Authentication authentication) {
         try {
             if (!bindingResult.hasErrors()) {
-                invoiceService.confirm(id, form);
+                invoiceService.confirm(id, form, authentication.getName());
                 redirectAttributes.addFlashAttribute("successMessage", "Invoice confirmed, the final invoice has been issued");
                 return REDIRECT_CUSTOMER_EVENTS;
             }
-            model.addAttribute("review", invoiceService.getInvoiceReview(id));
+            model.addAttribute("review", invoiceService.getInvoiceReview(id, authentication.getName()));
         } catch (InvoiceNotFoundException | InvoiceNotEditableException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return REDIRECT_CUSTOMER_EVENTS;

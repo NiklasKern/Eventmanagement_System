@@ -75,8 +75,8 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     @Transactional(readOnly = true)
-    public InvoiceDto getInvoice(UUID id) throws InvoiceNotFoundException {
-        return invoiceMapper.toDto(findInvoice(id));
+    public InvoiceDto getInvoice(UUID id, String username) throws InvoiceNotFoundException {
+        return invoiceMapper.toDto(ownInvoice(id, username).invoice());
     }
 
     @Override
@@ -88,37 +88,36 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     @Transactional(readOnly = true)
-    public InvoiceReviewDto getInvoiceReview(UUID id) throws InvoiceNotFoundException {
-        Invoice invoice = findInvoice(id);
-        EventBooking booking = eventBookingRepository.findById(invoice.getBookingId())
-                .orElseThrow(InvoiceNotFoundException::new);
+    public InvoiceReviewDto getInvoiceReview(UUID id, String username) throws InvoiceNotFoundException {
+        OwnInvoice own = ownInvoice(id, username);
         return new InvoiceReviewDto(
-                invoiceMapper.toDto(invoice),
-                eventBookingMapper.toDto(booking),
-                eventMapper.toDto(booking.getEventDate().getEvent()));
+                invoiceMapper.toDto(own.invoice()),
+                eventBookingMapper.toDto(own.booking()),
+                eventMapper.toDto(own.booking().getEventDate().getEvent()));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public InvoiceDto requestChanges(UUID id, InvoiceForm form)
+    public InvoiceDto requestChanges(UUID id, InvoiceForm form, String username)
             throws InvoiceNotFoundException, InvoiceNotEditableException {
-        Invoice invoice = findInvoice(id);
+        Invoice invoice = ownInvoice(id, username).invoice();
         applyChanges(invoice, form);
         return invoiceMapper.toDto(invoiceRepository.save(invoice));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public InvoiceDto confirm(UUID id) throws InvoiceNotFoundException, InvoiceNotEditableException {
-        Invoice invoice = findInvoice(id);
+    public InvoiceDto confirm(UUID id, String username) throws InvoiceNotFoundException, InvoiceNotEditableException {
+        Invoice invoice = ownInvoice(id, username).invoice();
         invoice.confirm();
         return invoiceMapper.toDto(invoiceRepository.save(invoice));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public InvoiceDto confirm(UUID id, InvoiceForm form) throws InvoiceNotFoundException, InvoiceNotEditableException {
-        Invoice invoice = findInvoice(id);
+    public InvoiceDto confirm(UUID id, InvoiceForm form, String username)
+            throws InvoiceNotFoundException, InvoiceNotEditableException {
+        Invoice invoice = ownInvoice(id, username).invoice();
         applyChanges(invoice, form);
         invoice.confirm();
         return invoiceMapper.toDto(invoiceRepository.save(invoice));
@@ -131,21 +130,34 @@ public class InvoiceServiceImpl implements InvoiceService {
                         .address(form.getAddress().trim())
                         .email(form.getEmail().trim())
                         .build(),
-                form.getPaymentMethod(),
-                invoiceMapper.toItems(form.getItems()));
+                form.getPaymentMethod());
     }
 
-    // The invoice is billed to the currently logged in customer
     private Customer currentCustomer(String username) throws CustomerNotFoundException {
-        UserAccount account = userAccountRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalStateException("No account for logged-in user " + username));
+        UserAccount account = account(username);
         if (account.getCustomer() == null) {
             throw new CustomerNotFoundException("Your account is not linked to a customer");
         }
         return account.getCustomer();
     }
 
-    private Invoice findInvoice(UUID id) throws InvoiceNotFoundException {
-        return invoiceRepository.findById(id).orElseThrow(InvoiceNotFoundException::new);
+    private record OwnInvoice(Invoice invoice, EventBooking booking) {
+    }
+
+    private OwnInvoice ownInvoice(UUID id, String username) throws InvoiceNotFoundException {
+        Invoice invoice = invoiceRepository.findById(id).orElseThrow(InvoiceNotFoundException::new);
+        Customer customer = account(username).getCustomer();
+        if (customer == null || invoice.getBookingId() == null) {
+            throw new InvoiceNotFoundException();
+        }
+        EventBooking booking = eventBookingRepository.findById(invoice.getBookingId())
+                .filter(b -> b.getCustomer() != null && customer.getId().equals(b.getCustomer().getId()))
+                .orElseThrow(InvoiceNotFoundException::new);
+        return new OwnInvoice(invoice, booking);
+    }
+
+    private UserAccount account(String username) {
+        return userAccountRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalStateException("No account for logged-in user " + username));
     }
 }

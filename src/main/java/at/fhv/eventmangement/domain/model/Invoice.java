@@ -57,7 +57,9 @@ public class Invoice {
                 .setContactInfo(booking.getCustomer() == null ? null : booking.getCustomer().getContactInfo());
     }
 
-    public void requestChanges(ContactInfo contactInfo, PaymentMethod paymentMethod, List<InvoiceItem> items)
+    // no Items list so that customer can only change contact info and payment method
+    // Items and prices only come from the booking (createInterimFor)
+    public void requestChanges(ContactInfo contactInfo, PaymentMethod paymentMethod)
             throws InvoiceNotEditableException {
         ensureInterim();
         this.contactInfo = contactInfo;
