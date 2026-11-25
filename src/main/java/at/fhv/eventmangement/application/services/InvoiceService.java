@@ -15,15 +15,15 @@ public interface InvoiceService {
     InvoiceDto previewInvoice(UUID eventId, EventBookingForm form, String username)
             throws EventNotFoundException, CustomerNotFoundException;
 
-    InvoiceDto getInvoice(UUID id) throws InvoiceNotFoundException;
+    InvoiceDto getInvoice(UUID id, String username) throws InvoiceNotFoundException;
 
     InvoiceDto getInvoiceForBooking(UUID bookingId) throws InvoiceNotFoundException;
 
-    InvoiceReviewDto getInvoiceReview(UUID id) throws InvoiceNotFoundException;
+    InvoiceReviewDto getInvoiceReview(UUID id, String username) throws InvoiceNotFoundException;
 
-    InvoiceDto requestChanges(UUID id, InvoiceForm form) throws InvoiceNotFoundException, InvoiceNotEditableException;
+    InvoiceDto requestChanges(UUID id, InvoiceForm form, String username) throws InvoiceNotFoundException, InvoiceNotEditableException;
 
-    InvoiceDto confirm(UUID id) throws InvoiceNotFoundException, InvoiceNotEditableException;
+    InvoiceDto confirm(UUID id, String username) throws InvoiceNotFoundException, InvoiceNotEditableException;
 
-    InvoiceDto confirm(UUID id, InvoiceForm form) throws InvoiceNotFoundException, InvoiceNotEditableException;
+    InvoiceDto confirm(UUID id, InvoiceForm form, String username) throws InvoiceNotFoundException, InvoiceNotEditableException;
 }
