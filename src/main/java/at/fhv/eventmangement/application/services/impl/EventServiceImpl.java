@@ -132,10 +132,13 @@ public class EventServiceImpl implements EventService {
         // Save event to db and return saved eventdto
         return eventMapper.toDto(eventRepository.save(event));
     }
+
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public EventUpdateResultDto cancelEvent(UUID id)
-            throws EventNotFoundException, EventAlreadyCancelledException {
+    public EventUpdateResultDto cancelEvent(UUID id, String username)
+            throws EventNotFoundException, EventAlreadyCancelledException, NotEventOwnerException {
+
+        editableEvent(id, username);
 
         // excute cancellation and save to db
         EventCancelTransaction.Result result = eventCancelTransaction.apply(id);
@@ -147,7 +150,7 @@ public class EventServiceImpl implements EventService {
                 .map(customer -> customer.getContactInfo().getName())
                 .toList();
 
-        // 3.return rsult to controller
+        // return rsult to controller
         return new EventUpdateResultDto(eventMapper.toDto(saved), notified);
     }
 

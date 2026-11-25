@@ -1,21 +1,11 @@
 package at.fhv.eventmangement.presentation.controllers;
 
+import at.fhv.eventmangement.application.dto.EventBookingDto;
 import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.form.EventBookingForm;
 import at.fhv.eventmangement.application.form.EventSearchForm;
-import at.fhv.eventmangement.application.services.CustomerService;
-import at.fhv.eventmangement.application.services.EventBookingService;
-import at.fhv.eventmangement.application.services.EventCategoryService;
-import at.fhv.eventmangement.application.services.EventService;
+import at.fhv.eventmangement.application.services.*;
 import at.fhv.eventmangement.domain.exceptions.*;
-import at.fhv.eventmangement.application.services.InvoiceService;
-import at.fhv.eventmangement.application.dto.EventBookingDto;
-import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventDateNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventNotBookableException;
-import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.NotEnoughPlacesException;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -26,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 // Customer side: browse active events and book them
@@ -45,8 +36,9 @@ public class CustomerEventController {
     private final InvoiceService invoiceService;
     private final EventCategoryService eventCategoryService;
 
-    //Dependency injection
-    public CustomerEventController(EventService eventService, EventBookingService eventBookingService, CustomerService customerService, InvoiceService invoiceService) {
+    public CustomerEventController(EventService eventService, EventBookingService eventBookingService,
+                                   CustomerService customerService, InvoiceService invoiceService,
+                                   EventCategoryService eventCategoryService) {
         this.eventService = eventService;
         this.eventBookingService = eventBookingService;
         this.customerService = customerService;
@@ -102,10 +94,10 @@ public class CustomerEventController {
                        Authentication authentication) {
         if (!bindingResult.hasErrors()) {
             try {
-                String bookingNumber = eventBookingService.book(id, form, authentication.getName()).bookingNumber();
+                EventBookingDto booking = eventBookingService.book(id, form, authentication.getName());
                 redirectAttributes.addFlashAttribute("successMessage",
-                        "Event successfully booked (" + bookingNumber + ")");
-                return "redirect:/customer/booking/" + bookingNumber;
+                        "Event successfully booked (" + booking.bookingNumber() + ")");
+                return redirectToInvoice(booking);
             } catch (EventDateNotFoundException ex) {
                 bindingResult.rejectValue("eventDateId", "unknown", ex.getMessage());
             } catch (EventNotBookableException ex) {
@@ -135,32 +127,34 @@ public class CustomerEventController {
             return REDIRECT_CUSTOMER_EVENTS;
         }
     }
-    // Shows confirmation details for a specific booking
+
     @GetMapping("/booking/{bookingNumber}")
     public String showBookingConfirmation(@PathVariable String bookingNumber,
                                           Model model,
-                                          RedirectAttributes redirectAttributes) {
-        return eventBookingService.getBookingByNumber(bookingNumber)
-                .map(booking -> {
-                    model.addAttribute("booking", booking);
-                    return BOOKING_CONFIRMATION;
-                })
-                .orElseGet(() -> {
-                    redirectAttributes.addFlashAttribute("errorMessage",
-                            "Booking not found: " + bookingNumber);
-                    return REDIRECT_CUSTOMER_EVENTS;
-                });
+                                          RedirectAttributes redirectAttributes,
+                                          Authentication authentication) {
+        try {
+            Optional<EventBookingDto> booking =
+                    eventBookingService.getBookingByNumber(bookingNumber, authentication.getName());
+            if (booking.isPresent()) {
+                model.addAttribute("booking", booking.get());
+                return BOOKING_CONFIRMATION;
+            }
+            redirectAttributes.addFlashAttribute("errorMessage", "Booking not found: " + bookingNumber);
+        } catch (CustomerNotFoundException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return REDIRECT_CUSTOMER_EVENTS;
     }
 
-    // Shows all bookings for the current customer (User Account)
     @GetMapping("/bookings")
-    public String showCustomerBookings(Model model, RedirectAttributes redirectAttributes) {
+    public String showCustomerBookings(Model model, RedirectAttributes redirectAttributes,
+                                       Authentication authentication) {
         try {
-            model.addAttribute("customer", customerService.getCurrentCustomer());
-            model.addAttribute("bookings", eventBookingService.getBookingsForCurrentCustomer());
+            model.addAttribute("customer", customerService.getCurrentCustomer(authentication.getName()));
+            model.addAttribute("bookings", eventBookingService.getBookingsForCurrentCustomer(authentication.getName()));
             return CUSTOMER_BOOKINGS;
         } catch (CustomerNotFoundException ex) {
-            log.error("Default customer missing", ex);
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return REDIRECT_CUSTOMER_EVENTS;
         }

@@ -14,8 +14,12 @@ import java.util.Optional;
 public interface EventBookingService {
     EventBookingDto book(UUID id, EventBookingForm form, String username)
             throws EventDateNotFoundException, EventNotBookableException, NotEnoughPlacesException, CustomerNotFoundException;
+
     List<String> getBookingTypes();
+
     List<String> getPaymentMethods();
-    List<EventBookingDto> getBookingsForCurrentCustomer() throws CustomerNotFoundException;
-    Optional<EventBookingDto> getBookingByNumber(String bookingNumber);
+
+    List<EventBookingDto> getBookingsForCurrentCustomer(String username) throws CustomerNotFoundException;
+
+    Optional<EventBookingDto> getBookingByNumber(String bookingNumber, String username) throws CustomerNotFoundException;
 }

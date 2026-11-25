@@ -220,12 +220,13 @@ public class OrganizerEventController {
         model.addAttribute("eventId", id);
         return MODIFY_EVENT;
     }
+
     @PostMapping(CANCEL)
-    public String cancelEvent(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
+    public String cancelEvent(@PathVariable UUID id, RedirectAttributes redirectAttributes, Authentication authentication) {
         EventUpdateResultDto result;
         try {
-            result = eventService.cancelEvent(id);
-        } catch (EventNotFoundException | EventAlreadyCancelledException ex) {
+            result = eventService.cancelEvent(id, authentication.getName());
+        } catch (EventNotFoundException | EventAlreadyCancelledException | NotEventOwnerException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return REDIRECT_EVENTS;
         }
