@@ -5,11 +5,7 @@ import at.fhv.eventmangement.domain.exceptions.InvoiceNotEditableException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 public class Invoice {
@@ -64,10 +60,6 @@ public class Invoice {
         ensureInterim();
         this.contactInfo = contactInfo;
         this.paymentMethod = paymentMethod;
-        if (items != null) {
-            setItems(items);
-            recalculateAdvancePayment();
-        }
     }
 
     public void confirm() throws InvoiceNotEditableException {
