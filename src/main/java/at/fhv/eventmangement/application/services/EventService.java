@@ -2,6 +2,7 @@ package at.fhv.eventmangement.application.services;
 
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
+import at.fhv.eventmangement.application.form.EventSearchForm;
 import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
 import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.EventDateHasBookingsException;
@@ -17,6 +18,8 @@ import java.util.UUID;
 public interface EventService {
     List<EventDto> getAllEvents();
     List<EventDto> getActiveEvents();
+    List<EventDto> searchEvents(@Valid EventSearchForm searchForm);
+    List<String> getEventLocation();
     EventDto addEvent(@Valid EventForm form)
             throws EventAlreadyExistsException, EventCategoryNotFoundException, EventOrganizerNotFoundException;
     EventDto getEventById(UUID id) throws EventNotFoundException;

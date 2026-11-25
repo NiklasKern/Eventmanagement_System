@@ -2,6 +2,7 @@ body {
     margin: 0;
     background: var(--color-bg);
 }
+
 a, a:hover {
     text-decoration: none;
 }
@@ -75,7 +76,7 @@ a, a:hover {
     color: var(--color-text-icon);
 }
 
-.WildPathLogo{
+.WildPathLogo {
     display: flex;
     align-items: center;
     font-size: 20px;
@@ -89,7 +90,7 @@ a, a:hover {
     margin-right: 8px;
 }
 
-.primary-green{
+.primary-green {
     color: var(--color-primary);
 }
 
@@ -251,4 +252,47 @@ a, a:hover {
     color: var(--color-text-avatar);
     font-size: 12px;
     white-space: nowrap;
+}
+
+.SearchBar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.SearchRow {
+    display: flex;
+    gap: 8px;
+}
+
+.SearchRow input {
+    flex: 1;
+    padding: 10px 12px;
+}
+
+.FilterRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.FilterRow .form-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+}
+
+.ExtendedSearch summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.ExtendedSearch[open] summary {
+    margin-bottom: 8px;
+}
+
+.input-error {
+    border-color: #b3261e;
+    box-shadow: 0 0 0 1px #b3261e;
 }
