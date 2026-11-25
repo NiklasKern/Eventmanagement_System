@@ -3,10 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <title>My Bookings</title>
-  <link rel="stylesheet" th:href="@{/styles.cssandjs/colors.css}">
-  <link rel="stylesheet" th:href="@{/styles.cssandjs/customer_bookings.css}">
+  <link rel="stylesheet" th:href="@{/styles/cssandjs/colors.css}">
+  <link rel="stylesheet" th:href="@{/styles/cssandjs/my_events.css}">
+  <link rel="stylesheet" th:href="@{/styles/cssandjs/customer_bookings.css}">
 </head>
 <body>
+<header class="AppHead">
+  <div class="HeadContainer">
+    <div class="WildPathLogo">
+      <img th:src="@{/images/leaf-icon.svg}" alt="leaf">
+      <span>WILD</span><span class="primary-green">PATH</span>
+    </div>
+    <div th:replace="~{fragments/account :: account}"></div>
+  </div>
+</header>
 <div class="container">
   <h1>My Bookings</h1>
 
