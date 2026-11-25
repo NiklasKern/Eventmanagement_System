@@ -12,11 +12,13 @@ import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
 import java.util.UUID;
 
 public interface InvoiceService {
-    InvoiceDto previewInvoice(UUID eventId, EventBookingForm form)
+    InvoiceDto previewInvoice(UUID eventId, EventBookingForm form, String username)
             throws EventNotFoundException, CustomerNotFoundException;
 
     InvoiceDto getInvoice(UUID id) throws InvoiceNotFoundException;
+
     InvoiceDto getInvoiceForBooking(UUID bookingId) throws InvoiceNotFoundException;
+
     InvoiceReviewDto getInvoiceReview(UUID id) throws InvoiceNotFoundException;
 
     InvoiceDto requestChanges(UUID id, InvoiceForm form) throws InvoiceNotFoundException, InvoiceNotEditableException;

@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class EventBookingServiceImpl implements EventBookingService {
@@ -30,16 +31,15 @@ public class EventBookingServiceImpl implements EventBookingService {
     private final EventDateRepository eventDateRepository;
     private final EventBookingRepository eventBookingRepository;
     private final UserAccountRepository userAccountRepository;
+    private final InvoiceRepository invoiceRepository;
     private final BookingNumberGenerator bookingNumberGenerator;
     private final EventBookingMapper eventBookingMapper;
-    private final InvoiceRepository invoiceRepository;
-
-    public EventBookingServiceImpl(EventDateRepository eventDateRepository, EventBookingRepository eventBookingRepository, UserAccountRepository userAccountRepository, BookingNumberGenerator bookingNumberGenerator, EventBookingMapper eventBookingMapper, InvoiceRepository invoiceRepository) {
     private final NotificationService notificationService;
 
     public EventBookingServiceImpl(EventDateRepository eventDateRepository,
                                    EventBookingRepository eventBookingRepository,
-                                   CustomerRepository customerRepository,
+                                   UserAccountRepository userAccountRepository,
+                                   InvoiceRepository invoiceRepository,
                                    BookingNumberGenerator bookingNumberGenerator,
                                    EventBookingMapper eventBookingMapper,
                                    NotificationService notificationService,
@@ -47,9 +47,9 @@ public class EventBookingServiceImpl implements EventBookingService {
         this.eventDateRepository = eventDateRepository;
         this.eventBookingRepository = eventBookingRepository;
         this.userAccountRepository = userAccountRepository;
+        this.invoiceRepository = invoiceRepository;
         this.bookingNumberGenerator = bookingNumberGenerator;
         this.eventBookingMapper = eventBookingMapper;
-        this.invoiceRepository = invoiceRepository;
         this.notificationService = notificationService;
     }
 
@@ -89,8 +89,10 @@ public class EventBookingServiceImpl implements EventBookingService {
 
         EventBooking saved = eventBookingRepository.save(booking);
 
+        // Interim invoice for the check-out review
         invoiceRepository.save(Invoice.createInterimFor(booking).setBookingId(saved.getId()));
 
+        // Booking confirmation email (a failed email does not cancel the booking)
         notificationService.notifyBookingConfirmed(saved.getCustomer(), saved);
 
         return eventBookingMapper.toDto(saved);
@@ -106,6 +108,27 @@ public class EventBookingServiceImpl implements EventBookingService {
         return Arrays.stream(PaymentMethod.values()).map(Enum::name).toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<EventBookingDto> getBookingsForCurrentCustomer(String username) throws CustomerNotFoundException {
+        Customer customer = currentCustomer(username);
+        return eventBookingRepository.findByCustomerId(customer.getId()).stream()
+                .map(eventBookingMapper::toDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<EventBookingDto> getBookingByNumber(String bookingNumber, String username)
+            throws CustomerNotFoundException {
+        UUID customerId = currentCustomer(username).getId();
+        return eventBookingRepository.findByBookingNumber(bookingNumber)
+                // a booking of another customer is treated like a booking that does not exist
+                .filter(booking -> booking.getCustomer() != null
+                        && customerId.equals(booking.getCustomer().getId()))
+                .map(eventBookingMapper::toDto);
+    }
+
     // The booking belongs to the customer linked to the logged-in account
     private Customer currentCustomer(String username) throws CustomerNotFoundException {
         UserAccount account = userAccountRepository.findByUsername(username)
@@ -114,20 +137,6 @@ public class EventBookingServiceImpl implements EventBookingService {
             throw new CustomerNotFoundException("Your account is not linked to a customer");
         }
         return account.getCustomer();
-    }
-
-    @Override
-    public List<EventBookingDto> getBookingsForCurrentCustomer() throws CustomerNotFoundException {
-        Customer customer = currentCustomer();
-        return eventBookingRepository.findByCustomerId(customer.getId()).stream()
-                .map(eventBookingMapper::toDto)
-                .toList();
-    }
-
-    @Override
-    public Optional<EventBookingDto> getBookingByNumber(String bookingNumber) {
-        return eventBookingRepository.findByBookingNumber(bookingNumber)
-                .map(eventBookingMapper::toDto);
     }
 
     @Override

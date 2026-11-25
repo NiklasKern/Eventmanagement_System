@@ -96,7 +96,7 @@ class EventBookingServiceImplTest {
                 .eventBookingType(EventBookingType.INDIVIDUAL)
                 .paymentMethod(PaymentMethod.CARD)
                 .build();
-        }
+    }
     private EventBookingForm groupForm(int places) {
         return EventBookingForm.builder().eventDateId(dateId).eventBookingType(EventBookingType.GROUP)
                 .places(places).paymentMethod(PaymentMethod.CARD).build();

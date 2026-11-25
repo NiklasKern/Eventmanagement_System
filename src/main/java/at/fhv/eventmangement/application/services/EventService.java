@@ -32,6 +32,6 @@ public interface EventService {
             throws EventNotFoundException, EventAlreadyExistsException, EventCategoryNotFoundException,
             EventDateHasBookingsException, MaxParticipantsBelowBookedPlacesException, NotEventOwnerException;
 
-    EventUpdateResultDto cancelEvent(UUID id)
-            throws EventNotFoundException, at.fhv.eventmangement.domain.exceptions.EventAlreadyCancelledException;
+    EventUpdateResultDto cancelEvent(UUID id, String username)
+            throws EventNotFoundException, EventAlreadyCancelledException, NotEventOwnerException;
 }
