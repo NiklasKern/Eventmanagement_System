@@ -13,6 +13,7 @@ import at.fhv.eventmangement.domain.model.EventBookingType;
 import at.fhv.eventmangement.domain.model.InvoiceStatus;
 import at.fhv.eventmangement.domain.model.PaymentMethod;
 import at.fhv.eventmangement.presentation.security.SecurityConfig;
+import at.fhv.eventmangement.application.services.EventCategoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
