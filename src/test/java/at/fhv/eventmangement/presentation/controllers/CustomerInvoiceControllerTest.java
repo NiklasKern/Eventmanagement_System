@@ -11,10 +11,13 @@ import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
 import at.fhv.eventmangement.domain.model.EventBookingType;
 import at.fhv.eventmangement.domain.model.InvoiceStatus;
 import at.fhv.eventmangement.domain.model.PaymentMethod;
+import at.fhv.eventmangement.presentation.security.SecurityConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -31,11 +34,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CustomerInvoiceController.class)
+@Import(SecurityConfig.class)
+@WithMockUser(authorities = {"EVENT_VIEW", "BOOK_EVENTS"})
 class CustomerInvoiceControllerTest {
 
     @Autowired
@@ -63,7 +69,7 @@ class CustomerInvoiceControllerTest {
                 new BigDecimal("150.00"), 1, 10, "ACTIVE", null, null, List.of());
         EventBookingDto booking = new EventBookingDto(UUID.randomUUID(), "BK-ABCDEFGH", null,
                 new EventDateDto(UUID.randomUUID(), LocalDateTime.of(2027, 5, 1, 9, 0), LocalDateTime.of(2027, 5, 1, 17, 0)),
-                EventBookingType.GROUP, 2, null, PaymentMethod.CARD, null, null, null, List.of());
+                EventBookingType.GROUP, 2, null, PaymentMethod.CARD, null, null, null, List.of(), null);
         InvoiceDto invoice = new InvoiceDto(invoiceId, booking.id(), LocalDateTime.of(2026, 11, 23, 10, 0),
                 new ContactInfoDto("Anna", "Street 1", "anna@example.com"),
                 editable ? InvoiceStatus.INTERM : InvoiceStatus.FINAL, PaymentMethod.CARD,
@@ -119,7 +125,7 @@ class CustomerInvoiceControllerTest {
 
     @Test
     void confirmInvoice_valid_savesChangesAndConfirms() throws Exception {
-        mockMvc.perform(post("/customer/invoice/{id}/confirm", invoiceId)
+        mockMvc.perform(post("/customer/invoice/{id}/confirm", invoiceId).with(csrf())
                         .param("name", "Firma GmbH")
                         .param("address", "Hauptplatz 1")
                         .param("email", "office@firma.at")
@@ -136,7 +142,7 @@ class CustomerInvoiceControllerTest {
     void confirmInvoice_invalid_showsErrorsAndDoesNotConfirm() throws Exception {
         when(invoiceService.getInvoiceReview(invoiceId)).thenReturn(review(true));
 
-        mockMvc.perform(post("/customer/invoice/{id}/confirm", invoiceId)
+        mockMvc.perform(post("/customer/invoice/{id}/confirm", invoiceId).with(csrf())
                         .param("name", "")
                         .param("address", "Hauptplatz 1")
                         .param("email", "no-mail")
@@ -153,7 +159,7 @@ class CustomerInvoiceControllerTest {
     void confirmInvoice_alreadyFinal_redirectsWithError() throws Exception {
         when(invoiceService.confirm(eq(invoiceId), any())).thenThrow(new InvoiceNotEditableException());
 
-        mockMvc.perform(post("/customer/invoice/{id}/confirm", invoiceId)
+        mockMvc.perform(post("/customer/invoice/{id}/confirm", invoiceId).with(csrf())
                         .param("name", "Anna")
                         .param("address", "Street 1")
                         .param("email", "anna@example.com")
@@ -166,7 +172,7 @@ class CustomerInvoiceControllerTest {
     void confirmInvoice_unknown_redirectsWithError() throws Exception {
         when(invoiceService.getInvoiceReview(invoiceId)).thenThrow(new InvoiceNotFoundException());
 
-        mockMvc.perform(post("/customer/invoice/{id}/confirm", invoiceId)
+        mockMvc.perform(post("/customer/invoice/{id}/confirm", invoiceId).with(csrf())
                         .param("name", ""))
                 .andExpect(redirectedUrl("/customer/events"))
                 .andExpect(flash().attribute("errorMessage", "invoice does not exist"));

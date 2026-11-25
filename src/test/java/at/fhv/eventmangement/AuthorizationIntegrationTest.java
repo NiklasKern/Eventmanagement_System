@@ -99,6 +99,27 @@ class AuthorizationIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    // --- rules added with booking, invoices and cancellation
+
+    @Test
+    @WithMockUser(authorities = "EVENT_VIEW")
+    void withoutViewOwnBookings_myBookingsIsForbidden() throws Exception {
+        mockMvc.perform(get("/customer/bookings")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(authorities = "EVENT_VIEW")
+    void withoutBookEvents_invoiceIsForbidden() throws Exception {
+        mockMvc.perform(get("/customer/invoice/{id}", UUID.randomUUID())).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(authorities = {"EVENT_VIEW", "BOOK_EVENTS"})
+    void customer_cannotCancelEvent() throws Exception {
+        mockMvc.perform(post("/event/manage/{id}/cancel", UUID.randomUUID()).with(csrf()))
+                .andExpect(status().isForbidden());
+    }
+
     // --- default deny ---
 
     @Test

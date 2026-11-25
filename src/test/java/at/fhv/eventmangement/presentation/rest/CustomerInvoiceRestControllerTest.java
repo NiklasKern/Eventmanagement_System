@@ -8,10 +8,13 @@ import at.fhv.eventmangement.domain.exceptions.InvoiceNotEditableException;
 import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
 import at.fhv.eventmangement.domain.model.InvoiceStatus;
 import at.fhv.eventmangement.domain.model.PaymentMethod;
+import at.fhv.eventmangement.presentation.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -32,6 +35,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CustomerInvoiceRestController.class)
+@Import(SecurityConfig.class)
+@WithMockUser(authorities = {"EVENT_VIEW", "BOOK_EVENTS"})
 class CustomerInvoiceRestControllerTest {
 
     @Autowired
@@ -65,7 +70,7 @@ class CustomerInvoiceRestControllerTest {
     void getInvoice_returnsJson() throws Exception {
         when(invoiceService.getInvoice(id)).thenReturn(invoice(InvoiceStatus.INTERM));
 
-        mockMvc.perform(get("/customer/invoice/{id}/info", id))
+        mockMvc.perform(get("/api/customer/invoice/{id}/info", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.invoiceStatus").value("INTERM"))
                 .andExpect(jsonPath("$.editable").value(true));
@@ -75,7 +80,7 @@ class CustomerInvoiceRestControllerTest {
     void getInvoice_unknown_returns404() throws Exception {
         when(invoiceService.getInvoice(id)).thenThrow(new InvoiceNotFoundException());
 
-        mockMvc.perform(get("/customer/invoice/{id}/info", id))
+        mockMvc.perform(get("/api/customer/invoice/{id}/info", id))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("invoice does not exist"));
     }
@@ -84,7 +89,7 @@ class CustomerInvoiceRestControllerTest {
     void requestChanges_valid_passesItemsToService() throws Exception {
         when(invoiceService.requestChanges(eq(id), any())).thenReturn(invoice(InvoiceStatus.INTERM));
 
-        mockMvc.perform(put("/customer/invoice/{id}", id)
+        mockMvc.perform(put("/api/customer/invoice/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_CHANGES))
                 .andExpect(status().isOk())
@@ -96,7 +101,7 @@ class CustomerInvoiceRestControllerTest {
 
     @Test
     void requestChanges_invalid_returns400WithFieldErrors() throws Exception {
-        mockMvc.perform(put("/customer/invoice/{id}", id)
+        mockMvc.perform(put("/api/customer/invoice/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name": "", "address": "A", "email": "x", "paymentMethod": "CARD",
@@ -113,7 +118,7 @@ class CustomerInvoiceRestControllerTest {
 
     @Test
     void requestChanges_emptyItemList_returns400() throws Exception {
-        mockMvc.perform(put("/customer/invoice/{id}", id)
+        mockMvc.perform(put("/api/customer/invoice/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name": "A", "address": "B", "email": "a@b.at", "paymentMethod": "CARD", "items": []}
@@ -126,7 +131,7 @@ class CustomerInvoiceRestControllerTest {
     void requestChanges_finalInvoice_returns409() throws Exception {
         when(invoiceService.requestChanges(eq(id), any())).thenThrow(new InvoiceNotEditableException());
 
-        mockMvc.perform(put("/customer/invoice/{id}", id)
+        mockMvc.perform(put("/api/customer/invoice/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_CHANGES))
                 .andExpect(status().isConflict())
@@ -137,7 +142,7 @@ class CustomerInvoiceRestControllerTest {
     void confirm_returnsFinalInvoice() throws Exception {
         when(invoiceService.confirm(id)).thenReturn(invoice(InvoiceStatus.FINAL));
 
-        mockMvc.perform(put("/customer/invoice/{id}/confirm", id))
+        mockMvc.perform(put("/api/customer/invoice/{id}/confirm", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.invoiceStatus").value("FINAL"))
                 .andExpect(jsonPath("$.editable").value(false));

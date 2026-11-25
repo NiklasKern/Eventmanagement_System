@@ -3,18 +3,11 @@ package at.fhv.eventmangement.application.services.impl;
 import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
-import at.fhv.eventmangement.application.services.NotificationService;
-import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
-import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventAlreadyCancelledException;
 import at.fhv.eventmangement.application.form.EventDateForm;
 import at.fhv.eventmangement.application.form.EventForm;
 import at.fhv.eventmangement.application.mappers.EventMapper;
 import at.fhv.eventmangement.application.services.NotificationService;
-import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
-import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventOrganizerNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.NotEventOwnerException;
+import at.fhv.eventmangement.domain.exceptions.*;
 import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.domain.repositories.EventCategoryRepository;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
@@ -387,13 +380,15 @@ class EventServiceImplTest {
         Customer reached = customer("Anna");
         Customer failed = customer("Bernd");
 
+        when(eventRepository.findById(id)).thenReturn(Optional.of(Event.builder().eventOrganizer(organizer).build()));
+        loggedIn(organizer, Permissions.EDIT_OWN_EVENTS);
         when(eventCancelTransaction.apply(id))
                 .thenReturn(new EventCancelTransaction.Result(saved, List.of(reached, failed)));
         when(notificationService.notifyEventCancelled(reached, saved)).thenReturn(true);
         when(notificationService.notifyEventCancelled(failed, saved)).thenReturn(false);
         when(eventMapper.toDto(saved)).thenReturn(expectedDto);
 
-        EventUpdateResultDto result = eventService.cancelEvent(id);
+        EventUpdateResultDto result = eventService.cancelEvent(id, USERNAME);
 
         assertThat(result.event()).isSameAs(expectedDto);
         assertThat(result.notifiedCustomers()).containsExactly("Anna");
@@ -402,13 +397,27 @@ class EventServiceImplTest {
     @Test
     void cancelEvent_failingCancellationSendsNoNotification() throws Exception {
         UUID id = UUID.randomUUID();
+        when(eventRepository.findById(id)).thenReturn(Optional.of(Event.builder().eventOrganizer(organizer).build()));
+        loggedIn(organizer, Permissions.EDIT_OWN_EVENTS);
         when(eventCancelTransaction.apply(id)).thenThrow(new EventAlreadyCancelledException());
 
-        assertThatThrownBy(() -> eventService.cancelEvent(id))
+        assertThatThrownBy(() -> eventService.cancelEvent(id, USERNAME))
                 .isInstanceOf(EventAlreadyCancelledException.class);
         verify(notificationService, never()).notifyEventCancelled(any(), any());
     }
-}
+
+    @Test
+    void cancelEvent_foreignEvent_isRejectedBeforeAnythingChanges() throws Exception {
+        UUID id = UUID.randomUUID();
+        EventOrganizer other = EventOrganizer.builder().id(UUID.randomUUID()).build();
+        when(eventRepository.findById(id)).thenReturn(Optional.of(Event.builder().eventOrganizer(other).build()));
+        loggedIn(organizer, Permissions.EDIT_OWN_EVENTS);
+
+        assertThatThrownBy(() -> eventService.cancelEvent(id, USERNAME))
+                .isInstanceOf(NotEventOwnerException.class);
+        verify(eventCancelTransaction, never()).apply(any());
+        verify(notificationService, never()).notifyEventCancelled(any(), any());
+    }
 
     @Test
     void updateEvent_editAllEvents_mayChangeForeignEvent() throws Exception {
