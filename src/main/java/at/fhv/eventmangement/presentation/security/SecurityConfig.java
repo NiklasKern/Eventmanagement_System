@@ -7,13 +7,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
-import static at.fhv.eventmangement.domain.model.Permissions.BOOK_EVENTS;
-import static at.fhv.eventmangement.domain.model.Permissions.EDIT_ALL_EVENTS;
-import static at.fhv.eventmangement.domain.model.Permissions.EDIT_OWN_EVENTS;
-import static at.fhv.eventmangement.domain.model.Permissions.EVENT_CREATE;
-import static at.fhv.eventmangement.domain.model.Permissions.EVENT_VIEW;
-import static at.fhv.eventmangement.domain.model.Permissions.MANAGE_ROLES;
-import static at.fhv.eventmangement.domain.model.Permissions.MANAGE_USERS;
+import static at.fhv.eventmangement.domain.model.Permissions.*;
 
 @Configuration
 public class SecurityConfig {
@@ -31,16 +25,19 @@ public class SecurityConfig {
 
                         // organizer pages
                         .requestMatchers("/event/manage/create").hasAuthority(EVENT_CREATE.name())
-                        .requestMatchers("/event/manage/*/modify")
+                        .requestMatchers("/event/manage/*/modify", "/event/manage/*/cancel")
                         .hasAnyAuthority(EDIT_OWN_EVENTS.name(), EDIT_ALL_EVENTS.name())
                         .requestMatchers("/events")
                         .hasAnyAuthority(EVENT_CREATE.name(), EDIT_OWN_EVENTS.name(), EDIT_ALL_EVENTS.name())
 
                         // customer pages: booking before the general /customer rule
                         .requestMatchers("/customer/event/*/book").hasAuthority(BOOK_EVENTS.name())
+                        .requestMatchers("/customer/event/*/invoice-preview", "/customer/invoice/**").hasAuthority(BOOK_EVENTS.name())
+                        .requestMatchers("/customer/bookings", "/customer/booking/**").hasAuthority(VIEW_OWN_BOOKINGS.name())
                         .requestMatchers("/customer/**").hasAuthority(EVENT_VIEW.name())
 
                         // REST API
+                        .requestMatchers("/api/customer/invoice/**").hasAuthority(BOOK_EVENTS.name())
                         .requestMatchers(HttpMethod.PUT, "/api/events/*")
                         .hasAnyAuthority(EDIT_OWN_EVENTS.name(), EDIT_ALL_EVENTS.name())
                         .requestMatchers(HttpMethod.GET, "/api/events/**", "/api/customer/**")

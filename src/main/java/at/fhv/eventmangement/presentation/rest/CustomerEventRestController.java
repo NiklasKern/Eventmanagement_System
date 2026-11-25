@@ -7,6 +7,7 @@ import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.application.services.InvoiceService;
 import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,8 +34,8 @@ public class CustomerEventRestController {
     }
 
     @GetMapping("/event/{id}/invoice-preview")
-    public InvoiceDto getInvoicePreview(@PathVariable UUID id, @ModelAttribute EventBookingForm form)
-            throws EventNotFoundException, CustomerNotFoundException {
-        return invoiceService.previewInvoice(id, form);
+    public InvoiceDto getInvoicePreview(@PathVariable UUID id, @ModelAttribute EventBookingForm form,
+                                        Authentication authentication) throws EventNotFoundException, CustomerNotFoundException {
+        return invoiceService.previewInvoice(id, form, authentication.getName());
     }
 }
