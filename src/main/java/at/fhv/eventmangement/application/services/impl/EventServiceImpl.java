@@ -3,6 +3,7 @@ package at.fhv.eventmangement.application.services.impl;
 import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
+import at.fhv.eventmangement.application.form.EventSearchForm;
 import at.fhv.eventmangement.application.services.NotificationService;
 import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
 import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
@@ -18,11 +19,14 @@ import at.fhv.eventmangement.domain.repositories.EventCategoryRepository;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
 import at.fhv.eventmangement.domain.repositories.EventRepository;
 import at.fhv.eventmangement.application.services.EventService;
+import at.fhv.eventmangement.domain.repositories.EventSearchCriteria;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
+import at.fhv.eventmangement.domain.exceptions.EventAlreadyCancelledException;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,6 +40,7 @@ public class EventServiceImpl implements EventService {
     private final EventCategoryRepository eventCategoryRepository;
     private final EventOrganizerRepository eventOrganizerRepository;
     private final EventUpdateTransaction eventUpdateTransaction;
+    private final EventCancelTransaction eventCancelTransaction;
     private final NotificationService notificationService;
 
     private final EventMapper eventMapper;
@@ -44,12 +49,14 @@ public class EventServiceImpl implements EventService {
                             EventCategoryRepository eventCategoryRepository,
                             EventOrganizerRepository eventOrganizerRepository,
                             EventUpdateTransaction eventUpdateTransaction,
+                            EventCancelTransaction eventCancelTransaction,
                             NotificationService notificationService,
                             EventMapper eventMapper) {
         this.eventRepository = eventRepository;
         this.eventCategoryRepository = eventCategoryRepository;
         this.eventOrganizerRepository = eventOrganizerRepository;
         this.eventUpdateTransaction = eventUpdateTransaction;
+        this.eventCancelTransaction = eventCancelTransaction;
         this.notificationService = notificationService;
         this.eventMapper = eventMapper;
     }
@@ -130,5 +137,53 @@ public class EventServiceImpl implements EventService {
 
         //Save event to db and return saved eventdto
         return eventMapper.toDto(eventRepository.save(event));
+    }
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public EventUpdateResultDto cancelEvent(UUID id)
+            throws EventNotFoundException, EventAlreadyCancelledException {
+
+        // excute cancellation and save to db
+        EventCancelTransaction.Result result = eventCancelTransaction.apply(id);
+        Event saved = result.event();
+
+        // send event cancellation notification to customers and gather the names of those who were successfully notified
+        List<String> notified = result.customersToNotify().stream()
+                .filter(customer -> notificationService.notifyEventCancelled(customer, saved))
+                .map(customer -> customer.getContactInfo().getName())
+                .toList();
+
+        // 3.return rsult to controller
+        return new EventUpdateResultDto(eventMapper.toDto(saved), notified);
+    }
+
+    @Override
+    public List<EventDto> searchEvents(EventSearchForm searchForm) {
+        return eventRepository.search(toCriteria(searchForm)).stream().map(eventMapper::toDto).toList();
+    }
+
+    @Override
+    public List<String> getEventLocation() {
+        return eventRepository.findLocations(EventStatus.ACTIVE);
+    }
+
+    private static EventSearchCriteria toCriteria(EventSearchForm searchForm) {
+        LocalDate firstDay = searchForm.getDateFrom();
+        LocalDate lastDay = searchForm.getDateTo() != null ? searchForm.getDateTo() : searchForm.getDateFrom();
+
+        return EventSearchCriteria.builder()
+                .status(EventStatus.ACTIVE)
+                .text(blankToNull(searchForm.getText()))
+                .location(blankToNull(searchForm.getLocation()))
+                .categoryId(searchForm.getCategoryId())
+                .from(firstDay == null ? null : firstDay.atStartOfDay())
+                .to(lastDay == null ? null : lastDay.plusDays(1).atStartOfDay())
+                .priceFrom(searchForm.getPriceFrom())
+                .priceTo(searchForm.getPriceTo())
+                .build();
+    }
+
+    private static String blankToNull(String text) {
+        return text == null || text.isBlank() ? null : text.trim();
     }
 }

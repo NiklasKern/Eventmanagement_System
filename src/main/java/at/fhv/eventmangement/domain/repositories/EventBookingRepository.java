@@ -5,6 +5,7 @@ import at.fhv.eventmangement.domain.model.EventBooking;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Optional;
 
 public interface EventBookingRepository {
     boolean existsByBookingNumber(String bookingNumber);
@@ -13,4 +14,6 @@ public interface EventBookingRepository {
     int sumBookedPlaces(UUID eventDateId);
     boolean hasActiveBookings(UUID eventDateId);
     List<EventBooking> findActiveBookingsByEventId(UUID eventId);
+    List<EventBooking> findByCustomerId(UUID customerId);
+    Optional<EventBooking> findByBookingNumber(String bookingNumber);
 }

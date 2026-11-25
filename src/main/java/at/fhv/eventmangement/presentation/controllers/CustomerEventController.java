@@ -1,8 +1,11 @@
 package at.fhv.eventmangement.presentation.controllers;
 
+import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.form.EventBookingForm;
+import at.fhv.eventmangement.application.form.EventSearchForm;
 import at.fhv.eventmangement.application.services.CustomerService;
 import at.fhv.eventmangement.application.services.EventBookingService;
+import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.application.services.InvoiceService;
 import at.fhv.eventmangement.application.dto.EventBookingDto;
@@ -35,11 +38,14 @@ public class CustomerEventController {
 
     private static final String CUSTOMER_EVENTS = "customer_events";
     private static final String REDIRECT_CUSTOMER_EVENTS = "redirect:/customer/events";
+    private static final String BOOKING_CONFIRMATION = "booking_confirmation";
+    private static final String CUSTOMER_BOOKINGS = "customer_bookings";
 
     private final EventService eventService;
     private final EventBookingService eventBookingService;
     private final CustomerService customerService;
     private final InvoiceService invoiceService;
+    private final EventCategoryService eventCategoryService;
 
     //Dependency injection
     public CustomerEventController(EventService eventService, EventBookingService eventBookingService, CustomerService customerService, InvoiceService invoiceService) {
@@ -47,6 +53,7 @@ public class CustomerEventController {
         this.eventBookingService = eventBookingService;
         this.customerService = customerService;
         this.invoiceService = invoiceService;
+        this.eventCategoryService = eventCategoryService;
     }
 
     // Dropdown values for the booking dialog in customer_events
@@ -97,8 +104,8 @@ public class CustomerEventController {
             try {
                 EventBookingDto booking = eventBookingService.book(id, form);
                 redirectAttributes.addFlashAttribute("successMessage",
-                        "Event successfully booked (" + booking.bookingNumber() + ")");
-                return redirectToInvoice(booking);
+                        "Event successfully booked (" + bookingNumber + ")");
+                return "redirect:/customer/booking/" + bookingNumber;
             } catch (EventDateNotFoundException ex) {
                 bindingResult.rejectValue("eventDateId", "unknown", ex.getMessage());
             } catch (EventNotBookableException ex) {
@@ -128,5 +135,57 @@ public class CustomerEventController {
             log.error("Interim invoice missing for booking {}", booking.bookingNumber(), ex);
             return REDIRECT_CUSTOMER_EVENTS;
         }
+    }
+    // Shows confirmation details for a specific booking
+    @GetMapping("/booking/{bookingNumber}")
+    public String showBookingConfirmation(@PathVariable String bookingNumber,
+                                          Model model,
+                                          RedirectAttributes redirectAttributes) {
+        return eventBookingService.getBookingByNumber(bookingNumber)
+                .map(booking -> {
+                    model.addAttribute("booking", booking);
+                    return BOOKING_CONFIRMATION;
+                })
+                .orElseGet(() -> {
+                    redirectAttributes.addFlashAttribute("errorMessage",
+                            "Booking not found: " + bookingNumber);
+                    return REDIRECT_CUSTOMER_EVENTS;
+                });
+    }
+
+    // Shows all bookings for the current customer (User Account)
+    @GetMapping("/bookings")
+    public String showCustomerBookings(Model model, RedirectAttributes redirectAttributes) {
+        try {
+            model.addAttribute("customer", customerService.getCurrentCustomer());
+            model.addAttribute("bookings", eventBookingService.getBookingsForCurrentCustomer());
+            return CUSTOMER_BOOKINGS;
+        } catch (CustomerNotFoundException ex) {
+            log.error("Default customer missing", ex);
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return REDIRECT_CUSTOMER_EVENTS;
+        }
+    }
+
+    @ModelAttribute("search")
+    public EventSearchForm searchForm() {
+        return new EventSearchForm();
+    }
+
+    @ModelAttribute("categories")
+    public List<EventCategoryDto> categories() {
+        return eventCategoryService.getAllEventCategories();
+    }
+
+    @ModelAttribute("locations")
+    public List<String> locations() {
+        return eventService.getEventLocation();
+    }
+
+    @GetMapping("/events/search")
+    public String search(@Valid @ModelAttribute("search") EventSearchForm search, BindingResult bindingResult, Model model) {
+        model.addAttribute("searched", true);
+        model.addAttribute("events", bindingResult.hasErrors() ? List.of() : eventService.searchEvents(search));
+        return CUSTOMER_EVENTS;
     }
 }

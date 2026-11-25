@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Optional;
 
 @Repository
 @Transactional(readOnly = true)
@@ -58,5 +59,18 @@ public class EventBookingRepositoryAdapter implements EventBookingRepository {
     public List<EventBooking> findActiveBookingsByEventId(UUID eventId) {
         return jpa.findActiveByEventId(eventId, List.of(EventBookingStatus.CANCELLED, EventBookingStatus.EXPIRED))
                 .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public List<EventBooking> findByCustomerId(UUID customerId) {
+        return jpa.findByCustomerId(customerId).stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public Optional<EventBooking> findByBookingNumber(String bookingNumber) {
+        return jpa.findByBookingNumber(bookingNumber)
+                .map(mapper::toDomain);
     }
 }

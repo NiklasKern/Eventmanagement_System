@@ -9,10 +9,13 @@ import at.fhv.eventmangement.application.form.EventBookingForm;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 
 public interface EventBookingService {
     EventBookingDto book(UUID id, EventBookingForm form)
             throws EventDateNotFoundException, EventNotBookableException, NotEnoughPlacesException, CustomerNotFoundException;
     List<String> getBookingTypes();
     List<String> getPaymentMethods();
+    List<EventBookingDto> getBookingsForCurrentCustomer() throws CustomerNotFoundException;
+    Optional<EventBookingDto> getBookingByNumber(String bookingNumber);
 }

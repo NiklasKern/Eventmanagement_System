@@ -7,6 +7,8 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring", uses = {CustomerMapper.class, EventDateMapper.class,EventParticipantMapper.class})
 public interface EventBookingMapper {
+    @Mapping(target = "created", ignore = true)
+    @Mapping(target = "updated", ignore = true)
     EventBooking fromDto(EventBookingDto eventBookingDto);
     EventBookingDto toDto(EventBooking eventBooking);
 }

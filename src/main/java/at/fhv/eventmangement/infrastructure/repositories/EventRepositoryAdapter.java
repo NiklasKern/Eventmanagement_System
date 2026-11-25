@@ -3,8 +3,10 @@ package at.fhv.eventmangement.infrastructure.repositories;
 import at.fhv.eventmangement.domain.model.Event;
 import at.fhv.eventmangement.domain.model.EventStatus;
 import at.fhv.eventmangement.domain.repositories.EventRepository;
+import at.fhv.eventmangement.domain.repositories.EventSearchCriteria;
 import at.fhv.eventmangement.infrastructure.entities.EventEntity;
 import at.fhv.eventmangement.infrastructure.mappers.EventEntityMapper;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -58,5 +60,16 @@ public class EventRepositoryAdapter implements EventRepository {
         entity.setEventCategory(categoryJpa.getReferenceById(event.getEventCategory().getId()));
         entity.setEventOrganizer(organizerJpa.getReferenceById(event.getEventOrganizer().getId()));
         return mapper.toDomain(jpa.save(entity));
+    }
+
+    @Override
+    public List<Event> search(EventSearchCriteria criteria) {
+        return jpa.findAll(EventSpecifications.matching(criteria), Sort.by("name"))
+                .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public List<String> findLocations(EventStatus status) {
+        return jpa.findLocations(status);
     }
 }
