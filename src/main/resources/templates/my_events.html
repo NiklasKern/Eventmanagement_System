@@ -105,9 +105,11 @@
                     <td class="Num" th:text="${e.minParticipants} + ' – ' + ${e.maxParticipants}">5 – 50</td>
                     <td th:text="${e.eventOrganizer != null} ? ${e.eventOrganizer.contactInfo.name} : '–'">Organizer
                     </td>
-                    <td><a th:if="${e.eventStatus != 'CANCELLED'}" th:href="@{/event/manage/{id}/modify(id=${e.id})}"
-                           th:if="${#sets.contains(permissions, 'EDIT_OWN_EVENTS') or #sets.contains(permissions, 'EDIT_ALL_EVENTS')}">Edit</a>
-                    <span th:if="${e.eventStatus == 'CANCELLED'}">–</span>
+                    <td>
+                        <a th:if="${e.eventStatus != 'CANCELLED' and (#sets.contains(permissions, 'EDIT_OWN_EVENTS')
+                                         or #sets.contains(permissions, 'EDIT_ALL_EVENTS'))}"
+                           th:href="@{/event/manage/{id}/modify(id=${e.id})}">Edit</a>
+                        <span th:if="${e.eventStatus == 'CANCELLED'}">–</span>
                     </td>
                 </tr>
                 </tbody>

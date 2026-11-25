@@ -1,13 +1,16 @@
 package at.fhv.eventmangement.presentation.controllers;
 
+import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.dto.InvoiceReviewDto;
+import at.fhv.eventmangement.application.form.EventSearchForm;
 import at.fhv.eventmangement.application.form.InvoiceForm;
+import at.fhv.eventmangement.application.mappers.InvoiceMapper;
 import at.fhv.eventmangement.application.services.EventBookingService;
+import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.application.services.InvoiceService;
 import at.fhv.eventmangement.domain.exceptions.InvoiceNotEditableException;
 import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
-import at.fhv.eventmangement.application.mappers.InvoiceMapper;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,13 +32,17 @@ public class CustomerInvoiceController {
     private final InvoiceService invoiceService;
     private final EventService eventService;
     private final EventBookingService eventBookingService;
+    private final EventCategoryService eventCategoryService;
     private final InvoiceMapper invoiceMapper;
 
     public CustomerInvoiceController(InvoiceService invoiceService, EventService eventService,
-                                     EventBookingService eventBookingService, InvoiceMapper invoiceMapper) {
+                                     EventBookingService eventBookingService,
+                                     EventCategoryService eventCategoryService,
+                                     InvoiceMapper invoiceMapper) {
         this.invoiceService = invoiceService;
         this.eventService = eventService;
         this.eventBookingService = eventBookingService;
+        this.eventCategoryService = eventCategoryService;
         this.invoiceMapper = invoiceMapper;
     }
 
@@ -47,6 +54,21 @@ public class CustomerInvoiceController {
     @ModelAttribute("paymentMethods")
     public List<String> paymentMethods() {
         return eventBookingService.getPaymentMethods();
+    }
+
+    @ModelAttribute("search")
+    public EventSearchForm searchForm() {
+        return new EventSearchForm();
+    }
+
+    @ModelAttribute("categories")
+    public List<EventCategoryDto> categories() {
+        return eventCategoryService.getAllEventCategories();
+    }
+
+    @ModelAttribute("locations")
+    public List<String> locations() {
+        return eventService.getEventLocation();
     }
 
     @GetMapping("/invoice/{id}")
