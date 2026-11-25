@@ -3,6 +3,7 @@ package at.fhv.eventmangement.presentation.controllers;
 import at.fhv.eventmangement.application.dto.*;
 import at.fhv.eventmangement.application.services.CustomerService;
 import at.fhv.eventmangement.application.services.EventBookingService;
+import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.application.services.InvoiceService;
 import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
@@ -10,6 +11,9 @@ import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.EventNotBookableException;
 import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.NotEnoughPlacesException;
+import at.fhv.eventmangement.domain.model.EventBookingStatus;
+import at.fhv.eventmangement.domain.model.EventBookingType;
+import at.fhv.eventmangement.domain.model.PaymentMethod;
 import at.fhv.eventmangement.presentation.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +27,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
@@ -38,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(CustomerEventController.class)
 @Import(SecurityConfig.class)
-@WithMockUser(authorities = {"EVENT_VIEW", "BOOK_EVENTS"})
+@WithMockUser(authorities = {"EVENT_VIEW", "BOOK_EVENTS", "VIEW_OWN_BOOKINGS"})
 class CustomerEventControllerTest {
 
     @Autowired
@@ -72,6 +77,13 @@ class CustomerEventControllerTest {
     private CustomerDto defaultCustomer() {
         return new CustomerDto(UUID.randomUUID(), new ContactInfoDto("test-customer", "Street 2", "c@test.com"),
                 null, null);
+    }
+
+    private EventBookingDto booking(UUID id) {
+        return new EventBookingDto(id, "BK-ABCDEFGH", null,
+                new EventDateDto(eventDateId, LocalDateTime.of(2027, 1, 10, 17, 0), LocalDateTime.of(2027, 1, 10, 20, 0)),
+                EventBookingType.GROUP, 2, new BigDecimal("50.00"), PaymentMethod.CARD, null, null,
+                EventBookingStatus.CONFIRMED, List.of(), LocalDateTime.of(2026, 11, 25, 10, 0));
     }
 
     private ResultActions postGroupBooking(int places) throws Exception {
@@ -118,8 +130,7 @@ class CustomerEventControllerTest {
     void book_success_redirectsToInterimInvoice() throws Exception {
         UUID bookingId = UUID.randomUUID();
         UUID invoiceId = UUID.randomUUID();
-        when(eventBookingService.book(any(), any(), eq("user"))).thenReturn(new EventBookingDto(
-                bookingId, "BK-ABCDEFGH", null, null, null, 2, null, null, null, null, null, List.of(), null));
+        when(eventBookingService.book(any(), any(), eq("user"))).thenReturn(booking(bookingId));
         when(invoiceService.getInvoiceForBooking(bookingId)).thenReturn(new InvoiceDto(invoiceId, bookingId,
                 null, null, null, null, List.of(), null, null, null, null, null, true));
 
@@ -132,8 +143,7 @@ class CustomerEventControllerTest {
     @Test
     void book_success_invoiceMissing_redirectsToEventList() throws Exception {
         UUID bookingId = UUID.randomUUID();
-        when(eventBookingService.book(any(), any())).thenReturn(new EventBookingDto(
-                bookingId, "BK-ABCDEFGH", null, null, null, 2, null, null, null, null, null, List.of(), null));
+        when(eventBookingService.book(any(), any(), eq("user"))).thenReturn(booking(bookingId));
         when(invoiceService.getInvoiceForBooking(bookingId)).thenThrow(new InvoiceNotFoundException());
 
         postGroupBooking(2)
@@ -204,5 +214,42 @@ class CustomerEventControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("FlashError")))
                 .andExpect(content().string(containsString("event does not exist")));
+    }
+
+    @Test
+    void bookingConfirmation_ownBooking_isShown() throws Exception {
+        when(eventBookingService.getBookingByNumber("BK-ABCDEFGH", "user"))
+                .thenReturn(Optional.of(booking(UUID.randomUUID())));
+
+        mockMvc.perform(get("/customer/booking/{number}", "BK-ABCDEFGH"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("booking_confirmation"))
+                .andExpect(content().string(containsString("BK-ABCDEFGH")));
+    }
+
+    @Test
+    void bookingConfirmation_foreignOrUnknownBooking_redirectsWithError() throws Exception {
+        when(eventBookingService.getBookingByNumber("BK-OTHER123", "user")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/customer/booking/{number}", "BK-OTHER123"))
+                .andExpect(redirectedUrl("/customer/events"))
+                .andExpect(flash().attribute("errorMessage", "Booking not found: BK-OTHER123"));
+    }
+
+    @Test
+    void myBookings_showsBookingsOfLoggedInCustomer() throws Exception {
+        when(customerService.getCurrentCustomer("user")).thenReturn(defaultCustomer());
+        when(eventBookingService.getBookingsForCurrentCustomer("user")).thenReturn(List.of(booking(UUID.randomUUID())));
+
+        mockMvc.perform(get("/customer/bookings"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("customer_bookings"))
+                .andExpect(content().string(containsString("BK-ABCDEFGH")));
+    }
+
+    @Test
+    @WithMockUser(authorities = "EVENT_VIEW")
+    void myBookings_withoutViewOwnBookings_isForbidden() throws Exception {
+        mockMvc.perform(get("/customer/bookings")).andExpect(status().isForbidden());
     }
 }

@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(CustomerEventRestController.class)
 @Import(SecurityConfig.class)
-@WithMockUser(authorities = "EVENT_VIEW")
+@WithMockUser(authorities = {"EVENT_VIEW", "BOOK_EVENTS"})
 class CustomerEventRestControllerTest {
 
     @Autowired
@@ -65,7 +65,7 @@ class CustomerEventRestControllerTest {
                 new BigDecimal("300.00"), new BigDecimal("60.00"), new BigDecimal("360.00"),
                 new BigDecimal("108.00"), new BigDecimal("252.00"), true);
         when(invoiceService.previewInvoice(eq(id), argThat((EventBookingForm f) ->
-                f.getEventBookingType() == EventBookingType.GROUP && Integer.valueOf(2).equals(f.getPlaces()))))
+                f.getEventBookingType() == EventBookingType.GROUP && Integer.valueOf(2).equals(f.getPlaces())), eq("user")))
                 .thenReturn(preview);
 
         mockMvc.perform(get("/customer/event/{id}/invoice-preview", id)

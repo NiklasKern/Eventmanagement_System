@@ -7,20 +7,16 @@ import at.fhv.eventmangement.application.dto.InvoiceReviewDto;
 import at.fhv.eventmangement.application.form.EventBookingForm;
 import at.fhv.eventmangement.application.form.InvoiceForm;
 import at.fhv.eventmangement.application.form.InvoiceItemForm;
-import at.fhv.eventmangement.application.mappers.ContactInfoMapperImpl;
-import at.fhv.eventmangement.application.mappers.EventBookingMapper;
-import at.fhv.eventmangement.application.mappers.EventMapper;
-import at.fhv.eventmangement.application.mappers.InvoiceMapper;
-import at.fhv.eventmangement.application.mappers.InvoiceMapperImpl;
+import at.fhv.eventmangement.application.mappers.*;
 import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.InvoiceNotEditableException;
 import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
 import at.fhv.eventmangement.domain.model.*;
-import at.fhv.eventmangement.domain.repositories.CustomerRepository;
 import at.fhv.eventmangement.domain.repositories.EventBookingRepository;
 import at.fhv.eventmangement.domain.repositories.EventRepository;
 import at.fhv.eventmangement.domain.repositories.InvoiceRepository;
+import at.fhv.eventmangement.domain.repositories.UserAccountRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,10 +34,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class InvoiceServiceImplTest {
@@ -53,7 +46,7 @@ class InvoiceServiceImplTest {
     @Mock
     private EventBookingRepository eventBookingRepository;
     @Mock
-    private CustomerRepository customerRepository;
+    private UserAccountRepository userAccountRepository;
     @Mock
     private EventBookingMapper eventBookingMapper;
     @Mock
@@ -70,7 +63,7 @@ class InvoiceServiceImplTest {
         InvoiceMapperImpl invoiceMapper = new InvoiceMapperImpl();
         ReflectionTestUtils.setField(invoiceMapper, "contactInfoMapper", new ContactInfoMapperImpl());
         invoiceService = new InvoiceServiceImpl(invoiceRepository, eventRepository, eventBookingRepository,
-                customerRepository, invoiceMapper, eventBookingMapper, eventMapper);
+                userAccountRepository, invoiceMapper, eventBookingMapper, eventMapper);
 
         EventDate date = EventDate.builder()
                 .id(dateId)
@@ -87,9 +80,15 @@ class InvoiceServiceImplTest {
 
     private void eventAndCustomerExist() {
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
-        when(customerRepository.findByContactInfoName(any())).thenReturn(Optional.of(Customer.builder()
-                .contactInfo(new ContactInfo("Anna", "Street 1", "anna@example.com")).build()));
+        loggedIn(Customer.builder()
+                .contactInfo(new ContactInfo("Anna", "Street 1", "anna@example.com")).build());
     }
+
+    private void loggedIn(Customer linkedCustomer) {
+        when(userAccountRepository.findByUsername("anna")).thenReturn(Optional.of(UserAccount.builder()
+                .username("anna").enabled(true).customer(linkedCustomer).build()));
+    }
+
 
     private Invoice interimInvoice(UUID id) {
         return Invoice.createInterim(PaymentMethod.CARD, List.of(InvoiceItem.withStandardVat("Hike", 2, new BigDecimal("100.00"))))
@@ -111,7 +110,7 @@ class InvoiceServiceImplTest {
                 .eventDateId(dateId).eventBookingType(EventBookingType.GROUP).places(3)
                 .paymentMethod(PaymentMethod.CARD).build();
 
-        InvoiceDto preview = invoiceService.previewInvoice(eventId, form);
+        InvoiceDto preview = invoiceService.previewInvoice(eventId, form, "anna");
 
         assertThat(preview.id()).isNull();
         assertThat(preview.invoiceStatus()).isEqualTo(InvoiceStatus.INTERM);
@@ -136,7 +135,7 @@ class InvoiceServiceImplTest {
         EventBookingForm form = EventBookingForm.builder()
                 .eventBookingType(EventBookingType.INDIVIDUAL).places(7).build();
 
-        InvoiceDto preview = invoiceService.previewInvoice(eventId, form);
+        InvoiceDto preview = invoiceService.previewInvoice(eventId, form, "anna");
 
         assertThat(preview.items()).singleElement().satisfies(item -> {
             assertThat(item.quantity()).isEqualTo(1);
@@ -150,17 +149,18 @@ class InvoiceServiceImplTest {
         UUID unknown = UUID.randomUUID();
         when(eventRepository.findById(unknown)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> invoiceService.previewInvoice(unknown, new EventBookingForm()))
+        assertThatThrownBy(() -> invoiceService.previewInvoice(unknown, new EventBookingForm(), "anna"))
                 .isInstanceOf(EventNotFoundException.class);
     }
 
     @Test
-    void preview_missingCustomer_throws() {
+    void preview_accountWithoutCustomer_throws() {
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
-        when(customerRepository.findByContactInfoName(any())).thenReturn(Optional.empty());
+        loggedIn(null);
 
-        assertThatThrownBy(() -> invoiceService.previewInvoice(eventId, new EventBookingForm()))
-                .isInstanceOf(CustomerNotFoundException.class);
+        assertThatThrownBy(() -> invoiceService.previewInvoice(eventId, new EventBookingForm(), "anna"))
+                .isInstanceOf(CustomerNotFoundException.class)
+                .hasMessage("Your account is not linked to a customer");
     }
 
     @Test
