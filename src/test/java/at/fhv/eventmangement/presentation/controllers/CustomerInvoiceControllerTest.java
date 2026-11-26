@@ -4,6 +4,7 @@ import at.fhv.eventmangement.application.dto.*;
 import at.fhv.eventmangement.application.form.InvoiceForm;
 import at.fhv.eventmangement.application.mappers.InvoiceMapper;
 import at.fhv.eventmangement.application.services.EventBookingService;
+import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.application.services.InvoiceService;
 import at.fhv.eventmangement.domain.exceptions.InvoiceNotEditableException;
@@ -49,6 +50,8 @@ class CustomerInvoiceControllerTest {
     private EventBookingService eventBookingService;
     @MockitoBean
     private InvoiceMapper invoiceMapper;
+    @MockitoBean
+    private EventCategoryService eventCategoryService;
 
     private final UUID invoiceId = UUID.randomUUID();
 
@@ -63,7 +66,7 @@ class CustomerInvoiceControllerTest {
                 new BigDecimal("150.00"), 1, 10, "ACTIVE", null, null, List.of());
         EventBookingDto booking = new EventBookingDto(UUID.randomUUID(), "BK-ABCDEFGH", null,
                 new EventDateDto(UUID.randomUUID(), LocalDateTime.of(2027, 5, 1, 9, 0), LocalDateTime.of(2027, 5, 1, 17, 0)),
-                EventBookingType.GROUP, 2, null, PaymentMethod.CARD, null, null, null, List.of());
+                EventBookingType.GROUP, 2, null, PaymentMethod.CARD, null, null, null, List.of(), null);
         InvoiceDto invoice = new InvoiceDto(invoiceId, booking.id(), LocalDateTime.of(2026, 11, 23, 10, 0),
                 new ContactInfoDto("Anna", "Street 1", "anna@example.com"),
                 editable ? InvoiceStatus.INTERM : InvoiceStatus.FINAL, PaymentMethod.CARD,

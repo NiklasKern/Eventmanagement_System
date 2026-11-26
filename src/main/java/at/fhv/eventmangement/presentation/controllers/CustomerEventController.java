@@ -1,30 +1,17 @@
 package at.fhv.eventmangement.presentation.controllers;
 
+import at.fhv.eventmangement.application.dto.EventBookingDto;
 import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.form.EventBookingForm;
 import at.fhv.eventmangement.application.form.EventSearchForm;
-import at.fhv.eventmangement.application.services.CustomerService;
-import at.fhv.eventmangement.application.services.EventBookingService;
-import at.fhv.eventmangement.application.services.EventCategoryService;
-import at.fhv.eventmangement.application.services.EventService;
-import at.fhv.eventmangement.application.services.InvoiceService;
-import at.fhv.eventmangement.application.dto.EventBookingDto;
-import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventDateNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventNotBookableException;
-import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.NotEnoughPlacesException;
+import at.fhv.eventmangement.application.services.*;
+import at.fhv.eventmangement.domain.exceptions.*;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
@@ -47,8 +34,7 @@ public class CustomerEventController {
     private final InvoiceService invoiceService;
     private final EventCategoryService eventCategoryService;
 
-    //Dependency injection
-    public CustomerEventController(EventService eventService, EventBookingService eventBookingService, CustomerService customerService, InvoiceService invoiceService) {
+    public CustomerEventController(EventService eventService, EventBookingService eventBookingService, CustomerService customerService, InvoiceService invoiceService, EventCategoryService eventCategoryService) {
         this.eventService = eventService;
         this.eventBookingService = eventBookingService;
         this.customerService = customerService;
@@ -104,8 +90,8 @@ public class CustomerEventController {
             try {
                 EventBookingDto booking = eventBookingService.book(id, form);
                 redirectAttributes.addFlashAttribute("successMessage",
-                        "Event successfully booked (" + bookingNumber + ")");
-                return "redirect:/customer/booking/" + bookingNumber;
+                        "Event successfully booked (" + booking.bookingNumber() + ")");
+                return redirectToInvoice(booking);
             } catch (EventDateNotFoundException ex) {
                 bindingResult.rejectValue("eventDateId", "unknown", ex.getMessage());
             } catch (EventNotBookableException ex) {

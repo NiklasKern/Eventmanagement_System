@@ -1,8 +1,11 @@
 package at.fhv.eventmangement.presentation.controllers;
 
+import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.dto.InvoiceReviewDto;
+import at.fhv.eventmangement.application.form.EventSearchForm;
 import at.fhv.eventmangement.application.form.InvoiceForm;
 import at.fhv.eventmangement.application.services.EventBookingService;
+import at.fhv.eventmangement.application.services.EventCategoryService;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.application.services.InvoiceService;
 import at.fhv.eventmangement.domain.exceptions.InvoiceNotEditableException;
@@ -30,13 +33,16 @@ public class CustomerInvoiceController {
     private final EventService eventService;
     private final EventBookingService eventBookingService;
     private final InvoiceMapper invoiceMapper;
+    private final EventCategoryService eventCategoryService;
 
     public CustomerInvoiceController(InvoiceService invoiceService, EventService eventService,
-                                     EventBookingService eventBookingService, InvoiceMapper invoiceMapper) {
+                                     EventBookingService eventBookingService, InvoiceMapper invoiceMapper,
+                                     EventCategoryService eventCategoryService) {
         this.invoiceService = invoiceService;
         this.eventService = eventService;
         this.eventBookingService = eventBookingService;
         this.invoiceMapper = invoiceMapper;
+        this.eventCategoryService = eventCategoryService;
     }
 
     @InitBinder("invoiceForm")
@@ -47,6 +53,21 @@ public class CustomerInvoiceController {
     @ModelAttribute("paymentMethods")
     public List<String> paymentMethods() {
         return eventBookingService.getPaymentMethods();
+    }
+
+    @ModelAttribute("search")
+    public EventSearchForm searchForm() {
+        return new EventSearchForm();
+    }
+
+    @ModelAttribute("categories")
+    public List<EventCategoryDto> categories() {
+        return eventCategoryService.getAllEventCategories();
+    }
+
+    @ModelAttribute("locations")
+    public List<String> locations() {
+        return eventService.getEventLocation();
     }
 
     @GetMapping("/invoice/{id}")

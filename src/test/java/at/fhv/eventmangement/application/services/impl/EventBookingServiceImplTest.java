@@ -3,6 +3,7 @@ package at.fhv.eventmangement.application.services.impl;
 import at.fhv.eventmangement.application.form.EventBookingForm;
 import at.fhv.eventmangement.application.mappers.EventBookingMapper;
 import at.fhv.eventmangement.application.services.BookingNumberGenerator;
+import at.fhv.eventmangement.application.services.NotificationService;
 import at.fhv.eventmangement.domain.exceptions.NotEnoughPlacesException;
 import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.domain.repositories.CustomerRepository;
@@ -44,6 +45,8 @@ class EventBookingServiceImplTest {
     private EventBookingMapper eventBookingMapper;
     @Mock
     private InvoiceRepository invoiceRepository;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private EventBookingServiceImpl eventBookingService;
@@ -96,6 +99,20 @@ class EventBookingServiceImplTest {
 
         assertThatThrownBy(() -> eventBookingService.book(eventId, groupForm(2)))
                 .isInstanceOf(NotEnoughPlacesException.class);
+        verify(notificationService, never()).notifyBookingConfirmed(any(), any());
         verify(invoiceRepository, never()).save(any());
+    }
+
+    @Test
+    void book_sendsBookingConfirmationToCustomer() throws Exception {
+        when(eventBookingRepository.sumBookedPlaces(dateId)).thenReturn(0);
+        when(customerRepository.findByContactInfoName(any())).thenReturn(Optional.of(Customer.builder()
+                .contactInfo(new ContactInfo("Anna", "Street 1", "anna@example.com")).build()));
+        when(bookingNumberGenerator.next()).thenReturn("BK-ABCDEFGH");
+        when(eventBookingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        eventBookingService.book(eventId, groupForm(2));
+
+        verify(notificationService).notifyBookingConfirmed(any(Customer.class), any(EventBooking.class));
     }
 }
