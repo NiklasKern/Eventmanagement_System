@@ -4,9 +4,11 @@
   <meta charset="UTF-8">
   <title>My Bookings</title>
   <link rel="stylesheet" th:href="@{/styles.cssandjs/colors.css}">
+  <link rel="stylesheet" th:href="@{/styles/cssandjs/navigation.css}">
   <link rel="stylesheet" th:href="@{/styles.cssandjs/customer_bookings.css}">
 </head>
 <body>
+<div th:replace="~{fragments/navigation :: nav}"></div>
 <div class="container">
   <h1>My Bookings</h1>
 
