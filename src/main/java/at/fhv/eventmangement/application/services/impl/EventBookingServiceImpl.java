@@ -2,28 +2,28 @@ package at.fhv.eventmangement.application.services.impl;
 
 import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventBookingDto;
-import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventDateNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventNotBookableException;
-import at.fhv.eventmangement.domain.exceptions.NotEnoughPlacesException;
 import at.fhv.eventmangement.application.form.EventBookingForm;
 import at.fhv.eventmangement.application.mappers.EventBookingMapper;
 import at.fhv.eventmangement.application.services.BookingNumberGenerator;
 import at.fhv.eventmangement.application.services.EventBookingService;
+import at.fhv.eventmangement.application.services.NotificationService;
+import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.EventDateNotFoundException;
+import at.fhv.eventmangement.domain.exceptions.EventNotBookableException;
+import at.fhv.eventmangement.domain.exceptions.NotEnoughPlacesException;
 import at.fhv.eventmangement.domain.model.*;
 import at.fhv.eventmangement.domain.repositories.CustomerRepository;
 import at.fhv.eventmangement.domain.repositories.EventBookingRepository;
 import at.fhv.eventmangement.domain.repositories.EventDateRepository;
 import at.fhv.eventmangement.domain.repositories.InvoiceRepository;
-import at.fhv.eventmangement.application.services.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class EventBookingServiceImpl implements EventBookingService {
@@ -34,11 +34,15 @@ public class EventBookingServiceImpl implements EventBookingService {
     private final BookingNumberGenerator bookingNumberGenerator;
     private final EventBookingMapper eventBookingMapper;
     private final InvoiceRepository invoiceRepository;
-
-    public EventBookingServiceImpl(EventDateRepository eventDateRepository, EventBookingRepository eventBookingRepository, CustomerRepository customerRepository, BookingNumberGenerator bookingNumberGenerator, EventBookingMapper eventBookingMapper, InvoiceRepository invoiceRepository) {
     private final NotificationService notificationService;
 
-    public EventBookingServiceImpl(EventDateRepository eventDateRepository, EventBookingRepository eventBookingRepository, CustomerRepository customerRepository, BookingNumberGenerator bookingNumberGenerator, EventBookingMapper eventBookingMapper, NotificationService notificationService) {
+    public EventBookingServiceImpl(EventDateRepository eventDateRepository,
+                                   EventBookingRepository eventBookingRepository,
+                                   CustomerRepository customerRepository,
+                                   BookingNumberGenerator bookingNumberGenerator,
+                                   EventBookingMapper eventBookingMapper,
+                                   NotificationService notificationService,
+                                   InvoiceRepository invoiceRepository) {
         this.eventDateRepository = eventDateRepository;
         this.eventBookingRepository = eventBookingRepository;
         this.customerRepository = customerRepository;
@@ -86,11 +90,9 @@ public class EventBookingServiceImpl implements EventBookingService {
 
         invoiceRepository.save(Invoice.createInterimFor(booking).setBookingId(saved.getId()));
 
-        return eventBookingMapper.toDto(saved);
-        EventBooking savedBooking = eventBookingRepository.save(booking);
-        notificationService.notifyBookingConfirmed(savedBooking.getCustomer(), savedBooking);
+        notificationService.notifyBookingConfirmed(saved.getCustomer(), saved);
 
-        return eventBookingMapper.toDto(savedBooking);
+        return eventBookingMapper.toDto(saved);
     }
 
     @Override

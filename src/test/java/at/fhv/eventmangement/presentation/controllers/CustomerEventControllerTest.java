@@ -54,6 +54,8 @@ class CustomerEventControllerTest {
     private CustomerService customerService;
     @MockitoBean
     private InvoiceService invoiceService;
+    @MockitoBean
+    private EventCategoryService eventCategoryService;
 
     private final UUID categoryId = UUID.randomUUID();
 
@@ -119,7 +121,7 @@ class CustomerEventControllerTest {
         UUID bookingId = UUID.randomUUID();
         UUID invoiceId = UUID.randomUUID();
         when(eventBookingService.book(any(), any())).thenReturn(new EventBookingDto(
-                bookingId, "BK-ABCDEFGH", null, null, null, 2, null, null, null, null, null, List.of()));
+                bookingId, "BK-ABCDEFGH", null, null, null, 2, null, null, null, null, null, List.of(), null));
         when(invoiceService.getInvoiceForBooking(bookingId)).thenReturn(new InvoiceDto(invoiceId, bookingId,
                 null, null, null, null, List.of(), null, null, null, null, null, true));
 
@@ -133,7 +135,7 @@ class CustomerEventControllerTest {
     void book_success_invoiceMissing_redirectsToEventList() throws Exception {
         UUID bookingId = UUID.randomUUID();
         when(eventBookingService.book(any(), any())).thenReturn(new EventBookingDto(
-                bookingId, "BK-ABCDEFGH", null, null, null, 2, null, null, null, null, null, List.of()));
+                bookingId, "BK-ABCDEFGH", null, null, null, 2, null, null, null, null, null, List.of(), null));
         when(invoiceService.getInvoiceForBooking(bookingId)).thenThrow(new InvoiceNotFoundException());
 
         postGroupBooking(2)
