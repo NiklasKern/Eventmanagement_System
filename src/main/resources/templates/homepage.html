@@ -1,51 +1,28 @@
 <!DOCTYPE html>
-<html lang="en"
-      xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:th="https://www.thymeleaf.org">
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wildpath</title>
     <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet"/>
     <link th:href="@{/styles/cssandjs/homepage.css}" rel="stylesheet">
+    <link th:href="@{/styles/cssandjs/navigation.css}" rel="stylesheet"/>
 </head>
 <body>
 
-<div class="topbar"></div>
-
-<!-- Header -->
-<header class="header">
-    <!-- Navigation -->
-    <!-- As a placeholder most navigation buttons refer to the /events page -->
-    <a class="header__logo" th:href="@{/home}">Wildpath</a>
-
-    <nav class="nav" aria-label="Main navigation">
-        <a class="nav__link is-active" th:href="@{/home}">Home</a>
-        <a class="nav__link" th:href="@{/events}">Events</a>
-        <a class="nav__link" th:href="@{/events}">My Bookings</a>
-        <!-- Contact not yet available -->
-        <a class="nav__link" th:href="@{/contact}">Contact</a>
-    </nav>
-    <!-- User Button -->
-    <a class="user-chip" th:href="@{/events}" aria-label="User Menu">
-        <span class="user-chip__avatar">K</span>
-        <span class="user-chip__text">
-    <span class="user-chip__label">Logged in as</span>
-    <span class="user-chip__name">Customer</span>
-  </span>
-        <svg class="user-chip__chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-    </a>
-</header>
+<div th:replace="~{fragments/navigation :: nav}"></div>
 
 <main>
-
     <!-- Hero -->
     <section class="hero">
         <span class="hero__circle hero__circle--1"></span>
         <span class="hero__circle hero__circle--2"></span>
 
         <div class="hero__deco" aria-hidden="true">
-            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="m8 3 4 8 5-5 5 15H2L8 3z"/>
+            </svg>
         </div>
 
         <div class="container">
@@ -59,71 +36,126 @@
                 </p>
 
                 <!-- Placeholder for the full integration -->
-                <form class="search" id="searchForm" th:action="@{/home}" method="get">
+                <form class="search" th:action="@{/customer/events/search}" method="get">
                     <label class="search__field">
                         <span class="search__label">Where?</span>
                         <span class="search__input-wrap">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                <input type="text" name="location" placeholder="Place or Region">
-              </span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path
+                                    d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                            <input type="text" name="location" placeholder="Place or Region">
+                        </span>
                     </label>
                     <label class="search__field">
-                        <span class="search__label">When?</span>
+                        <span class="search__label">From when?</span>
                         <span class="search__input-wrap">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                <input type="text" name="date" placeholder="Choose Date" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'">
-              </span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4"
+                                                                                                       width="18"
+                                                                                                       height="18"
+                                                                                                       rx="2"/><path
+                                    d="M16 2v4M8 2v4M3 10h18"/></svg>
+                            <input type="date" name="dateFrom">
+                        </span>
                     </label>
                     <button type="submit" class="btn btn--primary search__btn">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.3-4.3"/>
+                        </svg>
                         Find Events
                     </button>
                 </form>
             </div>
+            <form class="search" id="searchForm" th:action="@{/home}" method="get">
+                <label class="search__field">
+                    <span class="search__label">Where?</span>
+                    <span class="search__input-wrap">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round"><path
+                        d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                <input type="text" name="location" placeholder="Place or Region">
+              </span>
+                </label>
+                <label class="search__field">
+                    <span class="search__label">When?</span>
+                    <span class="search__input-wrap">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path
+                        d="M16 2v4M8 2v4M3 10h18"/></svg>
+                <input type="text" name="date" placeholder="Choose Date" onfocus="this.type='date'"
+                       onblur="if(!this.value)this.type='text'">
+              </span>
+                </label>
+                <button type="submit" class="btn btn--primary search__btn">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.3-4.3"/>
+                    </svg>
+                    Find Events
+                </button>
+            </form>
         </div>
     </section>
 
-    <!-- My Bookings -->
-    <!-- Placeholder for information that will be provided from the database -->
+    <!-- Customer Bookings -->
     <section class="bookings">
         <div class="container">
             <p class="eyebrow">My Bookings</p>
             <h2 class="section-title section-title--sm">Your next adventure</h2>
 
-            <article class="booking">
+            <article class="booking" th:if="${nextBooking != null}">
                 <div class="booking__thumb">
-            <span class="icon-tile">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.5 5-7"/></svg>
-            </span>
+                    <span class="icon-tile">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/>
+                            <path d="M2 21c0-3 1.9-5.5 5-7"/></svg>
+                    </span>
                 </div>
 
                 <div class="booking__info">
-                    <span class="badge badge--status">Confirmed</span>
-                    <h3 class="booking__title">Booked Outdoor-Event</h3>
+                    <span class="badge badge--status" th:text="${nextBooking.eventBookingStatus}">CONFIRMED</span>
+                    <h3 class="booking__title"
+                        th:text="${nextBooking.places} + (${nextBooking.places == 1} ? ' place' : ' places')">2
+                        places</h3>
                     <ul class="meta">
                         <li>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                            date
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                                <path d="M16 2v4M8 2v4M3 10h18"/>
+                            </svg>
+                            <span th:text="${#temporals.format(nextBooking.eventDate.startTime, 'dd.MM.yyyy, HH:mm')}">01.05.2027, 09:00</span>
                         </li>
                         <li>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                            region
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
                         </li>
                     </ul>
                 </div>
 
                 <div class="booking__ref">
                     <span class="booking__ref-label">booking number</span>
-                    <strong class="booking__ref-number">#WP-XXXXX</strong>
+                    <strong class="booking__ref-number" th:text="${nextBooking.bookingNumber}">BK-XXXXXXXX</strong>
                 </div>
 
-                <button type="button" class="booking__cancel" id="cancelBooking">cancel booking</button>
+                <a class="booking__link" th:href="@{/customer/booking/{n}(n=${nextBooking.bookingNumber})}">View
+                    details</a>
             </article>
+
+            <p class="empty-note" th:if="${nextBooking == null}">You have no upcoming bookings.
+                <a th:href="@{/customer/events}">Browse events</a>
+            </p>
         </div>
     </section>
 
     <!-- More Adventures -->
-    <!-- These Cards are currently placeholders. In the future this information should come from the database -->
     <section class="events">
         <div class="container">
             <div class="events__head">
@@ -131,113 +163,56 @@
                     <p class="eyebrow">More Adventures</p>
                     <h2 class="section-title">You may also like this</h2>
                 </div>
-
-                <div class="tabs" role="tablist">
-                    <button class="tabs__btn is-active" role="tab" data-filter="all">All Events</button>
-                    <button class="tabs__btn" role="tab" data-filter="mountain">Mountain Tours</button>
-                    <button class="tabs__btn" role="tab" data-filter="water">Water</button>
-                </div>
+                <a class="events__more" th:href="@{/customer/events}">Show all events</a>
             </div>
 
-            <div class="cards">
-
-                <!-- Card 1 -->
-                <article class="card" data-category="berg">
-                    <div class="card__visual card__visual--green">
-                        <span class="tag">Mountain Tour</span>
+            <div class="cards" th:if="${!#lists.isEmpty(events)}">
+                <article class="card" th:each="event : ${events}">
+                    <div class="card__thumb"
+                         th:classappend="${stat.index % 3 == 0} ? 'card__visual--green' : (${stat.index % 3 == 1}
+                        ? 'card__visual--blue' : 'card__visual--yellow')">
+                        <span class="tag" th:if="${e.eventCategory != null}" th:text="${e.eventCategory.categoryName}">Hiking</span>
                         <span class="icon-tile icon-tile--lg">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
-              </span>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
+                        </span>
                     </div>
                     <div class="card__body">
-                        <p class="card__date">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                            June
+                        <p class="card__date" th:if="${!#lists.isEmpty(e.eventDates)}">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                                <path d="M16 2v4M8 2v4M3 10h18"/>
+                            </svg>
+                            <span th:text="${#temporals.format(e.eventDates[0].startTime, 'dd.MM.yyyy')}">01.06.2027</span>
                         </p>
-                        <h3 class="card__title">Guided Mountain Tour</h3>
+                        <h3 class="card__title" th:text="${e.name}">Guided Mountain Tour</h3>
                         <p class="card__location">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                            Mountain Region
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                            <span th:text="${e.location}">Mountain Region</span>
                         </p>
                         <div class="card__availability">
-                            <div>
-                                <strong>8 spaces left</strong>
-                            </div>
-                            <span class="counter">8</span>
+                            <strong th:text="${#numbers.formatDecimal(e.price, 1, 'POINT', 2, 'COMMA')} + ' € per person'">25,00
+                                € per person</strong>
                         </div>
-                        <button type="button" class="btn btn--primary btn--block" data-book>
-                            book event
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                        </button>
+                        <a class="btn btn--primary btn--block" th:href="@{/customer/event/{id}/book(id=${e.id})}">
+                            Book event
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
                     </div>
                 </article>
-
-                <!-- Card 2 -->
-                <article class="card" data-category="water">
-                    <div class="card__visual card__visual--blue">
-                        <span class="tag">Water</span>
-                        <span class="icon-tile icon-tile--lg">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>
-              </span>
-                    </div>
-                    <div class="card__body">
-                        <p class="card__date">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                            June
-                        </p>
-                        <h3 class="card__title">Outdoor-Event by the Water</h3>
-                        <p class="card__location">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                            River Region
-                        </p>
-                        <div class="card__availability">
-                            <div>
-                                <strong>5 spaces left</strong>
-                            </div>
-                            <span class="counter">5</span>
-                        </div>
-                        <button type="button" class="btn btn--primary btn--block" data-book>
-                            book event
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                        </button>
-                    </div>
-                </article>
-
-                <!-- Card 3 -->
-                <article class="card" data-category="berg">
-                    <div class="card__visual card__visual--yellow">
-                        <span class="tag">Hiking</span>
-                        <span class="icon-tile icon-tile--lg">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.5 5-7"/></svg>
-              </span>
-                    </div>
-                    <div class="card__body">
-                        <p class="card__date">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                            July
-                        </p>
-                        <h3 class="card__title">Scenic Hike</h3>
-                        <p class="card__location">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                            Alp Region
-                        </p>
-                        <div class="card__availability">
-                            <div>
-                                <strong>14 spaces left</strong>
-                            </div>
-                            <span class="counter">14</span>
-                        </div>
-                        <button type="button" class="btn btn--primary btn--block" data-book>
-                            book event
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                        </button>
-                    </div>
-                </article>
-
             </div>
+            <p class="empty-note" th:if="${#lists.isEmpty(events)}">There are no events open for booking right now.</p>
         </div>
     </section>
-
 </main>
 </body>
 </html>
