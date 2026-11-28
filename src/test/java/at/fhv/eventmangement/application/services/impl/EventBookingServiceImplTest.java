@@ -10,7 +10,10 @@ import at.fhv.eventmangement.domain.repositories.CustomerRepository;
 import at.fhv.eventmangement.domain.repositories.EventBookingRepository;
 import at.fhv.eventmangement.domain.repositories.EventDateRepository;
 import at.fhv.eventmangement.domain.repositories.InvoiceRepository;
-import org.junit.jupiter.api.BeforeEach;
+import at.fhv.eventmangement.application.dto.EventBookingDto;
+import java.util.List;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -60,7 +63,7 @@ class EventBookingServiceImplTest {
                 .maxParticipants(10).eventStatus(EventStatus.ACTIVE).build();
         EventDate date = EventDate.builder().id(dateId).event(event)
                 .startTime(LocalDateTime.of(2027, 5, 1, 9, 0)).endTime(LocalDateTime.of(2027, 5, 1, 17, 0)).build();
-        when(eventDateRepository.findById(dateId)).thenReturn(Optional.of(date));
+        lenient().when(eventDateRepository.findById(dateId)).thenReturn(Optional.of(date)); //lenient: only booking tests use the event date
     }
 
     private EventBookingForm groupForm(int places) {
@@ -114,5 +117,44 @@ class EventBookingServiceImplTest {
         eventBookingService.book(eventId, groupForm(2));
 
         verify(notificationService).notifyBookingConfirmed(any(Customer.class), any(EventBooking.class));
+    }
+
+    private EventBooking bookingOn(LocalDateTime start, EventBookingStatus status) {
+        return EventBooking.builder()
+                .bookingNumber("BK-" + start.getDayOfMonth() + status)
+                .eventDate(EventDate.builder().startTime(start).endTime(start.plusHours(3)).build())
+                .eventBookingStatus(status)
+                .build();
+    }
+
+    @Test
+    void getNextBooking_returnsSoonestUpcomingBookingThatIsNotCancelled() throws Exception {
+        Customer anna = Customer.builder().id(UUID.randomUUID())
+                .contactInfo(new ContactInfo("Anna", "Street 1", "anna@example.com")).build();
+        LocalDateTime now = LocalDateTime.now();
+        EventBooking past = bookingOn(now.minusDays(3), EventBookingStatus.CONFIRMED);
+        EventBooking cancelledSooner = bookingOn(now.plusDays(2), EventBookingStatus.CANCELLED);
+        EventBooking next = bookingOn(now.plusDays(10), EventBookingStatus.CONFIRMED);
+        EventBooking later = bookingOn(now.plusDays(20), EventBookingStatus.OPTION);
+        EventBookingDto nextDto = mock(EventBookingDto.class);
+        when(customerRepository.findByContactInfoName(any())).thenReturn(Optional.of(anna));
+        when(eventBookingRepository.findByCustomerId(anna.getId()))
+                .thenReturn(List.of(later, past, cancelledSooner, next));
+        when(eventBookingMapper.toDto(next)).thenReturn(nextDto);
+
+        assertThat(eventBookingService.getNextBookingForCurrentCustomer()).contains(nextDto);
+    }
+
+    @Test
+    void getNextBooking_onlyPastOrCancelledBookings_isEmpty() throws Exception {
+        Customer anna = Customer.builder().id(UUID.randomUUID())
+                .contactInfo(new ContactInfo("Anna", "Street 1", "anna@example.com")).build();
+        LocalDateTime now = LocalDateTime.now();
+        when(customerRepository.findByContactInfoName(any())).thenReturn(Optional.of(anna));
+        when(eventBookingRepository.findByCustomerId(anna.getId())).thenReturn(List.of(
+                bookingOn(now.minusDays(1), EventBookingStatus.CONFIRMED),
+                bookingOn(now.plusDays(5), EventBookingStatus.EXPIRED)));
+
+        assertThat(eventBookingService.getNextBookingForCurrentCustomer()).isEmpty();
     }
 }
