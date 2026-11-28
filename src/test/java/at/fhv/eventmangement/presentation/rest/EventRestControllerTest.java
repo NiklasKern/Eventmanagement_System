@@ -47,7 +47,7 @@ class EventRestControllerTest {
                         LocalDateTime.of(2027, 1, 10, 20, 0))));
         when(eventService.getAllEvents()).thenReturn(List.of(event));
 
-        mockMvc.perform(get("/api/events"))
+        mockMvc.perform(get("/api/getEvents"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].id").value(id.toString()))
@@ -67,7 +67,7 @@ class EventRestControllerTest {
     void events_returnsEmptyArrayWhenNoEvents() throws Exception {
         when(eventService.getAllEvents()).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/events"))
+        mockMvc.perform(get("/api/getEvents"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
@@ -76,7 +76,7 @@ class EventRestControllerTest {
     void unexpectedError_returns500WithoutInternalDetails() throws Exception {
         when(eventService.getAllEvents()).thenThrow(new IllegalStateException("database password is wrong"));
 
-        mockMvc.perform(get("/api/events"))
+        mockMvc.perform(get("/api/getEvents"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.detail").value("An unexpected error occurred"));

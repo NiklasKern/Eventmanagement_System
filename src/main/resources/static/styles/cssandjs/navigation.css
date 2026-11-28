@@ -1,0 +1,61 @@
+.SiteHeader {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 4%;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    line-height: 1.2; /* same height on every page, whatever the page's own body styles are */
+}
+
+.SiteHeaderInner {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+}
+
+.SiteLogo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+.SiteLogo img {
+    display: block;
+}
+
+.SiteLogoAccent {
+    color: var(--color-primary);
+}
+
+.SiteNav {
+    display: flex;
+    gap: 4px;
+}
+
+.SiteNavLink {
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: background .15s ease, color .15s ease;
+}
+
+.SiteNavLink:hover {
+    background: var(--color-hover);
+    color: var(--color-text);
+}
+
+.SiteLogo:focus-visible,
+.SiteNavLink:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}

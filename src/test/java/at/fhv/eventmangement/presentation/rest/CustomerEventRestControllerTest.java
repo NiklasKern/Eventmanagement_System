@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * REST API tests for the customer endpoints (GlobalExceptionHandler).
+ * REST API tests for the customer endpoints.
  */
 @WebMvcTest(CustomerEventRestController.class)
 class CustomerEventRestControllerTest {

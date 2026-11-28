@@ -9,35 +9,11 @@ a, a:hover {
 
 
 /*Inhalt*/
-.AppHead {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px 4%;
-    background: var(--color-surface);
-    border-bottom: 1px solid var(--color-border);
-}
 
 .HeadContainer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-.AccountButton {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 10px;
-    box-shadow: 0 1px 3px var(--color-shadow);
-    cursor: pointer;
-    text-align: left;
-}
-
-.AccountButton:hover {
-    background: var(--color-hover);
 }
 
 .Avatar {

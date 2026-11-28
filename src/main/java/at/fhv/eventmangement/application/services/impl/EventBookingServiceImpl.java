@@ -20,10 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 public class EventBookingServiceImpl implements EventBookingService {
@@ -123,6 +121,18 @@ public class EventBookingServiceImpl implements EventBookingService {
     @Override
     public Optional<EventBookingDto> getBookingByNumber(String bookingNumber) {
         return eventBookingRepository.findByBookingNumber(bookingNumber)
+                .map(eventBookingMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<EventBookingDto> getNextBookingForCurrentCustomer() throws CustomerNotFoundException {
+        LocalDateTime now = LocalDateTime.now();
+        return eventBookingRepository.findByCustomerId(currentCustomer().getId()).stream()
+                .filter(booking -> booking.getEventBookingStatus() != EventBookingStatus.CANCELLED
+                        && booking.getEventBookingStatus() != EventBookingStatus.EXPIRED)
+                .filter(booking -> booking.getEventDate() != null && booking.getEventDate().getStartTime().isAfter(now))
+                .min(Comparator.comparing(booking -> booking.getEventDate().getStartTime()))
                 .map(eventBookingMapper::toDto);
     }
 }

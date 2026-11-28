@@ -18,4 +18,5 @@ public interface EventBookingService {
     List<String> getPaymentMethods();
     List<EventBookingDto> getBookingsForCurrentCustomer() throws CustomerNotFoundException;
     Optional<EventBookingDto> getBookingByNumber(String bookingNumber);
+    Optional<EventBookingDto> getNextBookingForCurrentCustomer() throws CustomerNotFoundException;
 }

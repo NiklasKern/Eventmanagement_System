@@ -5,28 +5,14 @@
 <head>
     <meta charset="UTF-8">
     <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet"/>
+    <link rel="stylesheet" th:href="@{/styles/cssandjs/navigation.css}">
     <link th:href="@{/styles/cssandjs/my_events.css}" rel="stylesheet"/>
     <link th:href="@{/styles/cssandjs/booking_dialog.css}" rel="stylesheet"/>
     <title>Events</title>
 </head>
 
 <body>
-<header class="AppHead">
-    <div class="HeadContainer">
-        <div class="WildPathLogo">
-            <img th:src="@{/images/leaf-icon.svg}" alt="leaf">
-            <span>WILD</span><span class="primary-green">PATH</span>
-        </div>
-        <button class="AccountButton" type="button">
-            <span class="Avatar">C</span>
-            <span class="AccountText">
-                <span class="AccountLabel">View</span>
-                <span class="AccountName">Customer</span>
-            </span>
-            <span class="Chevron">&gt;</span>
-        </button>
-    </div>
-</header>
+<div th:replace="~{fragments/navigation :: nav}"></div>
 
 <main class="AppContent">
     <div class="ContentContainer">
