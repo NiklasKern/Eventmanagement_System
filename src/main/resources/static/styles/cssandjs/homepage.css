@@ -348,6 +348,9 @@ a.btn {
 .card__visual--green  { background: var(--tint-green); }
 .card__visual--blue   { background: var(--tint-gray); }
 .card__visual--yellow { background: var(--tint-lime); }
+.cards .card:nth-child(3n+1) .card__visual { background: var(--tint-green); }
+.cards .card:nth-child(3n+2) .card__visual { background: var(--tint-gray); }
+.cards .card:nth-child(3n)   .card__visual { background: var(--tint-lime); }
 
 .tag {
     position: absolute;

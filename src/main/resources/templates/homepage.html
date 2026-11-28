@@ -109,10 +109,8 @@
             </div>
 
             <div class="cards" th:if="${!#lists.isEmpty(events)}">
-                <!-- e = the event, stat = loop status (stat.index for the alternating card colors) -->
-                <article class="card" th:each="e, stat : ${events}">
-                    <div class="card__visual"
-                         th:classappend="${stat.index % 3 == 0} ? 'card__visual--green' : (${stat.index % 3 == 1} ? 'card__visual--blue' : 'card__visual--yellow')">
+                <article class="card" th:each="e : ${events}">
+                    <div class="card__visual">
                         <span class="tag" th:if="${e.eventCategory != null}" th:text="${e.eventCategory.categoryName}">Hiking</span>
                         <span class="icon-tile icon-tile--lg">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
