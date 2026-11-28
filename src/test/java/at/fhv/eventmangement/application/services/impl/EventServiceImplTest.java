@@ -91,7 +91,7 @@ class EventServiceImplTest {
                 .build();
     }
 
-    // The account of the logged-in user "provider", linked to the given organizer (or none)
+    // The account of the logged-in user provider, linked to the given organizer (or none)
     private void loggedIn(EventOrganizer linkedOrganizer, Permissions... permissions) {
         Role role = Role.builder().name("Test").permissions(EnumSet.of(permissions[0], permissions)).build();
         when(userAccountRepository.findByUsername(USERNAME)).thenReturn(Optional.of(UserAccount.builder()

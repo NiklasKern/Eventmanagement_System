@@ -92,7 +92,7 @@ class EventBookingServiceImplTest {
                 .build();
     }
 
-    // The account of the logged-in user "anna", linked to the given customer (or none)
+    // The account of the logged-in user anna, linked to the given customer (or none)
     private void loggedIn(Customer linkedCustomer) {
         when(userAccountRepository.findByUsername(USERNAME)).thenReturn(Optional.of(UserAccount.builder()
                 .username(USERNAME)

@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 @ActiveProfiles("test")
-// Logged in as the real account "provider" (created below), linked to the default organizer
+// Logged in as the real account provider (created below), linked to the default organizer
 @WithMockUser(username = CreateEventAcceptanceTest.PROVIDER, authorities = {"EVENT_CREATE"})
 class CreateEventAcceptanceTest {
 
@@ -61,17 +61,14 @@ class CreateEventAcceptanceTest {
 
     @BeforeEach
     void ensureReferenceData() throws Exception {
-        // all tests share one database: only the first test creates the reference data
         try {
             organizerService.addOrganizer(new EventOrganizerForm(
                     EventmanagementApplicationRunner.DEFAULT_ORGANIZER, "Street 1", "test@test.com"));
         } catch (EventOrganizerAlreadyExistsException alreadyThere) {
-            // created by an earlier test
         }
         try {
             categoryService.addCategory(new EventCategoryForm(CATEGORY));
         } catch (EventCategoryAlreadyExistsException alreadyThere) {
-            // created by an earlier test
         }
 
         try {
@@ -83,7 +80,6 @@ class CreateEventAcceptanceTest {
                     .organizerId(defaultOrganizerId())
                     .build());
         } catch (UserAccountAlreadyExistsException alreadyThere) {
-            // created by an earlier test
         }
 
         categoryId = categoryService.getAllEventCategories().stream()
@@ -130,31 +126,26 @@ class CreateEventAcceptanceTest {
     void createEvent_fullFlow_fromButtonToUpdatedList() throws Exception {
         String name = uniqueName();
 
-        // 1. Event list offers the "Create event" button
         mockMvc.perform(get("/events"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("href=\"/event/manage/create\"")));
 
-        // 2. The button opens the "Create Event" form
         mockMvc.perform(get("/event/manage/create"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("add_event"))
                 .andExpect(content().string(containsString(CATEGORY)));
 
-        // 3. Submitting a valid form saves and redirects with the success message
         MvcResult result = mockMvc.perform(validPost(name))
                 .andExpect(redirectedUrl("/events"))
                 .andExpect(flash().attribute("successMessage", "Event successfully saved"))
                 .andReturn();
 
-        // 4. The list after the redirect shows the message and the new event
         mockMvc.perform(get("/events").flashAttrs(result.getFlashMap()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Event successfully saved")))
                 .andExpect(content().string(containsString(name)))
                 .andExpect(content().string(containsString(CATEGORY)));
 
-        // 5. And it really is in the database, with status ACTIVE and the organizer of the logged-in account
         assertThat(eventService.getAllEvents())
                 .filteredOn(e -> e.name().equals(name))
                 .singleElement()
