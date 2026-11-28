@@ -1,28 +1,26 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wildpath</title>
     <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet"/>
-    <link th:href="@{/styles/cssandjs/homepage.css}" rel="stylesheet">
     <link th:href="@{/styles/cssandjs/navigation.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/cssandjs/homepage.css}" rel="stylesheet"/>
 </head>
 <body>
 
 <div th:replace="~{fragments/navigation :: nav}"></div>
 
 <main>
-    <!-- Hero -->
+
+    <!-- Hero with search: leads to the event search -->
     <section class="hero">
         <span class="hero__circle hero__circle--1"></span>
         <span class="hero__circle hero__circle--2"></span>
 
         <div class="hero__deco" aria-hidden="true">
-            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="m8 3 4 8 5-5 5 15H2L8 3z"/>
-            </svg>
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
         </div>
 
         <div class="container">
@@ -35,72 +33,31 @@
                     Discover carefully curated outdoor experiences and secure your spot.
                 </p>
 
-                <!-- Placeholder for the full integration -->
                 <form class="search" th:action="@{/customer/events/search}" method="get">
                     <label class="search__field">
                         <span class="search__label">Where?</span>
                         <span class="search__input-wrap">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path
-                                    d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                             <input type="text" name="location" placeholder="Place or Region">
                         </span>
                     </label>
                     <label class="search__field">
                         <span class="search__label">From when?</span>
                         <span class="search__input-wrap">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4"
-                                                                                                       width="18"
-                                                                                                       height="18"
-                                                                                                       rx="2"/><path
-                                    d="M16 2v4M8 2v4M3 10h18"/></svg>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
                             <input type="date" name="dateFrom">
                         </span>
                     </label>
                     <button type="submit" class="btn btn--primary search__btn">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"/>
-                            <path d="m21 21-4.3-4.3"/>
-                        </svg>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         Find Events
                     </button>
                 </form>
             </div>
-            <form class="search" id="searchForm" th:action="@{/home}" method="get">
-                <label class="search__field">
-                    <span class="search__label">Where?</span>
-                    <span class="search__input-wrap">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round"><path
-                        d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                <input type="text" name="location" placeholder="Place or Region">
-              </span>
-                </label>
-                <label class="search__field">
-                    <span class="search__label">When?</span>
-                    <span class="search__input-wrap">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path
-                        d="M16 2v4M8 2v4M3 10h18"/></svg>
-                <input type="text" name="date" placeholder="Choose Date" onfocus="this.type='date'"
-                       onblur="if(!this.value)this.type='text'">
-              </span>
-                </label>
-                <button type="submit" class="btn btn--primary search__btn">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"/>
-                        <path d="m21 21-4.3-4.3"/>
-                    </svg>
-                    Find Events
-                </button>
-            </form>
         </div>
     </section>
 
-    <!-- Customer Bookings -->
+    <!-- Next booking of the customer -->
     <section class="bookings">
         <div class="container">
             <p class="eyebrow">My Bookings</p>
@@ -109,33 +66,18 @@
             <article class="booking" th:if="${nextBooking != null}">
                 <div class="booking__thumb">
                     <span class="icon-tile">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/>
-                            <path d="M2 21c0-3 1.9-5.5 5-7"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.5 5-7"/></svg>
                     </span>
                 </div>
 
                 <div class="booking__info">
                     <span class="badge badge--status" th:text="${nextBooking.eventBookingStatus}">CONFIRMED</span>
                     <h3 class="booking__title"
-                        th:text="${nextBooking.places} + (${nextBooking.places == 1} ? ' place' : ' places')">2
-                        places</h3>
+                        th:text="${nextBooking.places} + (${nextBooking.places == 1} ? ' place' : ' places')">2 places</h3>
                     <ul class="meta">
                         <li>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="4" width="18" height="18" rx="2"/>
-                                <path d="M16 2v4M8 2v4M3 10h18"/>
-                            </svg>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
                             <span th:text="${#temporals.format(nextBooking.eventDate.startTime, 'dd.MM.yyyy, HH:mm')}">01.05.2027, 09:00</span>
-                        </li>
-                        <li>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-                                <circle cx="12" cy="10" r="3"/>
-                            </svg>
                         </li>
                     </ul>
                 </div>
@@ -145,17 +87,17 @@
                     <strong class="booking__ref-number" th:text="${nextBooking.bookingNumber}">BK-XXXXXXXX</strong>
                 </div>
 
-                <a class="booking__link" th:href="@{/customer/booking/{n}(n=${nextBooking.bookingNumber})}">View
-                    details</a>
+                <a class="booking__link" th:href="@{/customer/booking/{n}(n=${nextBooking.bookingNumber})}">View details</a>
             </article>
 
-            <p class="empty-note" th:if="${nextBooking == null}">You have no upcoming bookings.
+            <p class="empty-note" th:if="${nextBooking == null}">
+                You have no upcoming bookings.
                 <a th:href="@{/customer/events}">Browse events</a>
             </p>
         </div>
     </section>
 
-    <!-- More Adventures -->
+    <!-- Active events, leading to their booking dialog -->
     <section class="events">
         <div class="container">
             <div class="events__head">
@@ -167,52 +109,42 @@
             </div>
 
             <div class="cards" th:if="${!#lists.isEmpty(events)}">
-                <article class="card" th:each="event : ${events}">
-                    <div class="card__thumb"
-                         th:classappend="${stat.index % 3 == 0} ? 'card__visual--green' : (${stat.index % 3 == 1}
-                        ? 'card__visual--blue' : 'card__visual--yellow')">
+                <!-- e = the event, stat = loop status (stat.index for the alternating card colors) -->
+                <article class="card" th:each="e, stat : ${events}">
+                    <div class="card__visual"
+                         th:classappend="${stat.index % 3 == 0} ? 'card__visual--green' : (${stat.index % 3 == 1} ? 'card__visual--blue' : 'card__visual--yellow')">
                         <span class="tag" th:if="${e.eventCategory != null}" th:text="${e.eventCategory.categoryName}">Hiking</span>
                         <span class="icon-tile icon-tile--lg">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>
                         </span>
                     </div>
                     <div class="card__body">
                         <p class="card__date" th:if="${!#lists.isEmpty(e.eventDates)}">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="4" width="18" height="18" rx="2"/>
-                                <path d="M16 2v4M8 2v4M3 10h18"/>
-                            </svg>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
                             <span th:text="${#temporals.format(e.eventDates[0].startTime, 'dd.MM.yyyy')}">01.06.2027</span>
                         </p>
                         <h3 class="card__title" th:text="${e.name}">Guided Mountain Tour</h3>
                         <p class="card__location">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-                                <circle cx="12" cy="10" r="3"/>
-                            </svg>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                             <span th:text="${e.location}">Mountain Region</span>
                         </p>
                         <div class="card__availability">
-                            <strong th:text="${#numbers.formatDecimal(e.price, 1, 'POINT', 2, 'COMMA')} + ' € per person'">25,00
-                                € per person</strong>
+                            <strong th:text="${#numbers.formatDecimal(e.price, 1, 'POINT', 2, 'COMMA')} + ' € per person'">25,00 € per person</strong>
                         </div>
                         <a class="btn btn--primary btn--block" th:href="@{/customer/event/{id}/book(id=${e.id})}">
                             Book event
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M5 12h14M12 5l7 7-7 7"/>
-                            </svg>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                         </a>
                     </div>
                 </article>
             </div>
-            <p class="empty-note" th:if="${#lists.isEmpty(events)}">There are no events open for booking right now.</p>
+
+            <p class="empty-note" th:if="${#lists.isEmpty(events)}">
+                There are no events open for booking right now.
+            </p>
         </div>
     </section>
+
 </main>
 </body>
 </html>

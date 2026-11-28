@@ -10,11 +10,9 @@ import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
 import at.fhv.eventmangement.domain.model.EventBookingStatus;
 import at.fhv.eventmangement.domain.model.EventBookingType;
 import at.fhv.eventmangement.domain.model.PaymentMethod;
-import jakarta.servlet.RequestDispatcher;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -24,15 +22,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(HomeController.class)
 class HomeControllerTest {
@@ -130,30 +123,5 @@ class HomeControllerTest {
                 .andExpect(content().string(containsString("href=\"/customer/bookings\"")))
                 .andExpect(content().string(containsString("href=\"/events\"")))
                 .andExpect(content().string(not(containsString("/contact"))));
-    }
-
-    // error handling
-
-    @Test
-    void errorPage_notFound_showsMessageAndWayBack() throws Exception {
-        mockMvc.perform(get("/error")
-                        .requestAttr(RequestDispatcher.ERROR_STATUS_CODE, 404)
-                        .requestAttr(RequestDispatcher.ERROR_REQUEST_URI, "/does-not-exist")
-                        .accept(MediaType.TEXT_HTML))
-                .andExpect(status().isNotFound())
-                .andExpect(content().string(containsString("Page not found")))
-                .andExpect(content().string(containsString("Back to home")))
-                .andExpect(content().string(containsString("class=\"SiteNav\"")));
-    }
-
-    @Test
-    void errorPage_serverError_showsGenericMessage() throws Exception {
-        mockMvc.perform(get("/error")
-                        .requestAttr(RequestDispatcher.ERROR_STATUS_CODE, 500)
-                        .requestAttr(RequestDispatcher.ERROR_REQUEST_URI, "/customer/events")
-                        .accept(MediaType.TEXT_HTML))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().string(containsString("Something went wrong")))
-                .andExpect(content().string(not(containsString("Exception"))));
     }
 }

@@ -47,7 +47,7 @@ class EventRestControllerTest {
                         LocalDateTime.of(2027, 1, 10, 20, 0))));
         when(eventService.getAllEvents()).thenReturn(List.of(event));
 
-        mockMvc.perform(get("/events"))
+        mockMvc.perform(get("api/events"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].id").value(id.toString()))
@@ -67,7 +67,7 @@ class EventRestControllerTest {
     void getEvents_returnsEmptyArrayWhenNoEvents() throws Exception {
         when(eventService.getAllEvents()).thenReturn(List.of());
 
-        mockMvc.perform(get("/events"))
+        mockMvc.perform(get("api/events"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
@@ -76,7 +76,7 @@ class EventRestControllerTest {
     void unexpectedError_returns500WithoutInternalDetails() throws Exception {
         when(eventService.getAllEvents()).thenThrow(new IllegalStateException("database password is wrong"));
 
-        mockMvc.perform(get("/events"))
+        mockMvc.perform(get("api/events"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.detail").value("An unexpected error occurred"));
@@ -87,7 +87,7 @@ class EventRestControllerTest {
         UUID id = UUID.randomUUID();
         when(eventService.getEventById(id)).thenReturn(sampleEvent(id));
 
-        mockMvc.perform(get("/events/{id}", id))
+        mockMvc.perform(get("api/events/{id}", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id.toString()))
                 .andExpect(jsonPath("$.name").value("Summer Hike"))
@@ -100,7 +100,7 @@ class EventRestControllerTest {
         UUID id = UUID.randomUUID();
         when(eventService.getEventById(id)).thenThrow(new EventNotFoundException());
 
-        mockMvc.perform(get("/events/{id}", id))
+        mockMvc.perform(get("api/events/{id}", id))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.detail").value("event does not exist"));
@@ -108,7 +108,7 @@ class EventRestControllerTest {
 
     @Test
     void getEventInfo_invalidId_returns400() throws Exception {
-        mockMvc.perform(get("/events/{id}", "not-a-uuid"))
+        mockMvc.perform(get("api/events/{id}", "not-a-uuid"))
                 .andExpect(status().isBadRequest());
     }
 
