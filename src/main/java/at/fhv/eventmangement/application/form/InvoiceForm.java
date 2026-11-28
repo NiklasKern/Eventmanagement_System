@@ -1,20 +1,18 @@
 package at.fhv.eventmangement.application.form;
 
 import at.fhv.eventmangement.domain.model.PaymentMethod;
-import jakarta.validation.Valid;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.*;
-
-import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class InvoiceForm {
 
     @NotBlank(message = "please fill mandatory fields")
@@ -29,8 +27,4 @@ public class InvoiceForm {
 
     @NotNull(message = "please fill mandatory fields")
     private PaymentMethod paymentMethod;
-
-    @Valid
-    @Size(min = 1, message = "an invoice needs at least one item")
-    private List<InvoiceItemForm> items;
 }

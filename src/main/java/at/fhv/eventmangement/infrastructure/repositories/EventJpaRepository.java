@@ -14,8 +14,11 @@ import java.util.UUID;
 @Repository
 public interface EventJpaRepository extends JpaRepository<EventEntity, UUID>, JpaSpecificationExecutor<EventEntity> {
     boolean existsByName(String name);
+
     List<EventEntity> findByEventStatus(EventStatus eventStatus);
 
     @Query("select distinct e.location from EventEntity e where e.eventStatus = :status order by e.location")
     List<String> findLocations(@Param("status") EventStatus status);
+
+    List<EventEntity> findByEventOrganizerId(UUID organizerId);
 }

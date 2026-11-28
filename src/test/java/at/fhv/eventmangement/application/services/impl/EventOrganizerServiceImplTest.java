@@ -1,7 +1,9 @@
 package at.fhv.eventmangement.application.services.impl;
 
-import at.fhv.eventmangement.domain.exceptions.EventOrganizerAlreadyExistsException;
+import at.fhv.eventmangement.application.dto.EventOrganizerDto;
 import at.fhv.eventmangement.application.form.EventOrganizerForm;
+import at.fhv.eventmangement.application.mappers.EventOrganizerMapper;
+import at.fhv.eventmangement.domain.exceptions.EventOrganizerAlreadyExistsException;
 import at.fhv.eventmangement.domain.model.ContactInfo;
 import at.fhv.eventmangement.domain.model.EventOrganizer;
 import at.fhv.eventmangement.domain.repositories.EventOrganizerRepository;
@@ -12,18 +14,20 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class EventOrganizerServiceImplTest {
 
     @Mock
     private EventOrganizerRepository eventOrganizerRepository;
+    @Mock
+    private EventOrganizerMapper eventOrganizerMapper;
 
     @InjectMocks
     private EventOrganizerServiceImpl eventOrganizerService;
@@ -51,5 +55,15 @@ class EventOrganizerServiceImplTest {
                 .isInstanceOf(EventOrganizerAlreadyExistsException.class)
                 .hasMessage("organizer name already exists");
         verify(eventOrganizerRepository, never()).save(any());
+    }
+
+    @Test
+    void getAllOrganizers_mapsEveryOrganizer() {
+        EventOrganizer organizer = new EventOrganizer(new ContactInfo("Alpine Club", "Hauptstrasse 1", "info@alpine.at"));
+        EventOrganizerDto dto = mock(EventOrganizerDto.class);
+        when(eventOrganizerRepository.findAll()).thenReturn(List.of(organizer));
+        when(eventOrganizerMapper.toDto(organizer)).thenReturn(dto);
+
+        assertThat(eventOrganizerService.getAllOrganizers()).containsExactly(dto);
     }
 }

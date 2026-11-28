@@ -7,9 +7,12 @@ import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.dto.EventOrganizerDto;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
+import at.fhv.eventmangement.presentation.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,6 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * REST API tests (GlobalExceptionHandler).
  */
 @WebMvcTest(EventRestController.class)
+@Import(SecurityConfig.class)
+@WithMockUser(authorities = {"EVENT_VIEW", "EDIT_ALL_EVENTS"})
 class EventRestControllerTest {
 
     @Autowired
@@ -36,7 +41,7 @@ class EventRestControllerTest {
     private EventService eventService;
 
     @Test
-    void events_returnsEventsAsJson() throws Exception {
+    void getEvents_returnsEventsAsJson() throws Exception {
         UUID id = UUID.randomUUID();
         EventDto event = new EventDto(id, "Summer Hike", "A nice walk", "Dornbirn",
                 new BigDecimal("150.00"), 5, 50, "ACTIVE",
@@ -47,7 +52,7 @@ class EventRestControllerTest {
                         LocalDateTime.of(2027, 1, 10, 20, 0))));
         when(eventService.getAllEvents()).thenReturn(List.of(event));
 
-        mockMvc.perform(get("/api/getEvents"))
+        mockMvc.perform(get("/api/events"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].id").value(id.toString()))
@@ -64,10 +69,10 @@ class EventRestControllerTest {
     }
 
     @Test
-    void events_returnsEmptyArrayWhenNoEvents() throws Exception {
+    void getEvents_returnsEmptyArrayWhenNoEvents() throws Exception {
         when(eventService.getAllEvents()).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/getEvents"))
+        mockMvc.perform(get("/api/events"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
@@ -76,7 +81,7 @@ class EventRestControllerTest {
     void unexpectedError_returns500WithoutInternalDetails() throws Exception {
         when(eventService.getAllEvents()).thenThrow(new IllegalStateException("database password is wrong"));
 
-        mockMvc.perform(get("/api/getEvents"))
+        mockMvc.perform(get("/api/events"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.detail").value("An unexpected error occurred"));

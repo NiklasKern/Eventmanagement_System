@@ -5,11 +5,7 @@ import at.fhv.eventmangement.domain.exceptions.InvoiceNotEditableException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 public class Invoice {
@@ -57,15 +53,13 @@ public class Invoice {
                 .setContactInfo(booking.getCustomer() == null ? null : booking.getCustomer().getContactInfo());
     }
 
-    public void requestChanges(ContactInfo contactInfo, PaymentMethod paymentMethod, List<InvoiceItem> items)
+    // no Items list so that customer can only change contact info and payment method
+    // Items and prices only come from the booking (createInterimFor)
+    public void requestChanges(ContactInfo contactInfo, PaymentMethod paymentMethod)
             throws InvoiceNotEditableException {
         ensureInterim();
         this.contactInfo = contactInfo;
         this.paymentMethod = paymentMethod;
-        if (items != null) {
-            setItems(items);
-            recalculateAdvancePayment();
-        }
     }
 
     public void confirm() throws InvoiceNotEditableException {

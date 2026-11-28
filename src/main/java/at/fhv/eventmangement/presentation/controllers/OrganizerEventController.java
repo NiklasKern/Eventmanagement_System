@@ -2,22 +2,21 @@ package at.fhv.eventmangement.presentation.controllers;
 
 import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.dto.EventDto;
+import at.fhv.eventmangement.application.dto.EventOrganizerDto;
 import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
 import at.fhv.eventmangement.application.form.EventDateForm;
 import at.fhv.eventmangement.application.form.EventForm;
 import at.fhv.eventmangement.application.services.EventCategoryService;
+import at.fhv.eventmangement.application.services.EventOrganizerService;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.domain.exceptions.*;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
@@ -39,11 +38,14 @@ public class OrganizerEventController {
 
     private final EventService eventService;
     private final EventCategoryService eventCategoryService;
+    private final EventOrganizerService eventOrganizerService;
 
     //Dependency injection
-    public OrganizerEventController(EventService eventService, EventCategoryService eventCategoryService) {
+    public OrganizerEventController(EventService eventService, EventCategoryService eventCategoryService,
+                                    EventOrganizerService eventOrganizerService) {
         this.eventService = eventService;
         this.eventCategoryService = eventCategoryService;
+        this.eventOrganizerService = eventOrganizerService;
     }
 
     // Categories for the dropdown in add_event and modify_event
@@ -52,10 +54,16 @@ public class OrganizerEventController {
         return eventCategoryService.getAllEventCategories();
     }
 
-    //Show
+    // Organizer dropdown in add_event (only shown with EDIT_ALL_EVENTS)
+    @ModelAttribute("organizers")
+    public List<EventOrganizerDto> organizers() {
+        return eventOrganizerService.getAllOrganizers();
+    }
+
+    // Shows the events the logged-in user may manage
     @GetMapping("/events")
-    public String getAllEventsTemplate(Model model) {
-        List<EventDto> events = eventService.getAllEvents();
+    public String getAllEventsTemplate(Model model, Authentication authentication) {
+        List<EventDto> events = eventService.getManagedEvents(authentication.getName());
         model.addAttribute("events", events);
         return MY_EVENTS;
     }
@@ -75,7 +83,8 @@ public class OrganizerEventController {
     @PostMapping(CREATE)
     public String createEvent(@Valid @ModelAttribute("event") EventForm form,
                               BindingResult bindingResult,
-                              RedirectAttributes redirectAttributes
+                              RedirectAttributes redirectAttributes,
+                              Authentication authentication
     ) {
         // Check for annotations on EventForm(@NotBlank, @Postive, ...)
         if (bindingResult.hasErrors()) {
@@ -86,7 +95,7 @@ public class OrganizerEventController {
         // Check if form is valid (unique name, existing category, ...)
         // Each exception is mapped to the form field it belongs to
         try {
-            eventService.addEvent(form);
+            eventService.addEvent(form, authentication.getName());
         } catch (EventAlreadyExistsException ex) {
             bindingResult.rejectValue("name", "duplicate", ex.getMessage());
             return ADD_EVENT;
@@ -94,7 +103,7 @@ public class OrganizerEventController {
             bindingResult.rejectValue("eventCategoryId", "unknown", ex.getMessage());
             return ADD_EVENT;
         } catch (EventOrganizerNotFoundException ex) {
-            log.error("Default organizer missing", ex);
+            // account not linked to an organizer and none chosen in the form
             bindingResult.reject("organizer", ex.getMessage());
             return ADD_EVENT;
         }
@@ -120,11 +129,12 @@ public class OrganizerEventController {
     }
 
     @GetMapping(MODIFY)
-    public String modifyEvent(@PathVariable UUID id, Model model, RedirectAttributes redirectAttributes) {
+    public String modifyEvent(@PathVariable UUID id, Model model, RedirectAttributes redirectAttributes,
+                              Authentication authentication) {
         EventDto dto;
         try {
-            dto = eventService.getEventById(id);
-        } catch (EventNotFoundException ex) {
+            dto = eventService.getEventForEdit(id, authentication.getName());
+        } catch (EventNotFoundException | NotEventOwnerException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return REDIRECT_EVENTS;
         }
@@ -156,7 +166,8 @@ public class OrganizerEventController {
                               @Valid @ModelAttribute("event") EventForm form,
                               BindingResult bindingResult,
                               Model model,
-                              RedirectAttributes redirectAttributes) {
+                              RedirectAttributes redirectAttributes,
+                              Authentication authentication) {
         model.addAttribute("eventId", id);
         if (bindingResult.hasErrors()) {
             return MODIFY_EVENT;
@@ -164,8 +175,8 @@ public class OrganizerEventController {
 
         EventUpdateResultDto result;
         try {
-            result = eventService.updateEvent(id, form);
-        } catch (EventNotFoundException ex) {
+            result = eventService.updateEvent(id, form, authentication.getName());
+        } catch (EventNotFoundException | NotEventOwnerException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return REDIRECT_EVENTS;
         } catch (EventAlreadyExistsException ex) {
@@ -209,12 +220,13 @@ public class OrganizerEventController {
         model.addAttribute("eventId", id);
         return MODIFY_EVENT;
     }
+
     @PostMapping(CANCEL)
-    public String cancelEvent(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
+    public String cancelEvent(@PathVariable UUID id, RedirectAttributes redirectAttributes, Authentication authentication) {
         EventUpdateResultDto result;
         try {
-            result = eventService.cancelEvent(id);
-        } catch (EventNotFoundException | EventAlreadyCancelledException ex) {
+            result = eventService.cancelEvent(id, authentication.getName());
+        } catch (EventNotFoundException | EventAlreadyCancelledException | NotEventOwnerException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return REDIRECT_EVENTS;
         }

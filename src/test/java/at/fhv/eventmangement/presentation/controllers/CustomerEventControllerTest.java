@@ -1,19 +1,17 @@
 package at.fhv.eventmangement.presentation.controllers;
 
 import at.fhv.eventmangement.application.dto.*;
-import at.fhv.eventmangement.application.services.CustomerService;
-import at.fhv.eventmangement.application.services.EventBookingService;
-import at.fhv.eventmangement.application.services.EventCategoryService;
-import at.fhv.eventmangement.application.services.EventService;
-import at.fhv.eventmangement.application.services.InvoiceService;
-import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventNotBookableException;
-import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.NotEnoughPlacesException;
+import at.fhv.eventmangement.application.services.*;
+import at.fhv.eventmangement.domain.exceptions.*;
+import at.fhv.eventmangement.domain.model.EventBookingStatus;
+import at.fhv.eventmangement.domain.model.EventBookingType;
+import at.fhv.eventmangement.domain.model.PaymentMethod;
+import at.fhv.eventmangement.presentation.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -21,26 +19,23 @@ import org.springframework.test.web.servlet.ResultActions;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Web layer tests for the customer Thymeleaf controller (browse + book events).
  */
 @WebMvcTest(CustomerEventController.class)
+@Import(SecurityConfig.class)
+@WithMockUser(authorities = {"EVENT_VIEW", "BOOK_EVENTS", "VIEW_OWN_BOOKINGS"})
 class CustomerEventControllerTest {
 
     @Autowired
@@ -68,7 +63,7 @@ class CustomerEventControllerTest {
                 new EventCategoryDto(categoryId, "Hiking"),
                 new EventOrganizerDto(UUID.randomUUID(), new ContactInfoDto("Alpine Club", "Street 1", "a@b.at")),
                 List.of(new EventDateDto(eventDateId, LocalDateTime.of(2027, 1, 10, 17, 0),
-                                                      LocalDateTime.of(2027, 1, 10, 20, 0))));
+                        LocalDateTime.of(2027, 1, 10, 20, 0))));
     }
 
     private CustomerDto defaultCustomer() {
@@ -76,8 +71,15 @@ class CustomerEventControllerTest {
                 null, null);
     }
 
+    private EventBookingDto booking(UUID id) {
+        return new EventBookingDto(id, "BK-ABCDEFGH", null,
+                new EventDateDto(eventDateId, LocalDateTime.of(2027, 1, 10, 17, 0), LocalDateTime.of(2027, 1, 10, 20, 0)),
+                EventBookingType.GROUP, 2, new BigDecimal("50.00"), PaymentMethod.CARD, null, null,
+                EventBookingStatus.CONFIRMED, List.of(), LocalDateTime.of(2026, 11, 25, 10, 0));
+    }
+
     private ResultActions postGroupBooking(int places) throws Exception {
-        return mockMvc.perform(post("/customer/event/{id}/book", eventId)
+        return mockMvc.perform(post("/customer/event/{id}/book", eventId).with(csrf())
                 .param("eventDateId", eventDateId.toString())
                 .param("eventBookingType", "GROUP")
                 .param("places", String.valueOf(places))
@@ -87,7 +89,7 @@ class CustomerEventControllerTest {
     @Test
     void bookingForm_showsEventAndCustomer() throws Exception {
         when(eventService.getEventById(eventId)).thenReturn(bookableEvent());
-        when(customerService.getCurrentCustomer()).thenReturn(defaultCustomer());
+        when(customerService.getCurrentCustomer("user")).thenReturn(defaultCustomer());
 
         mockMvc.perform(get("/customer/event/{id}/book", eventId))
                 .andExpect(status().isOk())
@@ -98,7 +100,7 @@ class CustomerEventControllerTest {
 
     @Test
     void bookingForm_unknownEvent_redirectsToEventListWithError() throws Exception {
-        when(customerService.getCurrentCustomer()).thenReturn(defaultCustomer());
+        when(customerService.getCurrentCustomer("user")).thenReturn(defaultCustomer());
         when(eventService.getEventById(eventId)).thenThrow(new EventNotFoundException());
 
         mockMvc.perform(get("/customer/event/{id}/book", eventId))
@@ -108,8 +110,8 @@ class CustomerEventControllerTest {
     }
 
     @Test
-    void bookingForm_missingDefaultCustomer_redirectsToEventListWithError() throws Exception {
-        when(customerService.getCurrentCustomer()).thenThrow(new CustomerNotFoundException());
+    void bookingForm_accountWithoutCustomer_redirectsToEventListWithError() throws Exception {
+        when(customerService.getCurrentCustomer("user")).thenThrow(new CustomerNotFoundException());
 
         mockMvc.perform(get("/customer/event/{id}/book", eventId))
                 .andExpect(redirectedUrl("/customer/events"))
@@ -120,8 +122,7 @@ class CustomerEventControllerTest {
     void book_success_redirectsToInterimInvoice() throws Exception {
         UUID bookingId = UUID.randomUUID();
         UUID invoiceId = UUID.randomUUID();
-        when(eventBookingService.book(any(), any())).thenReturn(new EventBookingDto(
-                bookingId, "BK-ABCDEFGH", null, null, null, 2, null, null, null, null, null, List.of(), null));
+        when(eventBookingService.book(any(), any(), eq("user"))).thenReturn(booking(bookingId));
         when(invoiceService.getInvoiceForBooking(bookingId)).thenReturn(new InvoiceDto(invoiceId, bookingId,
                 null, null, null, null, List.of(), null, null, null, null, null, true));
 
@@ -134,8 +135,7 @@ class CustomerEventControllerTest {
     @Test
     void book_success_invoiceMissing_redirectsToEventList() throws Exception {
         UUID bookingId = UUID.randomUUID();
-        when(eventBookingService.book(any(), any())).thenReturn(new EventBookingDto(
-                bookingId, "BK-ABCDEFGH", null, null, null, 2, null, null, null, null, null, List.of(), null));
+        when(eventBookingService.book(any(), any(), eq("user"))).thenReturn(booking(bookingId));
         when(invoiceService.getInvoiceForBooking(bookingId)).thenThrow(new InvoiceNotFoundException());
 
         postGroupBooking(2)
@@ -145,7 +145,7 @@ class CustomerEventControllerTest {
 
     @Test
     void book_notEnoughPlaces_showsErrorOnPlacesField() throws Exception {
-        when(eventBookingService.book(any(), any())).thenThrow(new NotEnoughPlacesException(3));
+        when(eventBookingService.book(any(), any(), eq("user"))).thenThrow(new NotEnoughPlacesException(3));
         when(eventService.getEventById(eventId)).thenReturn(bookableEvent());
 
         postGroupBooking(4)
@@ -157,7 +157,7 @@ class CustomerEventControllerTest {
 
     @Test
     void book_eventNotBookable_showsErrorOnDateField() throws Exception {
-        when(eventBookingService.book(any(), any())).thenThrow(new EventNotBookableException());
+        when(eventBookingService.book(any(), any(), eq("user"))).thenThrow(new EventNotBookableException());
         when(eventService.getEventById(eventId)).thenReturn(bookableEvent());
 
         postGroupBooking(2)
@@ -167,8 +167,8 @@ class CustomerEventControllerTest {
     }
 
     @Test
-    void book_missingDefaultCustomer_showsGlobalError() throws Exception {
-        when(eventBookingService.book(any(), any())).thenThrow(new CustomerNotFoundException());
+    void book_accountWithoutCustomer_showsGlobalError() throws Exception {
+        when(eventBookingService.book(any(), any(), eq("user"))).thenThrow(new CustomerNotFoundException());
         when(eventService.getEventById(eventId)).thenReturn(bookableEvent());
 
         postGroupBooking(2)
@@ -181,16 +181,16 @@ class CustomerEventControllerTest {
     void book_invalidForm_doesNotCallService() throws Exception {
         when(eventService.getEventById(eventId)).thenReturn(bookableEvent());
 
-        mockMvc.perform(post("/customer/event/{id}/book", eventId))
+        mockMvc.perform(post("/customer/event/{id}/book", eventId).with(csrf()))
                 .andExpect(view().name("customer_events"))
                 .andExpect(model().attributeHasFieldErrors("booking", "eventDateId", "eventBookingType", "paymentMethod"));
 
-        verify(eventBookingService, never()).book(any(), any());
+        verify(eventBookingService, never()).book(any(), any(), any());
     }
 
     @Test
     void book_eventDisappearedWhileShowingErrors_redirectsWithError() throws Exception {
-        when(eventBookingService.book(any(), any())).thenThrow(new NotEnoughPlacesException(0));
+        when(eventBookingService.book(any(), any(), eq("user"))).thenThrow(new NotEnoughPlacesException(0));
         when(eventService.getEventById(eventId)).thenThrow(new EventNotFoundException());
 
         postGroupBooking(2)
@@ -206,5 +206,42 @@ class CustomerEventControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("FlashError")))
                 .andExpect(content().string(containsString("event does not exist")));
+    }
+
+    @Test
+    void bookingConfirmation_ownBooking_isShown() throws Exception {
+        when(eventBookingService.getBookingByNumber("BK-ABCDEFGH", "user"))
+                .thenReturn(Optional.of(booking(UUID.randomUUID())));
+
+        mockMvc.perform(get("/customer/booking/{number}", "BK-ABCDEFGH"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("booking_confirmation"))
+                .andExpect(content().string(containsString("BK-ABCDEFGH")));
+    }
+
+    @Test
+    void bookingConfirmation_foreignOrUnknownBooking_redirectsWithError() throws Exception {
+        when(eventBookingService.getBookingByNumber("BK-OTHER123", "user")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/customer/booking/{number}", "BK-OTHER123"))
+                .andExpect(redirectedUrl("/customer/events"))
+                .andExpect(flash().attribute("errorMessage", "Booking not found: BK-OTHER123"));
+    }
+
+    @Test
+    void myBookings_showsBookingsOfLoggedInCustomer() throws Exception {
+        when(customerService.getCurrentCustomer("user")).thenReturn(defaultCustomer());
+        when(eventBookingService.getBookingsForCurrentCustomer("user")).thenReturn(List.of(booking(UUID.randomUUID())));
+
+        mockMvc.perform(get("/customer/bookings"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("customer_bookings"))
+                .andExpect(content().string(containsString("BK-ABCDEFGH")));
+    }
+
+    @Test
+    @WithMockUser(authorities = "EVENT_VIEW")
+    void myBookings_withoutViewOwnBookings_isForbidden() throws Exception {
+        mockMvc.perform(get("/customer/bookings")).andExpect(status().isForbidden());
     }
 }

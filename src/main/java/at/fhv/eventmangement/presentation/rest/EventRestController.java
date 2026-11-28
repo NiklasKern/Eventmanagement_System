@@ -4,13 +4,10 @@ import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
 import at.fhv.eventmangement.application.form.EventForm;
 import at.fhv.eventmangement.application.services.EventService;
-import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
-import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventDateHasBookingsException;
-import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.MaxParticipantsBelowBookedPlacesException;
+import at.fhv.eventmangement.domain.exceptions.*;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,9 +36,11 @@ public class EventRestController {
 
     // Updates an event and returns the saved event plus the customers that were notified
     @PutMapping("/events/{id}")
-    public ResponseEntity<EventUpdateResultDto> updateEvent(@PathVariable UUID id, @Valid @RequestBody EventForm form)
+    // Providers may only change their own events (NotEventOwnerException → 403)
+    public ResponseEntity<EventUpdateResultDto> updateEvent(@PathVariable UUID id, @Valid @RequestBody EventForm form,
+                                                            Authentication authentication)
             throws EventNotFoundException, EventAlreadyExistsException, EventCategoryNotFoundException,
-            EventDateHasBookingsException, MaxParticipantsBelowBookedPlacesException {
-        return ResponseEntity.ok(eventService.updateEvent(id, form));
+            EventDateHasBookingsException, MaxParticipantsBelowBookedPlacesException, NotEventOwnerException {
+        return ResponseEntity.ok(eventService.updateEvent(id, form, authentication.getName()));
     }
 }

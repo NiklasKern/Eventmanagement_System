@@ -103,27 +103,18 @@ class InvoiceTest {
     }
 
     @Test
-    void requestChanges_updatesAddressPaymentAndItems() throws Exception {
+    void requestChanges_updatesAddressAndPayment_keepsItemsAndAdvancePayment() throws Exception {
         Invoice invoice = Invoice.createInterim(PaymentMethod.CARD, List.of(item("100.00")));
         ContactInfo newAddress = new ContactInfo("Firma GmbH", "Hauptplatz 1", "office@firma.at");
 
-        invoice.requestChanges(newAddress, PaymentMethod.CARD, List.of(item("200.00"), item("50.00")));
+        invoice.requestChanges(newAddress, PaymentMethod.CARD);
 
         assertThat(invoice.getContactInfo()).isSameAs(newAddress);
-        assertThat(invoice.getItems()).hasSize(2);
-        assertThat(invoice.getGrossTotal()).isEqualByComparingTo("300.00");
-        assertThat(invoice.getAdvancePayment()).isEqualByComparingTo("90.00");
-    }
-
-    @Test
-    void requestChanges_withoutItems_keepsItemsAndAdvancePayment() throws Exception {
-        Invoice invoice = Invoice.createInterim(PaymentMethod.CARD, List.of(item("100.00")));
-
-        invoice.requestChanges(new ContactInfo("B", "C", "d@e.at"), PaymentMethod.CARD, null);
-
+        assertThat(invoice.getPaymentMethod()).isEqualTo(PaymentMethod.CARD);
+        // prices cannot be changed by the customer
         assertThat(invoice.getItems()).hasSize(1);
+        assertThat(invoice.getGrossTotal()).isEqualByComparingTo("120.00");
         assertThat(invoice.getAdvancePayment()).isEqualByComparingTo("36.00");
-        assertThat(invoice.getContactInfo().getName()).isEqualTo("B");
     }
 
     @Test
@@ -144,7 +135,7 @@ class InvoiceTest {
         invoice.confirm();
 
         assertThatThrownBy(invoice::confirm).isInstanceOf(InvoiceNotEditableException.class);
-        assertThatThrownBy(() -> invoice.requestChanges(new ContactInfo("B", "C", "d@e.at"), PaymentMethod.CARD, null))
+        assertThatThrownBy(() -> invoice.requestChanges(new ContactInfo("B", "C", "d@e.at"), PaymentMethod.CARD))
                 .isInstanceOf(InvoiceNotEditableException.class);
     }
 

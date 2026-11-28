@@ -1,26 +1,34 @@
 package at.fhv.eventmangement.application.services.impl;
 
-import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.CustomerDto;
-import at.fhv.eventmangement.domain.exceptions.CustomerAlreadyExistsException;
-import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
 import at.fhv.eventmangement.application.form.CustomerForm;
 import at.fhv.eventmangement.application.mappers.CustomerMapper;
 import at.fhv.eventmangement.application.services.CustomerService;
+import at.fhv.eventmangement.domain.exceptions.CustomerAlreadyExistsException;
+import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
 import at.fhv.eventmangement.domain.model.ContactInfo;
 import at.fhv.eventmangement.domain.model.Customer;
+import at.fhv.eventmangement.domain.model.UserAccount;
 import at.fhv.eventmangement.domain.repositories.CustomerRepository;
+import at.fhv.eventmangement.domain.repositories.UserAccountRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
+@Transactional(readOnly = true)
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final UserAccountRepository userAccountRepository;
     private final CustomerMapper customerMapper;
 
-    public CustomerServiceImpl(CustomerRepository customerRepository, CustomerMapper customerMapper) {
+    public CustomerServiceImpl(CustomerRepository customerRepository,
+                               UserAccountRepository userAccountRepository,
+                               CustomerMapper customerMapper) {
         this.customerRepository = customerRepository;
+        this.userAccountRepository = userAccountRepository;
         this.customerMapper = customerMapper;
     }
 
@@ -30,8 +38,7 @@ public class CustomerServiceImpl implements CustomerService {
 
         String name = form.getName().trim();
 
-        if(customerRepository.existsByContactInfoNameIgnoreCase(name))
-        {
+        if (customerRepository.existsByContactInfoNameIgnoreCase(name)) {
             throw new CustomerAlreadyExistsException();
         }
 
@@ -48,9 +55,19 @@ public class CustomerServiceImpl implements CustomerService {
         );
     }
 
+    // Customer linked to the account of the logged-in user
     @Override
-    public CustomerDto getCurrentCustomer() throws CustomerNotFoundException {
-        return customerMapper.toDto(customerRepository.findByContactInfoName(EventmanagementApplicationRunner.DEFAULT_CUSTOMER)
-                .orElseThrow(CustomerNotFoundException::new));
+    public CustomerDto getCurrentCustomer(String username) throws CustomerNotFoundException {
+        UserAccount account = userAccountRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalStateException("No account for logged-in user " + username));
+        if (account.getCustomer() == null) {
+            throw new CustomerNotFoundException("Your account is not linked to a customer");
+        }
+        return customerMapper.toDto(account.getCustomer());
+    }
+
+    @Override
+    public List<CustomerDto> getAllCustomers() {
+        return customerRepository.findAll().stream().map(customerMapper::toDto).toList();
     }
 }

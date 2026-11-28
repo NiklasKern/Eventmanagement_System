@@ -2,14 +2,9 @@ package at.fhv.eventmangement.application.services;
 
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
-import at.fhv.eventmangement.application.form.EventSearchForm;
-import at.fhv.eventmangement.domain.exceptions.EventAlreadyExistsException;
-import at.fhv.eventmangement.domain.exceptions.EventCategoryNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventDateHasBookingsException;
-import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventOrganizerNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.MaxParticipantsBelowBookedPlacesException;
 import at.fhv.eventmangement.application.form.EventForm;
+import at.fhv.eventmangement.application.form.EventSearchForm;
+import at.fhv.eventmangement.domain.exceptions.*;
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -17,15 +12,26 @@ import java.util.UUID;
 
 public interface EventService {
     List<EventDto> getAllEvents();
+
     List<EventDto> getActiveEvents();
+
     List<EventDto> searchEvents(@Valid EventSearchForm searchForm);
+
     List<String> getEventLocation();
-    EventDto addEvent(@Valid EventForm form)
-            throws EventAlreadyExistsException, EventCategoryNotFoundException, EventOrganizerNotFoundException;
+
     EventDto getEventById(UUID id) throws EventNotFoundException;
-    EventUpdateResultDto updateEvent(UUID id, @Valid EventForm form)
+
+    List<EventDto> getManagedEvents(String username);
+
+    EventDto addEvent(@Valid EventForm form, String username)
+            throws EventAlreadyExistsException, EventCategoryNotFoundException, EventOrganizerNotFoundException;
+
+    EventDto getEventForEdit(UUID id, String username) throws EventNotFoundException, NotEventOwnerException;
+    
+    EventUpdateResultDto updateEvent(UUID id, @Valid EventForm form, String username)
             throws EventNotFoundException, EventAlreadyExistsException, EventCategoryNotFoundException,
-            EventDateHasBookingsException, MaxParticipantsBelowBookedPlacesException;
-    EventUpdateResultDto cancelEvent(UUID id)
-            throws EventNotFoundException, at.fhv.eventmangement.domain.exceptions.EventAlreadyCancelledException;
+            EventDateHasBookingsException, MaxParticipantsBelowBookedPlacesException, NotEventOwnerException;
+
+    EventUpdateResultDto cancelEvent(UUID id, String username)
+            throws EventNotFoundException, EventAlreadyCancelledException, NotEventOwnerException;
 }

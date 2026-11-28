@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/cssandjs/add_event.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/cssandjs/navigation.css}" rel="stylesheet"/>
+    <title>Create account</title>
+</head>
+<body>
+<div th:replace="~{fragments/navigation :: nav}"></div>
+<main class="event-form">
+    <h1>Create account</h1>
+    <p class="subtitle">The password needs at least 8 characters with upper- and lowercase letters, a number and a
+        special character.</p>
+
+    <form th:action="@{/admin/users/new}" th:object="${account}" method="post">
+        <div class="form-group">
+            <label for="username">Username *</label>
+            <input type="text" th:field="*{username}" autocomplete="off" required>
+            <span class="error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
+        </div>
+
+        <!-- Passwords on purpose WITHOUT th:field: after an error the typed password
+             is never written back into the HTML page -->
+        <div class="form-group">
+            <label for="password">Password *</label>
+            <input type="password" id="password" name="password" autocomplete="new-password" required>
+            <span class="error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="confirmPassword">Repeat password *</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" autocomplete="new-password" required>
+            <span class="error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></span>
+            <span class="error" th:if="${#fields.hasErrors('passwordConfirmed')}"
+                  th:errors="*{passwordConfirmed}"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="roleId">Role *</label>
+            <select th:field="*{roleId}" required>
+                <option value="">-- choose a role --</option>
+                <option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.name}"></option>
+            </select>
+            <span class="error" th:if="${#fields.hasErrors('roleId')}" th:errors="*{roleId}"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="customerId">Linked customer</label>
+            <select th:field="*{customerId}">
+                <option value="">-- none --</option>
+                <option th:each="c : ${customers}" th:value="${c.id}" th:text="${c.contactInfo.name}"></option>
+            </select>
+            <small>For customer accounts: bookings are made for this customer.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="organizerId">Linked event organizer</label>
+            <select th:field="*{organizerId}">
+                <option value="">-- none --</option>
+                <option th:each="o : ${organizers}" th:value="${o.id}" th:text="${o.contactInfo.name}"></option>
+            </select>
+            <small>For event provider accounts: new events belong to this organizer.</small>
+        </div>
+
+        <p class="field-error" th:each="err : ${#fields.globalErrors()}" th:text="${err}"></p>
+
+        <button type="submit">Create account</button>
+        <a th:href="@{/admin/users}">Cancel</a>
+    </form>
+</main>
+</body>
+</html>

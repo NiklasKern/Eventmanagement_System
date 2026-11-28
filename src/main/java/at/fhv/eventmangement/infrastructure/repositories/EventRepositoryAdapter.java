@@ -9,6 +9,7 @@ import at.fhv.eventmangement.infrastructure.mappers.EventEntityMapper;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -71,5 +72,10 @@ public class EventRepositoryAdapter implements EventRepository {
     @Override
     public List<String> findLocations(EventStatus status) {
         return jpa.findLocations(status);
+    }
+
+    @Override
+    public List<Event> findByEventOrganizerId(UUID organizerId) {
+        return jpa.findByEventOrganizerId(organizerId).stream().map(mapper::toDomain).toList();
     }
 }

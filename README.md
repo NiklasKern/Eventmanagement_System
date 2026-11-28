@@ -52,3 +52,17 @@ The database can be accessed in IntelliJ via the **Database** tool window (datab
 ### Pull Requests
 * **Rule:** Every Pull Request into `dev` or `main` must reach **at least 80 % coverage on the changed files** (classes in `src/main`). Untouched code does not count.
 * **Usage:** The workflow posts a "Code Coverage" comment on the PR with the coverage per changed file. Below 80 % the `build-deploy` check fails. Add tests and push again; the comment updates automatically.
+
+
+---
+### Login data (local)
+| Username   | Password        | Role           | Can do                                              |
+|------------|-----------------|----------------|-----------------------------------------------------|
+| `admin`    | `Admin#2026`    | Admin          | Everything, incl. role and user management          |
+| `provider` | `Provider#2026` | Event Provider | Create events, edit/cancel own events               |
+| `customer` | `Customer#2026` | Customer       | Browse and book events, invoices, My Bookings       |
+
+**Test profile:**
+| Username | Password         | Role  |
+|----------|------------------|-------|
+| `admin`  | `Test#Admin2026` | Admin |

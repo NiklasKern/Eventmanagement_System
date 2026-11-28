@@ -1,82 +1,87 @@
 plugins {
-	java
-	jacoco
-	id("org.springframework.boot") version "4.1.2"
-	id("io.spring.dependency-management") version "1.1.7"
+    java
+    jacoco
+    id("org.springframework.boot") version "4.1.2"
+    id("io.spring.dependency-management") version "1.1.7"
 }
 
 group = "at.fhv"
 version = "0.0.1-SNAPSHOT"
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
-	implementation("org.springframework.boot:spring-boot-starter-webmvc")
-	implementation("org.springframework.boot:spring-boot-starter-validation")
-	implementation("org.springframework.boot:spring-boot-starter-mail")
-	developmentOnly("org.springframework.boot:spring-boot-devtools")
-	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
-	runtimeOnly("org.postgresql:postgresql")
-	testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-thymeleaf-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-	testImplementation("org.springframework.boot:spring-boot-testcontainers")
-	testImplementation("org.testcontainers:testcontainers-junit-jupiter")
-	testImplementation("org.testcontainers:testcontainers-postgresql")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-mail")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.85.2")
+	implementation("org.springframework.boot:spring-boot-starter-security")
+	testImplementation("org.springframework.boot:spring-boot-starter-security-test")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    testImplementation("org.springframework.boot:spring-boot-starter-security-test")
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+    runtimeOnly("org.postgresql:postgresql")
+    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-thymeleaf-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation("org.springframework.boot:spring-boot-testcontainers")
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter")
+    testImplementation("org.testcontainers:testcontainers-postgresql")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-	implementation("org.mapstruct:mapstruct:1.6.3")
-	annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
+    implementation("org.mapstruct:mapstruct:1.6.3")
+    annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
 
-	compileOnly("org.projectlombok:lombok")
-	annotationProcessor("org.projectlombok:lombok")
-	annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
 
 
 }
 
 tasks.withType<Test> {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
 
 // Classes without own logic, not counted for coverage
 val coverageExcludes = listOf(
-	"**/EventmangementApplication*",
-	"**/EventmanagementApplicationRunner*",
-	"**/application/dto/**",
-	"**/application/form/**",
-	"**/infrastructure/entities/**",
-	"**/domain/exceptions/**",
-	"**/*MapperImpl*",
+    "**/EventmangementApplication*",
+    "**/EventmanagementApplicationRunner*",
+    "**/application/dto/**",
+    "**/application/form/**",
+    "**/infrastructure/entities/**",
+    "**/domain/exceptions/**",
+    "**/*MapperImpl*",
 )
 
 tasks.test {
-	finalizedBy(tasks.jacocoTestReport)
+    finalizedBy(tasks.jacocoTestReport)
 }
 
 tasks.jacocoTestReport {
-	dependsOn(tasks.test)
-	reports {
-		xml.required = true
-		html.required = true
-	}
-	classDirectories.setFrom(
-		files(classDirectories.files.map { fileTree(it) { exclude(coverageExcludes) } })
-	)
+    dependsOn(tasks.test)
+    reports {
+        xml.required = true
+        html.required = true
+    }
+    classDirectories.setFrom(
+        files(classDirectories.files.map { fileTree(it) { exclude(coverageExcludes) } })
+    )
 }
 tasks.bootJar {
-	archiveFileName.set("app.jar")
+    archiveFileName.set("app.jar")
 }
 tasks.jar {
-	enabled = false
+    enabled = false
 }

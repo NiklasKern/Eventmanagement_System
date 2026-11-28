@@ -81,9 +81,9 @@ class InvoiceRepositoryAdapterIntegrationTest {
         Invoice saved = invoiceRepository.save(newInvoice(UUID.randomUUID()));
         Invoice invoice = reload(saved.getId());
 
-        invoice.requestChanges(new ContactInfo("Firma GmbH", "Hauptplatz 1", "office@firma.at"), PaymentMethod.CARD,
-                List.of(InvoiceItem.withStandardVat("Hike", 1, new BigDecimal("100.00")),
-                        InvoiceItem.withStandardVat("Lunch", 2, new BigDecimal("20.00"))));
+        invoice.requestChanges(new ContactInfo("Firma GmbH", "Hauptplatz 1", "office@firma.at"), PaymentMethod.CARD);
+        invoice.setItems(List.of(InvoiceItem.withStandardVat("Hike", 1, new BigDecimal("100.00")),
+                InvoiceItem.withStandardVat("Lunch", 2, new BigDecimal("20.00"))));
         invoiceRepository.save(invoice);
         Invoice found = reload(saved.getId());
 

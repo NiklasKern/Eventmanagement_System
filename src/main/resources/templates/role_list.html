@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/cssandjs/my_events.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/cssandjs/role_manager.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/cssandjs/navigation.css}" rel="stylesheet"/>
+    <title>Roles</title>
+</head>
+<body>
+<div th:replace="~{fragments/navigation :: nav}"></div>
+
+<main class="AppContent">
+    <div class="ContentContainer">
+        <div class="PageTitle">
+            <div class="PageTitleText">
+                <span class="Eyebrow">Administration</span>
+                <h1>Roles</h1>
+                <p>Create roles and choose which permissions they have.</p>
+            </div>
+            <a class="CreateEventButton" th:href="@{/admin/roles/new}">
+                <span class="Plus">+</span>
+                <span>Create role</span>
+            </a>
+        </div>
+
+        <div class="FlashMessage FlashSuccess" role="status"
+             th:if="${successMessage}" th:text="${successMessage}">Saved</div>
+        <div class="FlashMessage FlashError" role="alert"
+             th:if="${errorMessage}" th:text="${errorMessage}">Error</div>
+
+        <div class="TableWrapper">
+            <table class="EventTable">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th class="Num">Permissions</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${roles}">
+                    <td>
+                        <span class="EventName" th:text="${r.name}">Admin</span>
+                        <span class="Badge" th:if="${r.builtIn}">built-in</span>
+                    </td>
+                    <td th:text="${r.description} ?: '–'">Description</td>
+                    <td class="Num" th:text="${#sets.size(r.permissions)}">3</td>
+                    <td><a th:href="@{/admin/roles/{id}/edit(id=${r.id})}">Edit</a></td>
+                    <td>
+                        <!-- built-in roles cannot be deleted, so no button -->
+                        <form th:unless="${r.builtIn}" th:action="@{/admin/roles/{id}/delete(id=${r.id})}"
+                              method="post" class="InlineForm">
+                            <button type="submit" class="LinkButton">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

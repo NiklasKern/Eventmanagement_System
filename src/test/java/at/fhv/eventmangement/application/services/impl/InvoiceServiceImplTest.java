@@ -6,21 +6,16 @@ import at.fhv.eventmangement.application.dto.InvoiceDto;
 import at.fhv.eventmangement.application.dto.InvoiceReviewDto;
 import at.fhv.eventmangement.application.form.EventBookingForm;
 import at.fhv.eventmangement.application.form.InvoiceForm;
-import at.fhv.eventmangement.application.form.InvoiceItemForm;
-import at.fhv.eventmangement.application.mappers.ContactInfoMapperImpl;
-import at.fhv.eventmangement.application.mappers.EventBookingMapper;
-import at.fhv.eventmangement.application.mappers.EventMapper;
-import at.fhv.eventmangement.application.mappers.InvoiceMapper;
-import at.fhv.eventmangement.application.mappers.InvoiceMapperImpl;
+import at.fhv.eventmangement.application.mappers.*;
 import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.InvoiceNotEditableException;
 import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
 import at.fhv.eventmangement.domain.model.*;
-import at.fhv.eventmangement.domain.repositories.CustomerRepository;
 import at.fhv.eventmangement.domain.repositories.EventBookingRepository;
 import at.fhv.eventmangement.domain.repositories.EventRepository;
 import at.fhv.eventmangement.domain.repositories.InvoiceRepository;
+import at.fhv.eventmangement.domain.repositories.UserAccountRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,10 +33,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class InvoiceServiceImplTest {
@@ -53,7 +45,7 @@ class InvoiceServiceImplTest {
     @Mock
     private EventBookingRepository eventBookingRepository;
     @Mock
-    private CustomerRepository customerRepository;
+    private UserAccountRepository userAccountRepository;
     @Mock
     private EventBookingMapper eventBookingMapper;
     @Mock
@@ -64,13 +56,21 @@ class InvoiceServiceImplTest {
     private final UUID eventId = UUID.randomUUID();
     private final UUID dateId = UUID.randomUUID();
     private Event event;
+    private final Customer anna = Customer.builder()
+            .id(UUID.randomUUID())
+            .contactInfo(new ContactInfo("Anna", "Street 1", "anna@example.com"))
+            .build();
+    private final Customer bernd = Customer.builder()
+            .id(UUID.randomUUID())
+            .contactInfo(new ContactInfo("Bernd", "Street 2", "bernd@example.com"))
+            .build();
 
     @BeforeEach
     void setUp() {
         InvoiceMapperImpl invoiceMapper = new InvoiceMapperImpl();
         ReflectionTestUtils.setField(invoiceMapper, "contactInfoMapper", new ContactInfoMapperImpl());
         invoiceService = new InvoiceServiceImpl(invoiceRepository, eventRepository, eventBookingRepository,
-                customerRepository, invoiceMapper, eventBookingMapper, eventMapper);
+                userAccountRepository, invoiceMapper, eventBookingMapper, eventMapper);
 
         EventDate date = EventDate.builder()
                 .id(dateId)
@@ -87,8 +87,14 @@ class InvoiceServiceImplTest {
 
     private void eventAndCustomerExist() {
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
-        when(customerRepository.findByContactInfoName(any())).thenReturn(Optional.of(Customer.builder()
-                .contactInfo(new ContactInfo("Anna", "Street 1", "anna@example.com")).build()));
+        loggedIn(Customer.builder()
+                .contactInfo(new ContactInfo("Anna", "Street 1", "anna@example.com")).build());
+    }
+
+    // The account of the logged-in user "anna", linked to the given customer (or none)
+    private void loggedIn(Customer linkedCustomer) {
+        when(userAccountRepository.findByUsername("anna")).thenReturn(Optional.of(UserAccount.builder()
+                .username("anna").enabled(true).customer(linkedCustomer).build()));
     }
 
     private Invoice interimInvoice(UUID id) {
@@ -98,10 +104,26 @@ class InvoiceServiceImplTest {
                 .setContactInfo(new ContactInfo("Anna", "Street 1", "anna@example.com"));
     }
 
-    private InvoiceForm changeForm(List<InvoiceItemForm> items) {
+    private Invoice invoiceOf(Customer bookingCustomer, UUID id) {
+        Invoice invoice = interimInvoice(id);
+        when(invoiceRepository.findById(id)).thenReturn(Optional.of(invoice));
+        loggedIn(anna);
+        when(eventBookingRepository.findById(invoice.getBookingId())).thenReturn(Optional.of(EventBooking.builder()
+                .id(invoice.getBookingId())
+                .customer(bookingCustomer)
+                .eventDate(EventDate.builder().event(event).build())
+                .build()));
+        return invoice;
+    }
+
+    private void savingWorks() {
+        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
+    }
+
+    private InvoiceForm changeForm() {
         return InvoiceForm.builder()
                 .name(" Firma GmbH ").address("Hauptplatz 1").email("office@firma.at")
-                .paymentMethod(PaymentMethod.CARD).items(items).build();
+                .paymentMethod(PaymentMethod.CARD).build();
     }
 
     @Test
@@ -111,7 +133,7 @@ class InvoiceServiceImplTest {
                 .eventDateId(dateId).eventBookingType(EventBookingType.GROUP).places(3)
                 .paymentMethod(PaymentMethod.CARD).build();
 
-        InvoiceDto preview = invoiceService.previewInvoice(eventId, form);
+        InvoiceDto preview = invoiceService.previewInvoice(eventId, form, "anna");
 
         assertThat(preview.id()).isNull();
         assertThat(preview.invoiceStatus()).isEqualTo(InvoiceStatus.INTERM);
@@ -136,7 +158,7 @@ class InvoiceServiceImplTest {
         EventBookingForm form = EventBookingForm.builder()
                 .eventBookingType(EventBookingType.INDIVIDUAL).places(7).build();
 
-        InvoiceDto preview = invoiceService.previewInvoice(eventId, form);
+        InvoiceDto preview = invoiceService.previewInvoice(eventId, form, "anna");
 
         assertThat(preview.items()).singleElement().satisfies(item -> {
             assertThat(item.quantity()).isEqualTo(1);
@@ -150,25 +172,26 @@ class InvoiceServiceImplTest {
         UUID unknown = UUID.randomUUID();
         when(eventRepository.findById(unknown)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> invoiceService.previewInvoice(unknown, new EventBookingForm()))
+        assertThatThrownBy(() -> invoiceService.previewInvoice(unknown, new EventBookingForm(), "anna"))
                 .isInstanceOf(EventNotFoundException.class);
     }
 
     @Test
-    void preview_missingCustomer_throws() {
+    void preview_accountWithoutCustomer_throws() {
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
-        when(customerRepository.findByContactInfoName(any())).thenReturn(Optional.empty());
+        loggedIn(null);
 
-        assertThatThrownBy(() -> invoiceService.previewInvoice(eventId, new EventBookingForm()))
-                .isInstanceOf(CustomerNotFoundException.class);
+        assertThatThrownBy(() -> invoiceService.previewInvoice(eventId, new EventBookingForm(), "anna"))
+                .isInstanceOf(CustomerNotFoundException.class)
+                .hasMessage("Your account is not linked to a customer");
     }
 
     @Test
-    void getInvoice_returnsDtoWithTotals() throws Exception {
+    void getInvoice_ownInvoice_returnsDtoWithTotals() throws Exception {
         UUID id = UUID.randomUUID();
-        when(invoiceRepository.findById(id)).thenReturn(Optional.of(interimInvoice(id)));
+        invoiceOf(anna, id);
 
-        InvoiceDto dto = invoiceService.getInvoice(id);
+        InvoiceDto dto = invoiceService.getInvoice(id, "anna");
 
         assertThat(dto.id()).isEqualTo(id);
         assertThat(dto.grossTotal()).isEqualByComparingTo("240.00");
@@ -180,7 +203,25 @@ class InvoiceServiceImplTest {
         UUID id = UUID.randomUUID();
         when(invoiceRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> invoiceService.getInvoice(id)).isInstanceOf(InvoiceNotFoundException.class);
+        assertThatThrownBy(() -> invoiceService.getInvoice(id, "anna")).isInstanceOf(InvoiceNotFoundException.class);
+    }
+
+    @Test
+    void getInvoice_invoiceOfAnotherCustomer_isNotFound() {
+        UUID id = UUID.randomUUID();
+        invoiceOf(bernd, id);
+
+        assertThatThrownBy(() -> invoiceService.getInvoice(id, "anna")).isInstanceOf(InvoiceNotFoundException.class);
+    }
+
+    @Test
+    void getInvoice_accountWithoutCustomer_isNotFound() {
+        UUID id = UUID.randomUUID();
+        when(invoiceRepository.findById(id)).thenReturn(Optional.of(interimInvoice(id)));
+        loggedIn(null);
+
+        assertThatThrownBy(() -> invoiceService.getInvoice(id, "anna")).isInstanceOf(InvoiceNotFoundException.class);
+        verify(eventBookingRepository, never()).findById(any());
     }
 
     @Test
@@ -203,19 +244,13 @@ class InvoiceServiceImplTest {
     @Test
     void getInvoiceReview_containsInvoiceBookingAndEvent() throws Exception {
         UUID id = UUID.randomUUID();
-        Invoice invoice = interimInvoice(id);
-        EventBooking booking = EventBooking.builder()
-                .id(invoice.getBookingId())
-                .eventDate(EventDate.builder().event(event).build())
-                .build();
+        invoiceOf(anna, id);
         EventBookingDto bookingDto = mock(EventBookingDto.class);
         EventDto eventDto = mock(EventDto.class);
-        when(invoiceRepository.findById(id)).thenReturn(Optional.of(invoice));
-        when(eventBookingRepository.findById(invoice.getBookingId())).thenReturn(Optional.of(booking));
-        when(eventBookingMapper.toDto(booking)).thenReturn(bookingDto);
+        when(eventBookingMapper.toDto(any(EventBooking.class))).thenReturn(bookingDto);
         when(eventMapper.toDto(event)).thenReturn(eventDto);
 
-        InvoiceReviewDto review = invoiceService.getInvoiceReview(id);
+        InvoiceReviewDto review = invoiceService.getInvoiceReview(id, "anna");
 
         assertThat(review.invoice().id()).isEqualTo(id);
         assertThat(review.booking()).isSameAs(bookingDto);
@@ -227,49 +262,59 @@ class InvoiceServiceImplTest {
         UUID id = UUID.randomUUID();
         Invoice invoice = interimInvoice(id);
         when(invoiceRepository.findById(id)).thenReturn(Optional.of(invoice));
+        loggedIn(anna);
         when(eventBookingRepository.findById(invoice.getBookingId())).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> invoiceService.getInvoiceReview(id)).isInstanceOf(InvoiceNotFoundException.class);
+        assertThatThrownBy(() -> invoiceService.getInvoiceReview(id, "anna"))
+                .isInstanceOf(InvoiceNotFoundException.class);
     }
 
     @Test
-    void requestChanges_withItems_replacesItemsAndSaves() throws Exception {
+    void getInvoiceReview_invoiceOfAnotherCustomer_isNotFound() {
         UUID id = UUID.randomUUID();
-        when(invoiceRepository.findById(id)).thenReturn(Optional.of(interimInvoice(id)));
-        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
+        invoiceOf(bernd, id);
 
-        InvoiceDto dto = invoiceService.requestChanges(id, changeForm(List.of(
-                new InvoiceItemForm(" Hike ", 1, new BigDecimal("50.00"), 10))));
+        assertThatThrownBy(() -> invoiceService.getInvoiceReview(id, "anna"))
+                .isInstanceOf(InvoiceNotFoundException.class);
+        verify(eventBookingMapper, never()).toDto(any(EventBooking.class));
+    }
+
+    @Test
+    void requestChanges_changesAddressAndPayment_keepsPricesFromBooking() throws Exception {
+        UUID id = UUID.randomUUID();
+        invoiceOf(anna, id);
+        savingWorks();
+
+        InvoiceDto dto = invoiceService.requestChanges(id, changeForm(), "anna");
 
         ArgumentCaptor<Invoice> saved = ArgumentCaptor.forClass(Invoice.class);
         verify(invoiceRepository).save(saved.capture());
         assertThat(saved.getValue().getContactInfo().getName()).isEqualTo("Firma GmbH");
-        assertThat(saved.getValue().getItems()).singleElement()
-                .satisfies(item -> assertThat(item.getDescription()).isEqualTo("Hike"));
-        assertThat(dto.grossTotal()).isEqualByComparingTo("55.00");
-        assertThat(dto.advancePayment()).isEqualByComparingTo("16.50");
+        assertThat(saved.getValue().getPaymentMethod()).isEqualTo(PaymentMethod.CARD);
+        assertThat(saved.getValue().getItems()).singleElement().satisfies(item -> {
+            assertThat(item.getQuantity()).isEqualTo(2);
+            assertThat(item.getUnitPrice()).isEqualByComparingTo("100.00");
+        });
+        assertThat(dto.grossTotal()).isEqualByComparingTo("240.00");
+        assertThat(dto.advancePayment()).isEqualByComparingTo("72.00");
     }
 
     @Test
-    void requestChanges_withoutItems_keepsItems() throws Exception {
+    void requestChanges_invoiceOfAnotherCustomer_isNotFoundAndNotSaved() {
         UUID id = UUID.randomUUID();
-        when(invoiceRepository.findById(id)).thenReturn(Optional.of(interimInvoice(id)));
-        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
+        invoiceOf(bernd, id);
 
-        InvoiceDto dto = invoiceService.requestChanges(id, changeForm(null));
-
-        assertThat(dto.contactInfo().address()).isEqualTo("Hauptplatz 1");
-        assertThat(dto.grossTotal()).isEqualByComparingTo("240.00");
+        assertThatThrownBy(() -> invoiceService.requestChanges(id, changeForm(), "anna"))
+                .isInstanceOf(InvoiceNotFoundException.class);
+        verify(invoiceRepository, never()).save(any());
     }
 
     @Test
     void requestChanges_finalInvoice_throwsAndDoesNotSave() throws Exception {
         UUID id = UUID.randomUUID();
-        Invoice invoice = interimInvoice(id);
-        invoice.confirm();
-        when(invoiceRepository.findById(id)).thenReturn(Optional.of(invoice));
+        invoiceOf(anna, id).confirm();
 
-        assertThatThrownBy(() -> invoiceService.requestChanges(id, changeForm(null)))
+        assertThatThrownBy(() -> invoiceService.requestChanges(id, changeForm(), "anna"))
                 .isInstanceOf(InvoiceNotEditableException.class);
         verify(invoiceRepository, never()).save(any());
     }
@@ -277,22 +322,31 @@ class InvoiceServiceImplTest {
     @Test
     void confirm_savesFinalInvoice() throws Exception {
         UUID id = UUID.randomUUID();
-        when(invoiceRepository.findById(id)).thenReturn(Optional.of(interimInvoice(id)));
-        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
+        invoiceOf(anna, id);
+        savingWorks();
 
-        InvoiceDto dto = invoiceService.confirm(id);
+        InvoiceDto dto = invoiceService.confirm(id, "anna");
 
         assertThat(dto.invoiceStatus()).isEqualTo(InvoiceStatus.FINAL);
         assertThat(dto.editable()).isFalse();
     }
 
     @Test
+    void confirm_invoiceOfAnotherCustomer_isNotFoundAndNotSaved() {
+        UUID id = UUID.randomUUID();
+        invoiceOf(bernd, id);
+
+        assertThatThrownBy(() -> invoiceService.confirm(id, "anna")).isInstanceOf(InvoiceNotFoundException.class);
+        verify(invoiceRepository, never()).save(any());
+    }
+
+    @Test
     void confirmWithChanges_savesChangesAndFinalInvoiceInOneSave() throws Exception {
         UUID id = UUID.randomUUID();
-        when(invoiceRepository.findById(id)).thenReturn(Optional.of(interimInvoice(id)));
-        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(inv -> inv.getArgument(0));
+        invoiceOf(anna, id);
+        savingWorks();
 
-        InvoiceDto dto = invoiceService.confirm(id, changeForm(null));
+        InvoiceDto dto = invoiceService.confirm(id, changeForm(), "anna");
 
         verify(invoiceRepository).save(any(Invoice.class));
         assertThat(dto.invoiceStatus()).isEqualTo(InvoiceStatus.FINAL);
@@ -301,13 +355,21 @@ class InvoiceServiceImplTest {
     }
 
     @Test
+    void confirmWithChanges_invoiceOfAnotherCustomer_isNotFoundAndNotSaved() {
+        UUID id = UUID.randomUUID();
+        invoiceOf(bernd, id);
+
+        assertThatThrownBy(() -> invoiceService.confirm(id, changeForm(), "anna"))
+                .isInstanceOf(InvoiceNotFoundException.class);
+        verify(invoiceRepository, never()).save(any());
+    }
+
+    @Test
     void confirmWithChanges_finalInvoice_throwsAndDoesNotSave() throws Exception {
         UUID id = UUID.randomUUID();
-        Invoice invoice = interimInvoice(id);
-        invoice.confirm();
-        when(invoiceRepository.findById(id)).thenReturn(Optional.of(invoice));
+        invoiceOf(anna, id).confirm();
 
-        assertThatThrownBy(() -> invoiceService.confirm(id, changeForm(null)))
+        assertThatThrownBy(() -> invoiceService.confirm(id, changeForm(), "anna"))
                 .isInstanceOf(InvoiceNotEditableException.class);
         verify(invoiceRepository, never()).save(any());
     }
@@ -317,7 +379,7 @@ class InvoiceServiceImplTest {
         UUID id = UUID.randomUUID();
         when(invoiceRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> invoiceService.confirm(id)).isInstanceOf(InvoiceNotFoundException.class);
+        assertThatThrownBy(() -> invoiceService.confirm(id, "anna")).isInstanceOf(InvoiceNotFoundException.class);
     }
 
     @Test
@@ -330,6 +392,5 @@ class InvoiceServiceImplTest {
         assertThat(form.getName()).isEqualTo("Anna");
         assertThat(form.getEmail()).isEqualTo("anna@example.com");
         assertThat(form.getPaymentMethod()).isEqualTo(PaymentMethod.CARD);
-        assertThat(form.getItems()).isNull();
     }
 }

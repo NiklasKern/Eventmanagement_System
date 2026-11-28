@@ -259,6 +259,10 @@ a, a:hover {
     min-width: 160px;
 }
 
+.FilterSearchButton {
+    align-self: flex-end;
+}
+
 .ExtendedSearch summary {
     cursor: pointer;
     font-weight: 600;
@@ -271,4 +275,41 @@ a, a:hover {
 .input-error {
     border-color: #b3261e;
     box-shadow: 0 0 0 1px #b3261e;
+}
+
+.AccountArea {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.LogoutForm {
+    margin: 0;
+}
+
+.LogoutButton {
+    padding: 8px 14px;
+    border: 1px solid var(--color-border, #d0d5dd);
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.LogoutButton:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.AdminNav {
+    display: flex;
+    gap: 16px;
+}
+
+.AdminNav a {
+    color: inherit;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.AdminNav a:hover {
+    text-decoration: underline;
 }

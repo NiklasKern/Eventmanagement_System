@@ -1,6 +1,5 @@
 package at.fhv.eventmangement.application.services.impl;
 
-import at.fhv.eventmangement.EventmanagementApplicationRunner;
 import at.fhv.eventmangement.application.dto.EventBookingDto;
 import at.fhv.eventmangement.application.form.EventBookingForm;
 import at.fhv.eventmangement.application.mappers.EventBookingMapper;
@@ -12,47 +11,51 @@ import at.fhv.eventmangement.domain.exceptions.EventDateNotFoundException;
 import at.fhv.eventmangement.domain.exceptions.EventNotBookableException;
 import at.fhv.eventmangement.domain.exceptions.NotEnoughPlacesException;
 import at.fhv.eventmangement.domain.model.*;
-import at.fhv.eventmangement.domain.repositories.CustomerRepository;
 import at.fhv.eventmangement.domain.repositories.EventBookingRepository;
 import at.fhv.eventmangement.domain.repositories.EventDateRepository;
 import at.fhv.eventmangement.domain.repositories.InvoiceRepository;
+import at.fhv.eventmangement.domain.repositories.UserAccountRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class EventBookingServiceImpl implements EventBookingService {
 
     private final EventDateRepository eventDateRepository;
     private final EventBookingRepository eventBookingRepository;
-    private final CustomerRepository customerRepository;
+    private final UserAccountRepository userAccountRepository;
+    private final InvoiceRepository invoiceRepository;
     private final BookingNumberGenerator bookingNumberGenerator;
     private final EventBookingMapper eventBookingMapper;
-    private final InvoiceRepository invoiceRepository;
     private final NotificationService notificationService;
 
     public EventBookingServiceImpl(EventDateRepository eventDateRepository,
                                    EventBookingRepository eventBookingRepository,
-                                   CustomerRepository customerRepository,
+                                   UserAccountRepository userAccountRepository,
+                                   InvoiceRepository invoiceRepository,
                                    BookingNumberGenerator bookingNumberGenerator,
                                    EventBookingMapper eventBookingMapper,
-                                   NotificationService notificationService,
-                                   InvoiceRepository invoiceRepository) {
+                                   NotificationService notificationService) {
         this.eventDateRepository = eventDateRepository;
         this.eventBookingRepository = eventBookingRepository;
-        this.customerRepository = customerRepository;
+        this.userAccountRepository = userAccountRepository;
+        this.invoiceRepository = invoiceRepository;
         this.bookingNumberGenerator = bookingNumberGenerator;
         this.eventBookingMapper = eventBookingMapper;
-        this.invoiceRepository = invoiceRepository;
         this.notificationService = notificationService;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public EventBookingDto book(UUID eventId, EventBookingForm form)
+    public EventBookingDto book(UUID eventId, EventBookingForm form, String username)
             throws EventDateNotFoundException, EventNotBookableException, NotEnoughPlacesException, CustomerNotFoundException {
 
         EventDate eventDate = eventDateRepository.findById(form.getEventDateId())
@@ -76,7 +79,7 @@ public class EventBookingServiceImpl implements EventBookingService {
         EventBooking booking = EventBooking.builder()
                 .bookingNumber(bookingNumberGenerator.next())
                 .eventDate(eventDate)
-                .customer(currentCustomer())
+                .customer(currentCustomer(username))
                 .eventBookingType(form.getEventBookingType())
                 .places(places)
                 .price(event.getPrice().multiply(BigDecimal.valueOf(places)))
@@ -86,8 +89,10 @@ public class EventBookingServiceImpl implements EventBookingService {
 
         EventBooking saved = eventBookingRepository.save(booking);
 
+        // Interim invoice for the check-out review
         invoiceRepository.save(Invoice.createInterimFor(booking).setBookingId(saved.getId()));
 
+        // Booking confirmation email (a failed email does not cancel the booking)
         notificationService.notifyBookingConfirmed(saved.getCustomer(), saved);
 
         return eventBookingMapper.toDto(saved);
@@ -103,36 +108,47 @@ public class EventBookingServiceImpl implements EventBookingService {
         return Arrays.stream(PaymentMethod.values()).map(Enum::name).toList();
     }
 
-    // Only until there is a login
-    //every booking belongs to the default customer!!
-    private Customer currentCustomer() throws CustomerNotFoundException {
-        return customerRepository.findByContactInfoName(EventmanagementApplicationRunner.DEFAULT_CUSTOMER)
-                .orElseThrow(CustomerNotFoundException::new);
-    }
-
     @Override
-    public List<EventBookingDto> getBookingsForCurrentCustomer() throws CustomerNotFoundException {
-        Customer customer = currentCustomer();
+    @Transactional(readOnly = true)
+    public List<EventBookingDto> getBookingsForCurrentCustomer(String username) throws CustomerNotFoundException {
+        Customer customer = currentCustomer(username);
         return eventBookingRepository.findByCustomerId(customer.getId()).stream()
                 .map(eventBookingMapper::toDto)
                 .toList();
     }
 
     @Override
-    public Optional<EventBookingDto> getBookingByNumber(String bookingNumber) {
+    @Transactional(readOnly = true)
+    public Optional<EventBookingDto> getBookingByNumber(String bookingNumber, String username)
+            throws CustomerNotFoundException {
+        UUID customerId = currentCustomer(username).getId();
         return eventBookingRepository.findByBookingNumber(bookingNumber)
+                // a booking of another customer is treated like a booking that does not exist
+                .filter(booking -> booking.getCustomer() != null
+                        && customerId.equals(booking.getCustomer().getId()))
                 .map(eventBookingMapper::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<EventBookingDto> getNextBookingForCurrentCustomer() throws CustomerNotFoundException {
+    public Optional<EventBookingDto> getNextBookingForCurrentCustomer(String username) throws CustomerNotFoundException {
         LocalDateTime now = LocalDateTime.now();
-        return eventBookingRepository.findByCustomerId(currentCustomer().getId()).stream()
+        return eventBookingRepository.findByCustomerId(currentCustomer(username).getId()).stream()
                 .filter(booking -> booking.getEventBookingStatus() != EventBookingStatus.CANCELLED
                         && booking.getEventBookingStatus() != EventBookingStatus.EXPIRED)
-                .filter(booking -> booking.getEventDate() != null && booking.getEventDate().getStartTime().isAfter(now))
+                .filter(booking -> booking.getEventDate() != null
+                        && booking.getEventDate().getStartTime().isAfter(now))
                 .min(Comparator.comparing(booking -> booking.getEventDate().getStartTime()))
                 .map(eventBookingMapper::toDto);
+    }
+
+    // The booking belongs to the customer linked to the logged-in account
+    private Customer currentCustomer(String username) throws CustomerNotFoundException {
+        UserAccount account = userAccountRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalStateException("No account for logged-in user " + username));
+        if (account.getCustomer() == null) {
+            throw new CustomerNotFoundException("Your account is not linked to a customer");
+        }
+        return account.getCustomer();
     }
 }

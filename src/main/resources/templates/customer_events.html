@@ -23,7 +23,8 @@
                 <p th:if="${searched}" th:text="${#lists.size(events)} + ' event(s) found'">3 event(s) found</p>
                 <p th:unless="${searched}">Choose an event and book your places.</p>
             </div>
-            <a class="CreateEventButton" th:href="@{/customer/bookings}">My Bookings</a>
+            <a class="CreateEventButton" th:href="@{/customer/bookings}"
+               th:if="${#sets.contains(permissions, 'VIEW_OWN_BOOKINGS')}">My Bookings</a>
         </div>
 
         <form class="SearchBar" th:action="@{/customer/events/search}" th:object="${search}" method="get">
@@ -72,7 +73,7 @@
                         <label for="priceFrom">Price from (€)</label>
                         <input type="number" th:field="*{priceFrom}" th:errorclass="input-error" min="0" step="0.01">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="priceTo">Price to (€)</label>
                         <input type="number" th:field="*{priceTo}" th:errorclass="input-error" min="0" step="0.01">
@@ -145,7 +146,10 @@
                     <td th:text="${e.eventOrganizer != null} ? ${e.eventOrganizer.contactInfo.name} : '–'">Organizer
                     </td>
                     <td>
-                        <a class="CreateEventButton" th:href="@{/customer/event/{id}/book(id=${e.id})}">Book</a>
+                        <!-- Not logged in: the link leads to the login and afterwards straight to the booking dialog -->
+                        <a class="CreateEventButton" th:href="@{/customer/event/{id}/book(id=${e.id})}"
+                           th:if="${currentUser == null or #sets.contains(permissions, 'BOOK_EVENTS')}"
+                           th:text="${currentUser == null} ? 'Log in to book' : 'Book'">Book</a></td>
                     </td>
                 </tr>
                 </tbody>

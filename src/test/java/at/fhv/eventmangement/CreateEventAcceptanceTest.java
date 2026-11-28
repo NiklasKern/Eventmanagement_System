@@ -4,17 +4,19 @@ import at.fhv.eventmangement.application.dto.EventCategoryDto;
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.form.EventCategoryForm;
 import at.fhv.eventmangement.application.form.EventOrganizerForm;
-import at.fhv.eventmangement.application.services.EventCategoryService;
-import at.fhv.eventmangement.application.services.EventOrganizerService;
-import at.fhv.eventmangement.application.services.EventService;
+import at.fhv.eventmangement.application.form.UserAccountForm;
+import at.fhv.eventmangement.application.services.*;
 import at.fhv.eventmangement.domain.exceptions.EventCategoryAlreadyExistsException;
 import at.fhv.eventmangement.domain.exceptions.EventOrganizerAlreadyExistsException;
+import at.fhv.eventmangement.domain.exceptions.UserAccountAlreadyExistsException;
+import at.fhv.eventmangement.domain.model.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -25,23 +27,21 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/**
- * Test of the "Create Event" user story
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 @ActiveProfiles("test")
+// Logged in as the real account provider (created below), linked to the default organizer
+@WithMockUser(username = CreateEventAcceptanceTest.PROVIDER, authorities = {"EVENT_CREATE"})
 class CreateEventAcceptanceTest {
 
+    static final String PROVIDER = "provider";
+    private static final String PROVIDER_PASSWORD = "Provider#2026";
     private static final String CATEGORY = "Hiking";
 
     @Autowired
@@ -52,22 +52,34 @@ class CreateEventAcceptanceTest {
     private EventCategoryService categoryService;
     @Autowired
     private EventOrganizerService organizerService;
+    @Autowired
+    private UserAccountService userAccountService;
+    @Autowired
+    private RoleService roleService;
 
     private UUID categoryId;
 
     @BeforeEach
     void ensureReferenceData() throws Exception {
-        // all tests share one database: only the first test creates the reference data
         try {
             organizerService.addOrganizer(new EventOrganizerForm(
                     EventmanagementApplicationRunner.DEFAULT_ORGANIZER, "Street 1", "test@test.com"));
         } catch (EventOrganizerAlreadyExistsException alreadyThere) {
-            // created by an earlier test
         }
         try {
             categoryService.addCategory(new EventCategoryForm(CATEGORY));
         } catch (EventCategoryAlreadyExistsException alreadyThere) {
-            // created by an earlier test
+        }
+
+        try {
+            userAccountService.createAccount(UserAccountForm.builder()
+                    .username(PROVIDER)
+                    .password(PROVIDER_PASSWORD)
+                    .confirmPassword(PROVIDER_PASSWORD)
+                    .roleId(providerRoleId())
+                    .organizerId(defaultOrganizerId())
+                    .build());
+        } catch (UserAccountAlreadyExistsException alreadyThere) {
         }
 
         categoryId = categoryService.getAllEventCategories().stream()
@@ -75,6 +87,18 @@ class CreateEventAcceptanceTest {
                 .map(EventCategoryDto::id)
                 .findFirst()
                 .orElseThrow();
+    }
+
+    private UUID providerRoleId() {
+        return roleService.getAllRoles().stream()
+                .filter(role -> role.name().equals(Role.EVENT_PROVIDER))
+                .findFirst().orElseThrow().id();
+    }
+
+    private UUID defaultOrganizerId() {
+        return organizerService.getAllOrganizers().stream()
+                .filter(organizer -> organizer.contactInfo().name().equals(EventmanagementApplicationRunner.DEFAULT_ORGANIZER))
+                .findFirst().orElseThrow().id();
     }
 
     private static String uniqueName() {
@@ -86,7 +110,7 @@ class CreateEventAcceptanceTest {
     }
 
     private MockHttpServletRequestBuilder postWithParticipants(String name, int min, int max) {
-        return post("/event/manage/create")
+        return post("/event/manage/create").with(csrf())
                 .param("name", name)
                 .param("description", "A nice walk")
                 .param("location", "Dornbirn")
@@ -102,31 +126,26 @@ class CreateEventAcceptanceTest {
     void createEvent_fullFlow_fromButtonToUpdatedList() throws Exception {
         String name = uniqueName();
 
-        // 1. Event list offers the "Create event" button
         mockMvc.perform(get("/events"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("href=\"/event/manage/create\"")));
 
-        // 2. The button opens the "Create Event" form
         mockMvc.perform(get("/event/manage/create"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("add_event"))
                 .andExpect(content().string(containsString(CATEGORY)));
 
-        // 3. Submitting a valid form saves and redirects with the success message
         MvcResult result = mockMvc.perform(validPost(name))
                 .andExpect(redirectedUrl("/events"))
                 .andExpect(flash().attribute("successMessage", "Event successfully saved"))
                 .andReturn();
 
-        // 4. The list after the redirect shows the message and the new event
         mockMvc.perform(get("/events").flashAttrs(result.getFlashMap()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Event successfully saved")))
                 .andExpect(content().string(containsString(name)))
                 .andExpect(content().string(containsString(CATEGORY)));
 
-        // 5. And it really is in the database, with status ACTIVE and the default organizer
         assertThat(eventService.getAllEvents())
                 .filteredOn(e -> e.name().equals(name))
                 .singleElement()
@@ -144,7 +163,7 @@ class CreateEventAcceptanceTest {
     void createEvent_withMissingMandatoryFields_savesNothing() throws Exception {
         int before = eventService.getAllEvents().size();
 
-        mockMvc.perform(post("/event/manage/create").param("description", "only a description"))
+        mockMvc.perform(post("/event/manage/create").with(csrf()).param("description", "only a description"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("add_event"))
                 .andExpect(content().string(containsString("please fill mandatory fields")));
