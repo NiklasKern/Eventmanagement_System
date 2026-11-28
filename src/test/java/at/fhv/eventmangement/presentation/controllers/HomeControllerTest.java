@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -140,14 +141,36 @@ class HomeControllerTest {
         verify(eventBookingService, never()).getNextBookingForCurrentCustomer(any());
     }
 
+    // main page: not logged in
+
     @Test
-    @WithMockUser(authorities = {"VIEW_ALL_BOOKINGS", "VIEW_PAYMENTS", "MANAGE_PAYMENTS"})
-    void mainPage_withoutEventView_showsNoEventsAndNoSearch() throws Exception {
+    @WithAnonymousUser
+    void mainPage_notLoggedIn_showsEventsAndLoginToBook() throws Exception {
+        EventDto event = event("Summer Hike");
+        when(eventService.getActiveEvents()).thenReturn(List.of(event));
+
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(not(containsString("You may also like this"))))
-                .andExpect(content().string(not(containsString("action=\"/customer/events/search\""))));
-        verify(eventService, never()).getActiveEvents();
+                .andExpect(content().string(containsString("Summer Hike")))
+                .andExpect(content().string(containsString("action=\"/customer/events/search\"")))
+                // the link leads to the login and afterwards to the booking dialog
+                .andExpect(content().string(containsString("href=\"/customer/event/" + event.id() + "/book\"")))
+                .andExpect(content().string(containsString("Log in to book")))
+                .andExpect(content().string(not(containsString("Your next adventure"))));
+        verify(eventBookingService, never()).getNextBookingForCurrentCustomer(any());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void navigation_notLoggedIn_showsPublicLinksAndLogin() throws Exception {
+        when(eventService.getActiveEvents()).thenReturn(List.of());
+
+        mockMvc.perform(get("/"))
+                .andExpect(content().string(containsString(">Events</a>")))
+                .andExpect(content().string(containsString("href=\"/login\"")))
+                .andExpect(content().string(not(containsString(">My Bookings</a>"))))
+                .andExpect(content().string(not(containsString(">Manage Events</a>"))))
+                .andExpect(content().string(not(containsString("Signed in as"))));
     }
 
     // navigation: only links the user may open

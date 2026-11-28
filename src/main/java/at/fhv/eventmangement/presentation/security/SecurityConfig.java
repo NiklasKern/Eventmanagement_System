@@ -20,6 +20,14 @@ public class SecurityConfig {
                         // public
                         .requestMatchers("/login", "/styles/**", "/images/**", "/error").permitAll()
 
+                        // public website: main page, event list and search can be seen without logging in.
+                        // Everything else (booking, invoices, own bookings, managing) still needs a login.
+                        .requestMatchers(HttpMethod.GET, "/", "/home", "/customer/events", "/customer/events/search")
+                        .permitAll()
+
+                        // every logged-in user
+                        .requestMatchers("/access-denied").authenticated()
+
                         // every logged-in user: main page (its sections depend on the permissions)
                         .requestMatchers("/", "/home", "/access-denied").authenticated()
 

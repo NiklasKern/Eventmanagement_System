@@ -1,13 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <body>
-<!--
-  Main navigation with the account area, used on every page:
-  <div th:replace="~{fragments/navigation :: nav}"></div>
-  Every link is only shown with the permission its page needs (same rules as SecurityConfig),
-  so nobody gets links that end on the access-denied page.
-  "permissions" and "currentUser" come from CurrentUserAdvice.
--->
 <header class="SiteHeader" th:fragment="nav">
     <div class="SiteHeaderInner">
         <a class="SiteLogo" th:href="@{/}">
@@ -17,8 +10,7 @@
 
         <nav class="SiteNav">
             <a class="SiteNavLink" th:href="@{/}">Home</a>
-            <a class="SiteNavLink" th:href="@{/customer/events}"
-               th:if="${#sets.contains(permissions, 'EVENT_VIEW')}">Events</a>
+            <a class="SiteNavLink" th:href="@{/customer/events}">Events</a>
             <a class="SiteNavLink" th:href="@{/customer/bookings}"
                th:if="${#sets.contains(permissions, 'VIEW_OWN_BOOKINGS')}">My Bookings</a>
             <a class="SiteNavLink" th:href="@{/events}"
@@ -41,6 +33,9 @@
                 <button type="submit" class="SiteLogout">Log out</button>
             </form>
         </div>
+
+        <!-- Not logged in -->
+        <a class="SiteLogin" th:href="@{/login}" th:if="${currentUser == null}">Log in</a>
     </div>
 </header>
 </body>

@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -64,5 +65,15 @@ class NavigationAcceptanceTest {
                 .andExpect(content().string(containsString("class=\"SiteNav\"")))
                 .andExpect(content().string(containsString("class=\"SiteLogo\" href=\"/\"")))
                 .andExpect(content().string(containsString("Signed in as")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/", "/customer/events"})
+    @WithAnonymousUser
+    void publicPages_showNavigationWithLoginForVisitors(String page) throws Exception {
+        mockMvc.perform(get(page))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("class=\"SiteNav\"")))
+                .andExpect(content().string(containsString("href=\"/login\"")));
     }
 }

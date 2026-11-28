@@ -1,7 +1,6 @@
 package at.fhv.eventmangement.presentation.controllers;
 
 import at.fhv.eventmangement.application.dto.EventBookingDto;
-import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.services.EventBookingService;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
@@ -11,9 +10,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import java.util.List;
-
-// Main page for every logged-in user. What it shows depends on the permissions
+// Main page, public: everybody sees a few events to book.
+// Logged-in customers (VIEW_OWN_BOOKINGS) also see their next booking.
 @Controller
 public class HomeController {
 
@@ -28,9 +26,10 @@ public class HomeController {
         this.eventBookingService = eventBookingService;
     }
 
+    // authentication is null when nobody is logged in
     @GetMapping({"/", "/home"})
     public String home(Model model, Authentication authentication) {
-        model.addAttribute("events", featuredEvents(authentication));
+        model.addAttribute("events", eventService.getActiveEvents().stream().limit(FEATURED_EVENTS).toList());
         model.addAttribute("nextBooking", nextBooking(authentication));
         return HOMEPAGE;
     }
@@ -38,13 +37,6 @@ public class HomeController {
     @GetMapping("/access-denied")
     public String accessDenied() {
         return "access_denied";
-    }
-
-    private List<EventDto> featuredEvents(Authentication authentication) {
-        if (!has(authentication, Permissions.EVENT_VIEW)) {
-            return List.of();
-        }
-        return eventService.getActiveEvents().stream().limit(FEATURED_EVENTS).toList();
     }
 
     private EventBookingDto nextBooking(Authentication authentication) {
@@ -60,7 +52,7 @@ public class HomeController {
     }
 
     private static boolean has(Authentication authentication, Permissions permission) {
-        return authentication.getAuthorities().stream()
+        return authentication != null && authentication.getAuthorities().stream()
                 .anyMatch(authority -> authority.getAuthority().equals(permission.name()));
     }
 }

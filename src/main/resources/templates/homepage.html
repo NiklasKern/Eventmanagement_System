@@ -36,8 +36,7 @@
                     Discover carefully curated outdoor experiences and secure your spot.
                 </p>
 
-                <form class="search" th:action="@{/customer/events/search}" method="get"
-                      th:if="${#sets.contains(permissions, 'EVENT_VIEW')}">
+                <form class="search" th:action="@{/customer/events/search}" method="get">
                     <label class="search__field">
                         <span class="search__label">Where?</span>
                         <span class="search__input-wrap">
@@ -122,7 +121,7 @@
     </section>
 
     <!-- Active events, leading to their booking dialog -->
-    <section class="events" th:if="${#sets.contains(permissions, 'EVENT_VIEW')}">
+    <section class="events">
         <div class="container">
             <div class="events__head">
                 <div>
@@ -164,8 +163,10 @@
                             <strong th:text="${#numbers.formatDecimal(e.price, 1, 'POINT', 2, 'COMMA')} + ' € per person'">25,00
                                 € per person</strong>
                         </div>
+                        <!-- Not logged in: the link leads to the login and afterwards straight to the booking dialog -->
                         <a class="btn btn--primary btn--block" th:href="@{/customer/event/{id}/book(id=${e.id})}"
-                           th:if="${#sets.contains(permissions, 'BOOK_EVENTS')}">Book event
+                           th:if="${currentUser == null or #sets.contains(permissions, 'BOOK_EVENTS')}">
+                            <span th:text="${currentUser == null} ? 'Log in to book' : 'Book event'">Book event</span>
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M5 12h14M12 5l7 7-7 7"/>

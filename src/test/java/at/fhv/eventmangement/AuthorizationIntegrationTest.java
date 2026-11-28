@@ -18,6 +18,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 
 // Which permission may open which URL (rules from SecurityConfig)
 @SpringBootTest
@@ -79,8 +80,9 @@ class AuthorizationIntegrationTest {
 
     @Test
     @WithMockUser(authorities = {"VIEW_ALL_BOOKINGS", "VIEW_PAYMENTS", "MANAGE_PAYMENTS"})
-    void finance_cannotSeeCatalog() throws Exception {
-        mockMvc.perform(get("/customer/events")).andExpect(status().isForbidden());
+    void finance_seesPublicCatalogButCannotBook() throws Exception {
+        mockMvc.perform(get("/customer/events")).andExpect(status().isOk());
+        mockMvc.perform(get("/customer/event/{id}/book", UUID.randomUUID())).andExpect(status().isForbidden());
     }
 
     @Test
@@ -118,6 +120,35 @@ class AuthorizationIntegrationTest {
     void customer_cannotCancelEvent() throws Exception {
         mockMvc.perform(post("/event/manage/{id}/cancel", UUID.randomUUID()).with(csrf()))
                 .andExpect(status().isForbidden());
+    }
+
+    // --- not logged in: public website ---
+
+    @Test
+    void visitor_canSeeMainPageEventsAndSearch() throws Exception {
+        mockMvc.perform(get("/")).andExpect(status().isOk());
+        mockMvc.perform(get("/home")).andExpect(status().isOk());
+        mockMvc.perform(get("/customer/events")).andExpect(status().isOk());
+        mockMvc.perform(get("/customer/events/search").param("location", "Dornbirn")).andExpect(status().isOk());
+    }
+
+    @Test
+    void visitor_isSentToLoginWhenBooking() throws Exception {
+        mockMvc.perform(get("/customer/event/{id}/book", UUID.randomUUID()).accept(MediaType.TEXT_HTML))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+    }
+
+    @Test
+    void visitor_isSentToLoginForOwnBookings() throws Exception {
+        mockMvc.perform(get("/customer/bookings").accept(MediaType.TEXT_HTML))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+    }
+
+    @Test
+    void visitor_cannotUseEventApi() throws Exception {
+        mockMvc.perform(get("/api/events")).andExpect(status().isUnauthorized());
     }
 
     // --- default deny ---

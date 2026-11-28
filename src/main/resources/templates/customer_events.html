@@ -146,8 +146,11 @@
                     <td th:text="${e.eventOrganizer != null} ? ${e.eventOrganizer.contactInfo.name} : '–'">Organizer
                     </td>
                     <td>
+                        <!-- Not logged in: the link leads to the login and afterwards straight to the booking dialog -->
                         <a class="CreateEventButton" th:href="@{/customer/event/{id}/book(id=${e.id})}"
-                           th:if="${#sets.contains(permissions, 'BOOK_EVENTS')}">Book</a></td>
+                           th:if="${currentUser == null or #sets.contains(permissions, 'BOOK_EVENTS')}"
+                           th:text="${currentUser == null} ? 'Log in to book' : 'Book'">Book</a></td>
+                    </td>
                 </tr>
                 </tbody>
             </table>
