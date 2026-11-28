@@ -36,7 +36,7 @@ class EventRestControllerTest {
     private EventService eventService;
 
     @Test
-    void getEvents_returnsEventsAsJson() throws Exception {
+    void events_returnsEventsAsJson() throws Exception {
         UUID id = UUID.randomUUID();
         EventDto event = new EventDto(id, "Summer Hike", "A nice walk", "Dornbirn",
                 new BigDecimal("150.00"), 5, 50, "ACTIVE",
@@ -64,7 +64,7 @@ class EventRestControllerTest {
     }
 
     @Test
-    void getEvents_returnsEmptyArrayWhenNoEvents() throws Exception {
+    void events_returnsEmptyArrayWhenNoEvents() throws Exception {
         when(eventService.getAllEvents()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/getEvents"))
