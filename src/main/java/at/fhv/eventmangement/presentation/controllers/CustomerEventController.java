@@ -95,7 +95,6 @@ public class CustomerEventController {
         if (!bindingResult.hasErrors()) {
             try {
                 EventBookingDto booking = eventBookingService.book(id, form, authentication.getName());
-                String bookingNumber = eventBookingService.book(id, form, authentication.getName()).bookingNumber();
                 redirectAttributes.addFlashAttribute("successMessage",
                         "Event successfully booked (" + booking.bookingNumber() + ")");
                 return redirectToInvoice(booking);

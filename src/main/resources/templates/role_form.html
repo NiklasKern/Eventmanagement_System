@@ -5,9 +5,11 @@
     <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet"/>
     <link th:href="@{/styles/cssandjs/add_event.css}" rel="stylesheet"/>
     <link th:href="@{/styles/cssandjs/role_manager.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/cssandjs/navigation.css}" rel="stylesheet"/>
     <title th:text="${roleId == null} ? 'Create role' : 'Edit role'">Role</title>
 </head>
 <body>
+<div th:replace="~{fragments/navigation :: nav}"></div>
 <main class="event-form">
     <h1 th:text="${roleId == null} ? 'Create role' : 'Edit role'">Create role</h1>
     <p class="subtitle">Tick the permissions this role should have.</p>

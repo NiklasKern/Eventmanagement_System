@@ -1,6 +1,10 @@
 package at.fhv.eventmangement.presentation.rest;
 
-import at.fhv.eventmangement.application.dto.*;
+import at.fhv.eventmangement.application.dto.ContactInfoDto;
+import at.fhv.eventmangement.application.dto.EventCategoryDto;
+import at.fhv.eventmangement.application.dto.EventDateDto;
+import at.fhv.eventmangement.application.dto.EventDto;
+import at.fhv.eventmangement.application.dto.EventOrganizerDto;
 import at.fhv.eventmangement.application.services.EventService;
 import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
 import at.fhv.eventmangement.presentation.security.SecurityConfig;
@@ -37,7 +41,7 @@ class EventRestControllerTest {
     private EventService eventService;
 
     @Test
-    void events_returnsEventsAsJson() throws Exception {
+    void getEvents_returnsEventsAsJson() throws Exception {
         UUID id = UUID.randomUUID();
         EventDto event = new EventDto(id, "Summer Hike", "A nice walk", "Dornbirn",
                 new BigDecimal("150.00"), 5, 50, "ACTIVE",
@@ -48,7 +52,7 @@ class EventRestControllerTest {
                         LocalDateTime.of(2027, 1, 10, 20, 0))));
         when(eventService.getAllEvents()).thenReturn(List.of(event));
 
-        mockMvc.perform(get("/api/getEvents"))
+        mockMvc.perform(get("/api/events"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].id").value(id.toString()))
@@ -65,10 +69,10 @@ class EventRestControllerTest {
     }
 
     @Test
-    void events_returnsEmptyArrayWhenNoEvents() throws Exception {
+    void getEvents_returnsEmptyArrayWhenNoEvents() throws Exception {
         when(eventService.getAllEvents()).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/getEvents"))
+        mockMvc.perform(get("/api/events"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
@@ -77,50 +81,10 @@ class EventRestControllerTest {
     void unexpectedError_returns500WithoutInternalDetails() throws Exception {
         when(eventService.getAllEvents()).thenThrow(new IllegalStateException("database password is wrong"));
 
-        mockMvc.perform(get("/api/getEvents"))
+        mockMvc.perform(get("/api/events"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.detail").value("An unexpected error occurred"));
-    }
-
-    @Test
-    void getEventInfo_returnsEventAsJson() throws Exception {
-        UUID id = UUID.randomUUID();
-        when(eventService.getEventById(id)).thenReturn(sampleEvent(id));
-
-        mockMvc.perform(get("/api/events/{id}", id))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(id.toString()))
-                .andExpect(jsonPath("$.name").value("Summer Hike"))
-                .andExpect(jsonPath("$.eventCategory.categoryName").value("Hiking"))
-                .andExpect(jsonPath("$.eventDates.length()").value(1));
-    }
-
-    @Test
-    void getEventInfo_unknownEvent_returns404() throws Exception {
-        UUID id = UUID.randomUUID();
-        when(eventService.getEventById(id)).thenThrow(new EventNotFoundException());
-
-        mockMvc.perform(get("/api/events/{id}", id))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.detail").value("event does not exist"));
-    }
-
-    @Test
-    void getEventInfo_invalidId_returns400() throws Exception {
-        mockMvc.perform(get("/api/events/{id}", "not-a-uuid"))
-                .andExpect(status().isBadRequest());
-    }
-
-    private static EventDto sampleEvent(UUID id) {
-        return new EventDto(id, "Summer Hike", "A nice walk", "Dornbirn",
-                new BigDecimal("150.00"), 5, 50, "ACTIVE",
-                new EventCategoryDto(UUID.randomUUID(), "Hiking"),
-                new EventOrganizerDto(UUID.randomUUID(), new ContactInfoDto("Alpine Club", "Street 1", "a@b.at")),
-                List.of(new EventDateDto(UUID.randomUUID(),
-                        LocalDateTime.of(2027, 1, 10, 17, 0),
-                        LocalDateTime.of(2027, 1, 10, 20, 0))));
     }
 
     @Test

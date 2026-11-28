@@ -1,20 +1,11 @@
 package at.fhv.eventmangement.presentation.controllers;
 
 import at.fhv.eventmangement.application.dto.*;
-import at.fhv.eventmangement.application.services.CustomerService;
-import at.fhv.eventmangement.application.services.EventBookingService;
-import at.fhv.eventmangement.application.services.EventCategoryService;
-import at.fhv.eventmangement.application.services.EventService;
-import at.fhv.eventmangement.application.services.InvoiceService;
-import at.fhv.eventmangement.domain.exceptions.InvoiceNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.EventNotBookableException;
-import at.fhv.eventmangement.domain.exceptions.EventNotFoundException;
-import at.fhv.eventmangement.domain.exceptions.NotEnoughPlacesException;
+import at.fhv.eventmangement.application.services.*;
+import at.fhv.eventmangement.domain.exceptions.*;
 import at.fhv.eventmangement.domain.model.EventBookingStatus;
 import at.fhv.eventmangement.domain.model.EventBookingType;
 import at.fhv.eventmangement.domain.model.PaymentMethod;
-import at.fhv.eventmangement.presentation.security.SecurityConfig;
 import at.fhv.eventmangement.presentation.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,9 +119,12 @@ class CustomerEventControllerTest {
     }
 
     @Test
-    void book_success_redirectsWithBookingNumber() throws Exception {
-        when(eventBookingService.book(any(), any(), eq("user"))).thenReturn(new EventBookingDto(
-                UUID.randomUUID(), "BK-ABCDEFGH", null, null, null, 2, null, null, null, null, null, List.of()));
+    void book_success_redirectsToInterimInvoice() throws Exception {
+        UUID bookingId = UUID.randomUUID();
+        UUID invoiceId = UUID.randomUUID();
+        when(eventBookingService.book(any(), any(), eq("user"))).thenReturn(booking(bookingId));
+        when(invoiceService.getInvoiceForBooking(bookingId)).thenReturn(new InvoiceDto(invoiceId, bookingId,
+                null, null, null, null, List.of(), null, null, null, null, null, true));
 
         postGroupBooking(2)
                 .andExpect(status().is3xxRedirection())

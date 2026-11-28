@@ -22,5 +22,5 @@ public interface EventBookingService {
     List<EventBookingDto> getBookingsForCurrentCustomer(String username) throws CustomerNotFoundException;
 
     Optional<EventBookingDto> getBookingByNumber(String bookingNumber, String username) throws CustomerNotFoundException;
-    Optional<EventBookingDto> getNextBookingForCurrentCustomer() throws CustomerNotFoundException;
-}
+
+    Optional<EventBookingDto> getNextBookingForCurrentCustomer(String username) throws CustomerNotFoundException;}

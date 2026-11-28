@@ -20,8 +20,8 @@ public class SecurityConfig {
                         // public
                         .requestMatchers("/login", "/styles/**", "/images/**", "/error").permitAll()
 
-                        // every logged-in user
-                        .requestMatchers("/", "/access-denied").authenticated()
+                        // every logged-in user: main page (its sections depend on the permissions)
+                        .requestMatchers("/", "/home", "/access-denied").authenticated()
 
                         // organizer pages
                         .requestMatchers("/event/manage/create").hasAuthority(EVENT_CREATE.name())
@@ -43,14 +43,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/events/**", "/api/customer/**")
                         .hasAuthority(EVENT_VIEW.name())
 
-                        // role and user management (pages come in step 7)
-                        .requestMatchers("/admin/roles/**", "/api/admin/roles/**").hasAuthority(MANAGE_ROLES.name())
-                        .requestMatchers("/admin/users/**", "/api/admin/users/**").hasAuthority(MANAGE_USERS.name())
-
-                        // everything not listed above is forbidden
-                        .anyRequest().denyAll())
-
-                        // role and user management (pages come in step 7)
+                        // role and user management
                         .requestMatchers("/admin/roles/**", "/api/admin/roles/**").hasAuthority(MANAGE_ROLES.name())
                         .requestMatchers("/admin/users/**", "/api/admin/users/**").hasAuthority(MANAGE_USERS.name())
 

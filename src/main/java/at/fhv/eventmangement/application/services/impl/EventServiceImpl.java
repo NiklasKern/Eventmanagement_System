@@ -61,7 +61,7 @@ public class EventServiceImpl implements EventService {
     }
 
     // Runs without a surrounding transaction: the changes are committed by EventUpdateTransaction first,
-    // only afterward the customers are notified. Only successfully notified customers are returned.
+    // only afterwards the customers are notified. Only successfully notified customers are returned.
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public EventUpdateResultDto updateEvent(UUID id, EventForm form, String username)
@@ -133,86 +133,6 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventDto> searchEvents(EventSearchForm searchForm) {
-        return eventRepository.search(toCriteria(searchForm)).stream().map(eventMapper::toDto).toList();
-    }
-
-    // Organizer list: everything with EDIT_ALL_EVENTS, otherwise only the events of the own organizer
-    @Override
-    public List<EventDto> getManagedEvents(String username) {
-        UserAccount account = account(username);
-        if (account.hasPermission(Permissions.EDIT_ALL_EVENTS)) {
-            return getAllEvents();
-        }
-        if (account.getOrganizer() == null) {
-            return List.of();
-        }
-        return eventRepository.findByEventOrganizerId(account.getOrganizer().getId()).stream()
-                .map(eventMapper::toDto)
-                .toList();
-    }
-
-    // Edit form: only open it if the user may save it afterwards
-    @Override
-    public EventDto getEventForEdit(UUID id, String username) throws EventNotFoundException, NotEventOwnerException {
-        return eventMapper.toDto(editableEvent(id, username));
-    }
-
-    @Override
-    public List<String> getEventLocation() {
-        return eventRepository.findLocations(EventStatus.ACTIVE);
-    }
-
-    private static EventSearchCriteria toCriteria(EventSearchForm searchForm) {
-        LocalDate firstDay = searchForm.getDateFrom();
-        LocalDate lastDay = searchForm.getDateTo() != null ? searchForm.getDateTo() : searchForm.getDateFrom();
-
-        return EventSearchCriteria.builder()
-                .status(EventStatus.ACTIVE)
-                .text(blankToNull(searchForm.getText()))
-                .location(blankToNull(searchForm.getLocation()))
-                .categoryId(searchForm.getCategoryId())
-                .from(firstDay == null ? null : firstDay.atStartOfDay())
-                .to(lastDay == null ? null : lastDay.plusDays(1).atStartOfDay())
-                .priceFrom(searchForm.getPriceFrom())
-                .priceTo(searchForm.getPriceTo())
-                .build();
-    }
-
-    // The logged-in user always has an account. If not, that is a bug, not a user error → unchecked
-    private UserAccount account(String username) {
-        return userAccountRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalStateException("No account for logged-in user " + username));
-    }
-
-    // Loads the event and checks that the user may change it
-    private Event editableEvent(UUID id, String username) throws EventNotFoundException, NotEventOwnerException {
-        Event event = eventRepository.findById(id).orElseThrow(EventNotFoundException::new);
-        if (!account(username).canEdit(event)) {
-            throw new NotEventOwnerException();
-        }
-        return event;
-    }
-
-    // Providers always create for their own organizer.
-    // Users with EDIT_ALL_EVENTS (Event Management, Admin) may choose one in the form.
-    private EventOrganizer organizerFor(UserAccount account, UUID chosenOrganizerId) throws EventOrganizerNotFoundException {
-        if (chosenOrganizerId != null && account.hasPermission(Permissions.EDIT_ALL_EVENTS)) {
-            return eventOrganizerRepository.findById(chosenOrganizerId)
-                    .orElseThrow(EventOrganizerNotFoundException::new);
-        }
-        if (account.getOrganizer() == null) {
-            throw new EventOrganizerNotFoundException("Your account is not linked to an event organizer, please choose one");
-        }
-        return account.getOrganizer();
-    }
-
-    private static String blankToNull(String text) {
-        return text == null || text.isBlank() ? null : text.trim();
-    }
-}
-
-    @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public EventUpdateResultDto cancelEvent(UUID id, String username)
             throws EventNotFoundException, EventAlreadyCancelledException, NotEventOwnerException {
@@ -233,6 +153,10 @@ public class EventServiceImpl implements EventService {
         return new EventUpdateResultDto(eventMapper.toDto(saved), notified);
     }
 
+    @Override
+    public List<EventDto> searchEvents(EventSearchForm searchForm) {
+        return eventRepository.search(toCriteria(searchForm)).stream().map(eventMapper::toDto).toList();
+    }
 
     // Organizer list: everything with EDIT_ALL_EVENTS, otherwise only the events of the own organizer
     @Override

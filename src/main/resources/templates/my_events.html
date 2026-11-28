@@ -12,7 +12,6 @@
 
 <body>
 <div th:replace="~{fragments/navigation :: nav}"></div>
-<div th:replace="~{fragments/account :: account}"></div>
 <main class="AppContent">
     <div class="ContentContainer">
         <div class="PageTitle">
@@ -99,8 +98,8 @@
                     <td th:text="${e.eventOrganizer != null} ? ${e.eventOrganizer.contactInfo.name} : '–'">Organizer
                     </td>
                     <td><a th:if="${e.eventStatus != 'CANCELLED' and (#sets.contains(permissions, 'EDIT_OWN_EVENTS')
-                                         or #sets.contains(permissions, 'EDIT_ALL_EVENTS'))}"th:href="@{/event/manage/{id}/modify(id=${e.id})}"
-                           th:if="${#sets.contains(permissions, 'EDIT_OWN_EVENTS') or #sets.contains(permissions, 'EDIT_ALL_EVENTS')}">Edit</a>
+                                         or #sets.contains(permissions, 'EDIT_ALL_EVENTS'))}"
+                           th:href="@{/event/manage/{id}/modify(id=${e.id})}">Edit</a>
                     <span th:if="${e.eventStatus == 'CANCELLED'}">–</span>
                     </td>
                 </tr>

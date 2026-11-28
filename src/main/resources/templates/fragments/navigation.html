@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <body>
+<!--
+  Main navigation with the account area, used on every page:
+  <div th:replace="~{fragments/navigation :: nav}"></div>
+  Every link is only shown with the permission its page needs (same rules as SecurityConfig),
+  so nobody gets links that end on the access-denied page.
+  "permissions" and "currentUser" come from CurrentUserAdvice.
+-->
 <header class="SiteHeader" th:fragment="nav">
     <div class="SiteHeaderInner">
         <a class="SiteLogo" th:href="@{/}">
@@ -10,10 +17,30 @@
 
         <nav class="SiteNav">
             <a class="SiteNavLink" th:href="@{/}">Home</a>
-            <a class="SiteNavLink" th:href="@{/customer/events}">Events</a>
-            <a class="SiteNavLink" th:href="@{/customer/bookings}">My Bookings</a>
-            <a class="SiteNavLink" th:href="@{/events}">Manage Events</a>
+            <a class="SiteNavLink" th:href="@{/customer/events}"
+               th:if="${#sets.contains(permissions, 'EVENT_VIEW')}">Events</a>
+            <a class="SiteNavLink" th:href="@{/customer/bookings}"
+               th:if="${#sets.contains(permissions, 'VIEW_OWN_BOOKINGS')}">My Bookings</a>
+            <a class="SiteNavLink" th:href="@{/events}"
+               th:if="${#sets.contains(permissions, 'EVENT_CREATE') or #sets.contains(permissions, 'EDIT_OWN_EVENTS')
+                        or #sets.contains(permissions, 'EDIT_ALL_EVENTS')}">Manage Events</a>
+            <a class="SiteNavLink" th:href="@{/admin/roles}"
+               th:if="${#sets.contains(permissions, 'MANAGE_ROLES')}">Roles</a>
+            <a class="SiteNavLink" th:href="@{/admin/users}"
+               th:if="${#sets.contains(permissions, 'MANAGE_USERS')}">Users</a>
         </nav>
+
+        <!-- Who is logged in, and logout (a POST with the CSRF token, so a small form instead of a link) -->
+        <div class="SiteAccount" th:if="${currentUser != null}">
+            <span class="SiteAvatar" th:text="${#strings.toUpperCase(#strings.substring(currentUser, 0, 1))}">A</span>
+            <span class="SiteAccountText">
+                <span class="SiteAccountLabel">Signed in as</span>
+                <span class="SiteAccountName" th:text="${currentUser}">admin</span>
+            </span>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="SiteLogout">Log out</button>
+            </form>
+        </div>
     </div>
 </header>
 </body>

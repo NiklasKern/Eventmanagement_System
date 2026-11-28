@@ -5,18 +5,11 @@
     <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet"/>
     <link th:href="@{/styles/cssandjs/my_events.css}" rel="stylesheet"/>
     <link th:href="@{/styles/cssandjs/role_manager.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/cssandjs/navigation.css}" rel="stylesheet"/>
     <title>Users</title>
 </head>
 <body>
-<header class="AppHead">
-    <div class="HeadContainer">
-        <div class="WildPathLogo">
-            <img th:src="@{/images/leaf-icon.svg}" alt="leaf">
-            <span>WILD</span><span class="primary-green">PATH</span>
-        </div>
-        <div th:replace="~{fragments/account :: account}"></div>
-    </div>
-</header>
+<div th:replace="~{fragments/navigation :: nav}"></div>
 
 <main class="AppContent">
     <div class="ContentContainer">

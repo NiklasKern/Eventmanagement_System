@@ -4,18 +4,11 @@
     <meta charset="UTF-8">
     <link th:href="@{/styles/cssandjs/colors.css}" rel="stylesheet"/>
     <link th:href="@{/styles/cssandjs/my_events.css}" rel="stylesheet"/>
+    <link th:href="@{/styles/cssandjs/navigation.css}" rel="stylesheet"/>
     <title>Access denied</title>
 </head>
 <body>
-<header class="AppHead">
-    <div class="HeadContainer">
-        <div class="WildPathLogo">
-            <img th:src="@{/images/leaf-icon.svg}" alt="leaf">
-            <span>WILD</span><span class="primary-green">PATH</span>
-        </div>
-        <div th:replace="~{fragments/account :: account}"></div>
-    </div>
-</header>
+<div th:replace="~{fragments/navigation :: nav}"></div>
 <main class="AppContent">
     <div class="ContentContainer">
         <h1>Access denied</h1>

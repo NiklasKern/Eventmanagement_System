@@ -34,19 +34,16 @@ public class CustomerInvoiceController {
     private final EventBookingService eventBookingService;
     private final EventCategoryService eventCategoryService;
     private final InvoiceMapper invoiceMapper;
-    private final EventCategoryService eventCategoryService;
 
     public CustomerInvoiceController(InvoiceService invoiceService, EventService eventService,
                                      EventBookingService eventBookingService,
                                      EventCategoryService eventCategoryService,
-                                     InvoiceMapper invoiceMapper,
-                                     EventCategoryService eventCategoryService) {
+                                     InvoiceMapper invoiceMapper) {
         this.invoiceService = invoiceService;
         this.eventService = eventService;
         this.eventBookingService = eventBookingService;
         this.eventCategoryService = eventCategoryService;
         this.invoiceMapper = invoiceMapper;
-        this.eventCategoryService = eventCategoryService;
     }
 
     @ModelAttribute("paymentMethods")

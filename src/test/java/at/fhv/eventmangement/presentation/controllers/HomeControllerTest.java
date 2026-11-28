@@ -10,9 +10,12 @@ import at.fhv.eventmangement.domain.exceptions.CustomerNotFoundException;
 import at.fhv.eventmangement.domain.model.EventBookingStatus;
 import at.fhv.eventmangement.domain.model.EventBookingType;
 import at.fhv.eventmangement.domain.model.PaymentMethod;
+import at.fhv.eventmangement.presentation.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,12 +25,22 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @WebMvcTest(HomeController.class)
+@Import(SecurityConfig.class)
+@WithMockUser(authorities = {"EVENT_VIEW", "BOOK_EVENTS", "VIEW_OWN_BOOKINGS"})
 class HomeControllerTest {
 
     @Autowired
@@ -52,12 +65,16 @@ class HomeControllerTest {
                 EventBookingStatus.CONFIRMED, List.of(), null);
     }
 
-    // main page
+    private void nothingToShow() throws Exception {
+        when(eventService.getActiveEvents()).thenReturn(List.of());
+        when(eventBookingService.getNextBookingForCurrentCustomer("user")).thenReturn(Optional.empty());
+    }
+
+    // main page (customer)
 
     @Test
     void mainPage_isReachableUnderRootAndHome() throws Exception {
-        when(eventService.getActiveEvents()).thenReturn(List.of());
-        when(eventBookingService.getNextBookingForCurrentCustomer()).thenReturn(Optional.empty());
+        nothingToShow();
 
         mockMvc.perform(get("/")).andExpect(status().isOk()).andExpect(view().name("homepage"));
         mockMvc.perform(get("/home")).andExpect(status().isOk()).andExpect(view().name("homepage"));
@@ -67,7 +84,7 @@ class HomeControllerTest {
     void mainPage_showsAtMostThreeEventsWithLinkToBooking() throws Exception {
         EventDto first = event("Summer Hike");
         when(eventService.getActiveEvents()).thenReturn(List.of(first, event("Lake Tour"), event("Rafting"), event("Hidden")));
-        when(eventBookingService.getNextBookingForCurrentCustomer()).thenReturn(Optional.empty());
+        when(eventBookingService.getNextBookingForCurrentCustomer("user")).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/"))
                 .andExpect(model().attribute("events", hasSize(3)))
@@ -78,9 +95,9 @@ class HomeControllerTest {
     }
 
     @Test
-    void mainPage_showsNextBookingWithLinkToDetails() throws Exception {
+    void mainPage_showsNextBookingOfLoggedInCustomer() throws Exception {
         when(eventService.getActiveEvents()).thenReturn(List.of());
-        when(eventBookingService.getNextBookingForCurrentCustomer()).thenReturn(Optional.of(booking()));
+        when(eventBookingService.getNextBookingForCurrentCustomer("user")).thenReturn(Optional.of(booking()));
 
         mockMvc.perform(get("/"))
                 .andExpect(content().string(containsString("BK-ABCDEFGH")))
@@ -89,9 +106,9 @@ class HomeControllerTest {
     }
 
     @Test
-    void mainPage_withoutBookingsOrEvents_showsEmptyStates() throws Exception {
+    void mainPage_accountWithoutCustomer_showsEmptyStates() throws Exception {
         when(eventService.getActiveEvents()).thenReturn(List.of());
-        when(eventBookingService.getNextBookingForCurrentCustomer()).thenThrow(new CustomerNotFoundException());
+        when(eventBookingService.getNextBookingForCurrentCustomer("user")).thenThrow(new CustomerNotFoundException());
 
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
@@ -101,8 +118,7 @@ class HomeControllerTest {
 
     @Test
     void mainPage_searchLeadsToEventSearch() throws Exception {
-        when(eventService.getActiveEvents()).thenReturn(List.of());
-        when(eventBookingService.getNextBookingForCurrentCustomer()).thenReturn(Optional.empty());
+        nothingToShow();
 
         mockMvc.perform(get("/"))
                 .andExpect(content().string(containsString("action=\"/customer/events/search\"")))
@@ -110,18 +126,70 @@ class HomeControllerTest {
                 .andExpect(content().string(containsString("name=\"dateFrom\"")));
     }
 
-    // navigation bar
+    // main page: only what the role allows
 
     @Test
-    void navigation_linksToAllMainPages() throws Exception {
-        when(eventService.getActiveEvents()).thenReturn(List.of());
-        when(eventBookingService.getNextBookingForCurrentCustomer()).thenReturn(Optional.empty());
+    @WithMockUser(authorities = "EVENT_VIEW")
+    void mainPage_withoutBookEvents_hasNoBookButtonAndNoBookings() throws Exception {
+        when(eventService.getActiveEvents()).thenReturn(List.of(event("Summer Hike")));
+
+        mockMvc.perform(get("/"))
+                .andExpect(content().string(containsString("Summer Hike")))
+                .andExpect(content().string(not(containsString("/book\""))))
+                .andExpect(content().string(not(containsString("Your next adventure"))));
+        verify(eventBookingService, never()).getNextBookingForCurrentCustomer(any());
+    }
+
+    @Test
+    @WithMockUser(authorities = {"VIEW_ALL_BOOKINGS", "VIEW_PAYMENTS", "MANAGE_PAYMENTS"})
+    void mainPage_withoutEventView_showsNoEventsAndNoSearch() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("You may also like this"))))
+                .andExpect(content().string(not(containsString("action=\"/customer/events/search\""))));
+        verify(eventService, never()).getActiveEvents();
+    }
+
+    // navigation: only links the user may open
+
+    @Test
+    void navigation_customer_seesEventsAndOwnBookingsOnly() throws Exception {
+        nothingToShow();
 
         mockMvc.perform(get("/"))
                 .andExpect(content().string(containsString("class=\"SiteNav\"")))
-                .andExpect(content().string(containsString("href=\"/customer/events\"")))
-                .andExpect(content().string(containsString("href=\"/customer/bookings\"")))
-                .andExpect(content().string(containsString("href=\"/events\"")))
-                .andExpect(content().string(not(containsString("/contact"))));
+                .andExpect(content().string(containsString(">Events</a>")))
+                .andExpect(content().string(containsString(">My Bookings</a>")))
+                .andExpect(content().string(not(containsString(">Manage Events</a>"))))
+                .andExpect(content().string(not(containsString(">Roles</a>"))))
+                .andExpect(content().string(not(containsString(">Users</a>"))));
+    }
+
+    @Test
+    @WithMockUser(authorities = {"EVENT_VIEW", "EVENT_CREATE", "EDIT_OWN_EVENTS"})
+    void navigation_provider_seesManageEventsButNoBookings() throws Exception {
+        when(eventService.getActiveEvents()).thenReturn(List.of());
+
+        mockMvc.perform(get("/"))
+                .andExpect(content().string(containsString(">Manage Events</a>")))
+                .andExpect(content().string(not(containsString(">My Bookings</a>"))))
+                .andExpect(content().string(not(containsString(">Roles</a>"))));
+    }
+
+    @Test
+    @WithMockUser(authorities = {"MANAGE_ROLES", "MANAGE_USERS"})
+    void navigation_admin_seesRoleAndUserManagement() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(content().string(containsString("href=\"/admin/roles\"")))
+                .andExpect(content().string(containsString("href=\"/admin/users\"")));
+    }
+
+    @Test
+    void navigation_showsLoggedInUserAndLogout() throws Exception {
+        nothingToShow();
+
+        mockMvc.perform(get("/"))
+                .andExpect(content().string(containsString("Signed in as")))
+                .andExpect(content().string(containsString("action=\"/logout\"")));
     }
 }

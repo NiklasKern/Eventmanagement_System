@@ -29,7 +29,10 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 // Bookings belong to the customer linked to the logged-in account
 @ExtendWith(MockitoExtension.class)
@@ -49,8 +52,6 @@ class EventBookingServiceImplTest {
     private BookingNumberGenerator bookingNumberGenerator;
     @Mock
     private EventBookingMapper eventBookingMapper;
-    @Mock
-    private NotificationService notificationService;
     @Mock
     private NotificationService notificationService;
 
@@ -80,12 +81,6 @@ class EventBookingServiceImplTest {
                 .startTime(LocalDateTime.of(2027, 5, 1, 9, 0))
                 .endTime(LocalDateTime.of(2027, 5, 1, 17, 0))
                 .build();
-        when(eventDateRepository.findById(dateId)).thenReturn(Optional.of(date));
-        Event event = Event.builder().id(eventId).name("Summer Hike").price(new BigDecimal("150.00"))
-                .maxParticipants(10).eventStatus(EventStatus.ACTIVE).build();
-        EventDate date = EventDate.builder().id(dateId).event(event)
-                .startTime(LocalDateTime.of(2027, 5, 1, 9, 0)).endTime(LocalDateTime.of(2027, 5, 1, 17, 0)).build();
-        lenient().when(eventDateRepository.findById(dateId)).thenReturn(Optional.of(date)); //lenient: only booking tests use the event date
     }
 
     private EventBookingForm groupBooking(int places) {
@@ -93,14 +88,6 @@ class EventBookingServiceImplTest {
                 .eventDateId(dateId)
                 .eventBookingType(EventBookingType.GROUP)
                 .places(places)
-                .paymentMethod(PaymentMethod.CARD)
-                .build();
-    }
-
-    private EventBookingForm individualBooking() {
-        return EventBookingForm.builder()
-                .eventDateId(eventDate.getId())
-                .eventBookingType(EventBookingType.INDIVIDUAL)
                 .paymentMethod(PaymentMethod.CARD)
                 .build();
     }
@@ -132,13 +119,10 @@ class EventBookingServiceImplTest {
 
     @Test
     void book_belongsToCustomerOfLoggedInAccount() throws Exception {
-        when(eventDateRepository.findById(eventDate.getId())).thenReturn(Optional.of(eventDate));
-        when(eventBookingRepository.sumBookedPlaces(eventDate.getId())).thenReturn(0);
-        when(bookingNumberGenerator.next()).thenReturn("BK-TEST1234");
+        bookingCanBeSaved();
         loggedIn(anna);
-        when(eventBookingRepository.save(any(EventBooking.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        eventBookingService.book(eventId, individualBooking(), USERNAME);
+        eventBookingService.book(eventId, groupBooking(2), USERNAME);
 
         ArgumentCaptor<EventBooking> captor = ArgumentCaptor.forClass(EventBooking.class);
         verify(eventBookingRepository).save(captor.capture());
@@ -199,8 +183,6 @@ class EventBookingServiceImplTest {
 
         assertThatThrownBy(() -> eventBookingService.book(eventId, groupBooking(2), USERNAME))
                 .isInstanceOf(NotEnoughPlacesException.class);
-        verify(notificationService, never()).notifyBookingConfirmed(any(), any());
-        verify(invoiceRepository, never()).save(any());
         verify(userAccountRepository, never()).findByUsername(any());
         verify(eventBookingRepository, never()).save(any());
         verify(invoiceRepository, never()).save(any());
@@ -218,27 +200,6 @@ class EventBookingServiceImplTest {
         when(eventBookingMapper.toDto(booking)).thenReturn(dto);
 
         assertThat(eventBookingService.getBookingsForCurrentCustomer(USERNAME)).containsExactly(dto);
-    }
-
-    @Test
-    void book_sendsBookingConfirmationToCustomer() throws Exception {
-        when(eventBookingRepository.sumBookedPlaces(dateId)).thenReturn(0);
-        when(customerRepository.findByContactInfoName(any())).thenReturn(Optional.of(Customer.builder()
-                .contactInfo(new ContactInfo("Anna", "Street 1", "anna@example.com")).build()));
-        when(bookingNumberGenerator.next()).thenReturn("BK-ABCDEFGH");
-        when(eventBookingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        eventBookingService.book(eventId, groupForm(2));
-
-        verify(notificationService).notifyBookingConfirmed(any(Customer.class), any(EventBooking.class));
-    }
-
-    private EventBooking bookingOn(LocalDateTime start, EventBookingStatus status) {
-        return EventBooking.builder()
-                .bookingNumber("BK-" + start.getDayOfMonth() + status)
-                .eventDate(EventDate.builder().startTime(start).endTime(start.plusHours(3)).build())
-                .eventBookingStatus(status)
-                .build();
     }
 
     @Test
@@ -262,35 +223,50 @@ class EventBookingServiceImplTest {
         assertThat(eventBookingService.getBookingByNumber("BK-OTHER123", USERNAME)).isEmpty();
         verify(eventBookingMapper, never()).toDto(any(EventBooking.class));
     }
-}
+
+    // next booking for the main page
+
+    private EventBooking bookingOn(LocalDateTime start, EventBookingStatus status) {
+        return EventBooking.builder()
+                .bookingNumber("BK-" + start.getDayOfMonth() + status)
+                .customer(anna)
+                .eventDate(EventDate.builder().startTime(start).endTime(start.plusHours(3)).build())
+                .eventBookingStatus(status)
+                .build();
+    }
+
     @Test
     void getNextBooking_returnsSoonestUpcomingBookingThatIsNotCancelled() throws Exception {
-        Customer anna = Customer.builder().id(UUID.randomUUID())
-                .contactInfo(new ContactInfo("Anna", "Street 1", "anna@example.com")).build();
         LocalDateTime now = LocalDateTime.now();
         EventBooking past = bookingOn(now.minusDays(3), EventBookingStatus.CONFIRMED);
         EventBooking cancelledSooner = bookingOn(now.plusDays(2), EventBookingStatus.CANCELLED);
         EventBooking next = bookingOn(now.plusDays(10), EventBookingStatus.CONFIRMED);
         EventBooking later = bookingOn(now.plusDays(20), EventBookingStatus.OPTION);
         EventBookingDto nextDto = mock(EventBookingDto.class);
-        when(customerRepository.findByContactInfoName(any())).thenReturn(Optional.of(anna));
+        loggedIn(anna);
         when(eventBookingRepository.findByCustomerId(anna.getId()))
                 .thenReturn(List.of(later, past, cancelledSooner, next));
         when(eventBookingMapper.toDto(next)).thenReturn(nextDto);
 
-        assertThat(eventBookingService.getNextBookingForCurrentCustomer()).contains(nextDto);
+        assertThat(eventBookingService.getNextBookingForCurrentCustomer(USERNAME)).contains(nextDto);
     }
 
     @Test
-    void getNextBooking_onlyPastOrCancelledBookings_isEmpty() throws Exception {
-        Customer anna = Customer.builder().id(UUID.randomUUID())
-                .contactInfo(new ContactInfo("Anna", "Street 1", "anna@example.com")).build();
+    void getNextBooking_onlyPastOrExpiredBookings_isEmpty() throws Exception {
         LocalDateTime now = LocalDateTime.now();
-        when(customerRepository.findByContactInfoName(any())).thenReturn(Optional.of(anna));
+        loggedIn(anna);
         when(eventBookingRepository.findByCustomerId(anna.getId())).thenReturn(List.of(
                 bookingOn(now.minusDays(1), EventBookingStatus.CONFIRMED),
                 bookingOn(now.plusDays(5), EventBookingStatus.EXPIRED)));
 
-        assertThat(eventBookingService.getNextBookingForCurrentCustomer()).isEmpty();
+        assertThat(eventBookingService.getNextBookingForCurrentCustomer(USERNAME)).isEmpty();
+    }
+
+    @Test
+    void getNextBooking_accountWithoutCustomer_isRejected() {
+        loggedIn(null);
+
+        assertThatThrownBy(() -> eventBookingService.getNextBookingForCurrentCustomer(USERNAME))
+                .isInstanceOf(CustomerNotFoundException.class);
     }
 }

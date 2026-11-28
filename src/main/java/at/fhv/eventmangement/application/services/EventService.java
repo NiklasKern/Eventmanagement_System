@@ -2,8 +2,6 @@ package at.fhv.eventmangement.application.services;
 
 import at.fhv.eventmangement.application.dto.EventDto;
 import at.fhv.eventmangement.application.dto.EventUpdateResultDto;
-import at.fhv.eventmangement.application.form.EventSearchForm;
-import at.fhv.eventmangement.domain.exceptions.*;
 import at.fhv.eventmangement.application.form.EventForm;
 import at.fhv.eventmangement.application.form.EventSearchForm;
 import at.fhv.eventmangement.domain.exceptions.*;
